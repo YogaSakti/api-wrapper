@@ -70,6 +70,7 @@ router.get("/tensorBidsS2", asyncHandler(async (req, res, next) => {
         delete item.address
         delete item.target
         delete item.targetId
+        delete item.createdAt
         data.push(item)
     }
 
