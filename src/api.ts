@@ -14,11 +14,7 @@ app.get('/', (req, res) => {
   res.status(200).send({ status: 'ok' });
 });
 
-const api = express.Router();
-
-api.get('/hello', (req, res) => {
-  res.status(200).send({ message: 'hello world' });
-});
+import route from './route';
 
 // Version the api
-app.use('/api/v1', api);
+app.use('/api/v1', route);
