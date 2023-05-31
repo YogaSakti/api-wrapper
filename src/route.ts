@@ -55,15 +55,25 @@ router.get("/tensorBidsS2", asyncHandler(async (req, res, next) => {
       });
 
 
-    const json = await marketBidS2.json();
-
-    const response = json.data.tcompBids.map((item: any) => {
-        item.bidPrice = item.amount / 1000000000
+    let json = await marketBidS2.json();
+    const data = []
+    for (let i = 0; i < json.data.tcompBids.length; i++) {
+        const item = json.data.tcompBids[i];
+        item.solBalance = parseInt(item.solBalance) / 1000000000
+        item.bidPrice = parseInt(item.amount)  / 1000000000
         item.totalQuantity = item.quantity + item.filledQuantity
         item.quantity = item.quantity - item.filledQuantity
-        delete item.amount
-    })
-    res.status(200).send(response);
+
+        delete item.margin
+        delete item.marginNr
+        delete item.__typename
+        delete item.address
+        delete item.target
+        delete item.targetId
+        data.push(item)
+    }
+
+    res.status(200).send(data);
 }));
 
 
