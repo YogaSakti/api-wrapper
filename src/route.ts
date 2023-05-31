@@ -1,5 +1,5 @@
 import express from 'express';
-import fetch from 'node-fetch';
+import fetch from 'cross-fetch';
 import asyncHandler from 'express-async-handler'
 
 const router = express.Router();
