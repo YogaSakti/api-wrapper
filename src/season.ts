@@ -66,7 +66,7 @@ router.get("/two", asyncHandler(async (req, res, next) => {
     let formatedData = []
     data.forEach((item: any) => {
         formatedData.push({
-            name: item.name,
+            name: item.name.trim().replace(/\\/g, '').replace(/"/g, ''),
             rarity: item.rarity,
             listed: item.count,
             floor: item.price
