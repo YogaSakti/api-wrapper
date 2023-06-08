@@ -37,7 +37,7 @@ router.get("/one", asyncHandler(async (req, res, next) => {
     data.sort((a: any, b: any) => (a.drop < b.drop) ? 1 : -1)
 
     let formatedData = []
-    
+
     data.forEach((item: any) => {
         formatedData.push({
             name: item.name,
@@ -63,6 +63,85 @@ router.get("/two", asyncHandler(async (req, res, next) => {
 
     let data = two.data;
     if (seasonTwoWL.length >=1) data = data.filter((item: { name: string; }) => seasonTwoWL.includes(item.name));
+
+    data.sort((a: any, b: any) => (a.drop < b.drop) ? 1 : -1)
+
+    let formatedData = []
+    
+    data.forEach((item: any) => {
+        formatedData.push({
+            name: item.name.trim().replace(/\\/g, '').replace(/"/g, ''),
+            rarity: item.rarity,
+            listed: item.count,
+            floor: item.price
+        })
+    })
+
+    res.status(200).send(formatedData);
+}));
+
+
+router.get("/degen", asyncHandler(async (req, res, next) => {
+    const degen = await fetch("https://drip-value.herokuapp.com/degen_poet_all", {
+        headers: {
+            "accept": "application/json"
+        },
+        method: "GET"
+    }).then(res => res.json());
+
+    let data = degen.data;
+
+    data.sort((a: any, b: any) => (a.drop < b.drop) ? 1 : -1)
+
+    let formatedData = []
+    
+    data.forEach((item: any) => {
+        formatedData.push({
+            name: item.name.trim().replace(/\\/g, '').replace(/"/g, ''),
+            rarity: item.rarity,
+            listed: item.count,
+            floor: item.price
+        })
+    })
+
+    res.status(200).send(formatedData);
+}));
+
+router.get("/daa", asyncHandler(async (req, res, next) => {
+    const daa = await fetch("https://drip-value.herokuapp.com/daa_all", {
+        headers: {
+            "accept": "application/json"
+        },
+        method: "GET"
+    }).then(res => res.json());
+
+    let data = daa.data;
+
+    data.sort((a: any, b: any) => (a.drop < b.drop) ? 1 : -1)
+
+    let formatedData = []
+    
+    data.forEach((item: any) => {
+        formatedData.push({
+            name: item.name.trim().replace(/\\/g, '').replace(/"/g, ''),
+            rarity: item.rarity,
+            listed: item.count,
+            floor: item.price
+        })
+    })
+
+    res.status(200).send(formatedData);
+}));
+
+router.get("/vault", asyncHandler(async (req, res, next) => {
+    const vault = await fetch("https://drip-value.herokuapp.com/vault_all", {
+        headers: {
+            "accept": "application/json"
+        },
+        method: "GET"
+    }).then(res => res.json());
+
+    let data = vault.data;
 
     data.sort((a: any, b: any) => (a.drop < b.drop) ? 1 : -1)
 
