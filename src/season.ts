@@ -33,7 +33,7 @@ router.get("/one", asyncHandler(async (req, res, next) => {
 
     let data = one.data;
 
-    data = data.filter((item: { name: string; }) => seasonOneWL.includes(item.name));
+    if (seasonOneWL.length >=1) data = data.filter((item: { name: string; }) => seasonOneWL.includes(item.name));
 
     let formatedData = []
     data.forEach((item: any) => {
@@ -45,7 +45,7 @@ router.get("/one", asyncHandler(async (req, res, next) => {
         })
     })
 
-    res.status(200).send(data);
+    res.status(200).send(formatedData);
 }));
 
 
@@ -61,9 +61,19 @@ router.get("/two", asyncHandler(async (req, res, next) => {
 
     let data = two.data;
 
-    data = data.filter((item: { name: string; }) => seasonTwoWL.includes(item.name));
+    if (seasonTwoWL.length >=1) data = data.filter((item: { name: string; }) => seasonTwoWL.includes(item.name));
 
-    res.status(200).send(data);
+    let formatedData = []
+    data.forEach((item: any) => {
+        formatedData.push({
+            name: item.name,
+            rarity: item.rarity,
+            listed: item.count,
+            floor: item.price
+        })
+    })
+
+    res.status(200).send(formatedData);
 }));
 
 
