@@ -52,15 +52,7 @@ router.get("/owned/:address", asyncHandler(async (req, res, next) => {
         degen: nfts.collectibles.filter((nft: { collection: { name: string | string[]; }; }) => nft.collection.name?.includes('Degen')).length,
         daa: nfts.collectibles.filter((nft: { collection: { name: string | string[]; }; }) => nft.collection.name?.includes('DAA')).length,
         vault: nfts.collectibles.filter((nft: { collection: { name: string | string[]; }; }) => nft.collection.name?.includes('Vault')).length,
-        faceless: nfts.collectibles.filter((nft: { collection: { name: string | string[]; }; }) => nft.collection.name?.includes('Faceless')).length,
-        names: nfts.collectibles.map((nft: { name: string; attributes: any[]; }) => {
-            if (nft.name.includes('Faceless')) {
-                const rarity = nft.attributes.find((x: { trait_type: string; }) => x.trait_type === 'Rarity')?.value || ''
-                nft.name = nft.name.replace('Faceless', `Faceless ${rarity}`).split(' #')[0]
-            }
-
-            return nft.name
-        })
+        faceless: nfts.collectibles.filter((nft: { collection: { name: string | string[]; }; }) => nft.collection.name?.includes('Faceless')).length
     }
 
     res.status(200).send(formatedData);
