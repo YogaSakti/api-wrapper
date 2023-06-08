@@ -34,6 +34,18 @@ router.get("/one", asyncHandler(async (req, res, next) => {
     let data = one.data;
 
     data = data.filter((item: { name: string; }) => seasonOneWL.includes(item.name));
+    data = data.map((item: any) => { 
+        delete item.image
+    })
+    let formatedData = []
+    data.forEach((item: any) => {
+        formatedData.push({
+            name: item.name,
+            rarity: item.rarity,
+            listed: item.listed,
+            floor: item.floor
+        })
+    })
 
     res.status(200).send(data);
 }));
