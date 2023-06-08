@@ -15,6 +15,8 @@ app.get('/', (req, res) => {
 });
 
 import route from './route';
+import season from './season';
 
 // Version the api
 app.use('/api/v1', route);
+app.use('/api/season', season);
