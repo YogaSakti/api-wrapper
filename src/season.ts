@@ -18,7 +18,7 @@ router.get("/", function (req, res) {
 
 router.get("/owned/:address", asyncHandler(async (req, res, next) => {
     const address = req.params.address
-    const getNFTs = await fetch('https://api.phantom.app/collectibles/v1', {
+    let nfts = await fetch('https://api.phantom.app/collectibles/v1', {
         headers: {
             'accept': '*/*',
             'accept-language': 'en-US,en;q=0.9,id;q=0.8,id-ID;q=0.7',
@@ -42,9 +42,9 @@ router.get("/owned/:address", asyncHandler(async (req, res, next) => {
         method: 'POST'
     }).then((res) => res.json())
 
-    let nfts = getNFTs.collectibles
-
     nfts = nfts.collectibles.filter((nft: { collection: { name: string | string[]; }; }) => !nft.collection.name.includes('Compass Rose'))
+    // nfts = nfts.collectibles.filter((nft: { collection: { name: string | string[]; }; }) => !nft.collection.name.includes('Compass'))
+    // nfts = nfts.collectibles.filter((nft: { collection: { name: string | string[]; }; }) => !nft.collection.name.includes('Rose'))
 
     let formatedData = {
         seasonOne: nfts.collectibles.filter((nft: { collection: { name: string; }; }) => nft.collection.name === 'DRiP').length,
