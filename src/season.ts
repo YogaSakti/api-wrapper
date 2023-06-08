@@ -6,8 +6,65 @@ const router = express.Router();
 
 // Home page route.
 router.get("/", function (req, res) {
-    res.status(200).send({ status: 'ok' });
+    res.status(200).send({ 
+        status: 'ok',
+        endpoints: [
+            'one',
+            'two',
+            'owned/:address'
+        ]
+     });
 });
+
+router.get("/owned/:address", asyncHandler(async (req, res, next) => {
+    const address = req.params.address
+    const getNFTs = await fetch('https://api.phantom.app/collectibles/v1', {
+        headers: {
+            'accept': '*/*',
+            'accept-language': 'en-US,en;q=0.9,id;q=0.8,id-ID;q=0.7',
+            'content-type': 'application/json',
+            'sec-ch-ua': '"Chromium";v="112", "Google Chrome";v="112", "Not:A-Brand";v="99"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'none'
+        },
+        'referrerPolicy': 'strict-origin-when-cross-origin',
+        body: JSON.stringify({
+            addresses: [
+                {
+                    chainId: 'solana:101',
+                    address
+                }
+            ]
+        }),
+        method: 'POST'
+    }).then((res) => res.json())
+
+    let nfts = getNFTs.collectibles
+
+    nfts = nfts.collectibles.filter((nft: { collection: { name: string | string[]; }; }) => !nft.collection.name.includes('Compass Rose'))
+
+    let formatedData = {
+        seasonOne: nfts.collectibles.filter((nft: { collection: { name: string; }; }) => nft.collection.name === 'DRiP').length,
+        seasonTwo: nfts.collectibles.filter((nft: { collection: { name: string | string[]; }; }) => nft.collection.name?.includes('#2')).length,
+        degen: nfts.collectibles.filter((nft: { collection: { name: string | string[]; }; }) => nft.collection.name?.includes('Degen')).length,
+        daa: nfts.collectibles.filter((nft: { collection: { name: string | string[]; }; }) => nft.collection.name?.includes('DAA')).length,
+        vault: nfts.collectibles.filter((nft: { collection: { name: string | string[]; }; }) => nft.collection.name?.includes('Vault')).length,
+        faceless: nfts.collectibles.filter((nft: { collection: { name: string | string[]; }; }) => nft.collection.name?.includes('Faceless')).length,
+        names: nfts.collectibles.map((nft: { name: string; attributes: any[]; }) => {
+            if (nft.name.includes('Faceless')) {
+                const rarity = nft.attributes.find((x: { trait_type: string; }) => x.trait_type === 'Rarity')?.value || ''
+                nft.name = nft.name.replace('Faceless', `Faceless ${rarity}`).split(' #')[0]
+            }
+
+            return nft.name
+        })
+    }
+
+    res.status(200).send(formatedData);
+}));
 
 const seasonOneWL = [
     'TELEPORT2',
@@ -32,7 +89,7 @@ router.get("/one", asyncHandler(async (req, res, next) => {
     }).then(res => res.json());
 
     let data = one.data;
-    if (seasonOneWL.length >=1) data = data.filter((item: { name: string; }) => seasonOneWL.includes(item.name));
+    if (seasonOneWL.length >= 1) data = data.filter((item: { name: string; }) => seasonOneWL.includes(item.name));
 
     data.sort((a: any, b: any) => (a.drop < b.drop) ? 1 : -1)
 
@@ -62,12 +119,12 @@ router.get("/two", asyncHandler(async (req, res, next) => {
     }).then(res => res.json());
 
     let data = two.data;
-    if (seasonTwoWL.length >=1) data = data.filter((item: { name: string; }) => seasonTwoWL.includes(item.name));
+    if (seasonTwoWL.length >= 1) data = data.filter((item: { name: string; }) => seasonTwoWL.includes(item.name));
 
     data.sort((a: any, b: any) => (a.drop < b.drop) ? 1 : -1)
 
     let formatedData = []
-    
+
     data.forEach((item: any) => {
         formatedData.push({
             name: item.name.trim().replace(/\\/g, '').replace(/"/g, ''),
@@ -94,7 +151,7 @@ router.get("/degen", asyncHandler(async (req, res, next) => {
     data.sort((a: any, b: any) => (a.drop < b.drop) ? 1 : -1)
 
     let formatedData = []
-    
+
     data.forEach((item: any) => {
         formatedData.push({
             name: item.name.trim().replace(/\\/g, '').replace(/"/g, ''),
@@ -120,7 +177,7 @@ router.get("/daa", asyncHandler(async (req, res, next) => {
     data.sort((a: any, b: any) => (a.drop < b.drop) ? 1 : -1)
 
     let formatedData = []
-    
+
     data.forEach((item: any) => {
         formatedData.push({
             name: item.name.trim().replace(/\\/g, '').replace(/"/g, ''),
@@ -146,7 +203,7 @@ router.get("/vault", asyncHandler(async (req, res, next) => {
     data.sort((a: any, b: any) => (a.drop < b.drop) ? 1 : -1)
 
     let formatedData = []
-    
+
     data.forEach((item: any) => {
         formatedData.push({
             name: item.name.trim().replace(/\\/g, '').replace(/"/g, ''),
