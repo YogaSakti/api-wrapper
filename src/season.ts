@@ -32,10 +32,12 @@ router.get("/one", asyncHandler(async (req, res, next) => {
     }).then(res => res.json());
 
     let data = one.data;
-
     if (seasonOneWL.length >=1) data = data.filter((item: { name: string; }) => seasonOneWL.includes(item.name));
 
+    data.sort((a: any, b: any) => (a.drop < b.drop) ? 1 : -1)
+
     let formatedData = []
+    
     data.forEach((item: any) => {
         formatedData.push({
             name: item.name,
@@ -60,10 +62,12 @@ router.get("/two", asyncHandler(async (req, res, next) => {
     }).then(res => res.json());
 
     let data = two.data;
-
     if (seasonTwoWL.length >=1) data = data.filter((item: { name: string; }) => seasonTwoWL.includes(item.name));
 
+    data.sort((a: any, b: any) => (a.drop < b.drop) ? 1 : -1)
+
     let formatedData = []
+    
     data.forEach((item: any) => {
         formatedData.push({
             name: item.name.trim().replace(/\\/g, '').replace(/"/g, ''),
