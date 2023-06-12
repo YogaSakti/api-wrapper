@@ -178,6 +178,8 @@ router.get("/daa", asyncHandler(async (req, res, next) => {
         item.floor = daa.find((nft: any) => nft.name === item.name)?.price || 0;
     })
 
+    formatedData.forEach((item: any) => item.name = item.name.trim().replace(/\\/g, '').replace(/"/g, '').replace(/’/g, '\''))
+
     res.status(200).send(formatedData);
 }));
 
