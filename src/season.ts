@@ -86,7 +86,7 @@ router.get("/one", asyncHandler(async (req, res, next) => {
         .then(res => res.json()).then(res => res.data)
 
     formatedData.forEach((item: any) => {
-        item.rarity = daa.find((nft: any) => nft.name === item.name)?.rarity || 0;
+        item.rarity = daa.find((nft: any) => nft.name === item.name)?.rarity || '';
         item.listed = daa.find((nft: any) => nft.name === item.name)?.count || 0;
         item.floor = daa.find((nft: any) => nft.name === item.name)?.price || 0;
     })
@@ -149,7 +149,7 @@ router.get("/degen", asyncHandler(async (req, res, next) => {
         .then(res => res.json()).then(res => res.data)
 
     formatedData.forEach((item: any) => {
-        item.rarity = daa.find((nft: any) => nft.name === item.name)?.rarity || 0;
+        item.rarity = daa.find((nft: any) => nft.name === item.name)?.rarity || '';
         item.listed = daa.find((nft: any) => nft.name === item.name)?.count || 0;
         item.floor = daa.find((nft: any) => nft.name === item.name)?.price || 0;
     })
@@ -173,12 +173,17 @@ router.get("/daa", asyncHandler(async (req, res, next) => {
         .then(res => res.json()).then(res => res.data)
 
     formatedData.forEach((item: any) => {
-        item.rarity = daa.find((nft: any) => nft.name === item.name)?.rarity || 0;
+        item.rarity = daa.find((nft: any) => nft.name === item.name)?.rarity || '';
         item.listed = daa.find((nft: any) => nft.name === item.name)?.count || 0;
         item.floor = daa.find((nft: any) => nft.name === item.name)?.price || 0;
     })
 
     formatedData.forEach((item: any) => item.name = item.name.trim().replace(/\\/g, '').replace(/"/g, '').replace(/’/g, '\''))
+
+    formatedData.forEach((item: any) => {
+        if (item.name == `I'm Not Going To Lick It (Rare)`) item.rarity = 'rare'
+        if (item.name == `I'm Not Going To Lick It`) item.rarity = 'common'
+    })
 
     res.status(200).send(formatedData);
 }));
@@ -199,7 +204,7 @@ router.get("/vault", asyncHandler(async (req, res, next) => {
         .then(res => res.json()).then(res => res.data)
 
     formatedData.forEach((item: any) => {
-        item.rarity = daa.find((nft: any) => nft.name === item.name)?.rarity || 0;
+        item.rarity = daa.find((nft: any) => nft.name === item.name)?.rarity || '';
         item.listed = daa.find((nft: any) => nft.name === item.name)?.count || 0;
         item.floor = daa.find((nft: any) => nft.name === item.name)?.price || 0;
     })
