@@ -117,12 +117,17 @@ router.get("/two", asyncHandler(async (req, res, next) => {
     formatedData.unshift({ name: 'Faceless Common' })
 
     formatedData.forEach((item: any) => {
-        item.rarity = daa.find((nft: any) => nft.name === item.name)?.rarity || 0;
+        item.rarity = daa.find((nft: any) => nft.name === item.name)?.rarity || "";
         item.listed = daa.find((nft: any) => nft.name === item.name)?.count || 0;
         item.floor = daa.find((nft: any) => nft.name === item.name)?.price || 0;
     })
 
     formatedData.forEach((item: any) => item.name = item.name.trim().replace(/\\/g, '').replace(/"/g, ''))
+    formatedData.forEach((item: any) => {
+        if (item.name == 'Faceless Legendary') item.rarity = 'legendary'
+        if (item.name == 'Faceless Rare') item.rarity = 'rare'
+        if (item.name == 'Faceless Common') item.rarity = 'common'
+    })
 
     res.status(200).send(formatedData);
 }));
