@@ -24,8 +24,12 @@ router.get("/winner/:id", asyncHandler(async (req, res, next) => {
         method: "GET"
     });
 
-    const json = await request.json();
-    res.status(200).send({ data: json });
+    let json = await request.json();
+
+    // convert from array ['',''] to array of objects [{address},{address},{address}]
+    json = json.map((address: String) => { address })
+
+    res.status(200).send(json);
 }));
 
 
