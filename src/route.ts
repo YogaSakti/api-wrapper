@@ -25,7 +25,7 @@ router.get("/winner/:id", asyncHandler(async (req, res, next) => {
     });
 
     const json = await request.json();
-    res.status(200).send(json);
+    res.status(200).send({ data: json });
 }));
 
 
