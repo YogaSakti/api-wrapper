@@ -6,14 +6,14 @@ const router = express.Router();
 
 // Home page route.
 router.get("/", function (req, res) {
-    res.status(200).send({ 
+    res.status(200).send({
         status: 'ok',
         endpoints: [
             'one',
             'two',
             'owned/:address'
         ]
-     });
+    });
 });
 
 router.get("/owned/:address", asyncHandler(async (req, res, next) => {
@@ -73,136 +73,128 @@ const seasonOneWL = [
 ]
 
 router.get("/one", asyncHandler(async (req, res, next) => {
-    const one = await fetch("https://drip-value.herokuapp.com/season1_all", {
-        headers: {
-            "accept": "application/json"
-        },
-        method: "GET"
-    }).then(res => res.json());
-
-    let data = one.data;
-    if (seasonOneWL.length >= 1) data = data.filter((item: { name: string; }) => seasonOneWL.includes(item.name));
-
-    data.sort((a: any, b: any) => (a.drop < b.drop) ? 1 : -1)
 
     let formatedData = []
+    const nftList = await fetch("https://nox.solanaspaces.com/drip/v2/channels/showcase?limit=100", { headers: { accept: "application/json", Referer: "https://drip.haus/", }, method: 'GET' })
+        .then(res => res.json()).then(({ results }) => results.filter(({ attributes }) => attributes.Season == "1").map(({ name }) => name));
 
-    data.forEach((item: any) => {
-        formatedData.push({
-            name: item.name,
-            rarity: item.rarity,
-            listed: item.count,
-            floor: item.price
-        })
+    nftList.map((name: string) => {
+        if (seasonOneWL.includes(name)) formatedData.push({ name })
     })
+
+    let daa = await fetch("https://drip-value.herokuapp.com/season1_all", { headers: { accept: "application/json" }, method: "GET" })
+        .then(res => res.json()).then(res => res.data)
+
+    formatedData.forEach((item: any) => {
+        item.rarity = daa.find((nft: any) => nft.name === item.name)?.rarity || 0;
+        item.listed = daa.find((nft: any) => nft.name === item.name)?.count || 0;
+        item.floor = daa.find((nft: any) => nft.name === item.name)?.price || 0;
+    })
+
+    formatedData.forEach((item: any) => item.name = item.name.trim().replace(/\\/g, '').replace(/"/g, ''))
 
     res.status(200).send(formatedData);
 }));
 
 
-const seasonTwoWL = []
-
 router.get("/two", asyncHandler(async (req, res, next) => {
-    const two = await fetch("https://drip-value.herokuapp.com/season2_all", {
-        headers: {
-            "accept": "application/json"
-        },
-        method: "GET"
-    }).then(res => res.json());
-
-    let data = two.data;
-    if (seasonTwoWL.length >= 1) data = data.filter((item: { name: string; }) => seasonTwoWL.includes(item.name));
-
-    data.sort((a: any, b: any) => (a.drop < b.drop) ? 1 : -1)
-
     let formatedData = []
+    const nftList = await fetch("https://nox.solanaspaces.com/drip/v2/channels/showcase?limit=100", { headers: { accept: "application/json", Referer: "https://drip.haus/", }, method: 'GET' })
+        .then(res => res.json()).then(({ results }) => results.filter(({ attributes }) => attributes.Season == "2").map(({ name }) => name));
 
-    data.forEach((item: any) => {
-        formatedData.push({
-            name: item.name.trim().replace(/\\/g, '').replace(/"/g, ''),
-            rarity: item.rarity,
-            listed: item.count,
-            floor: item.price
-        })
+    nftList.map((name: string) => formatedData.push({ name }))
+
+    let daa = await fetch("https://drip-value.herokuapp.com/season2_all", { headers: { accept: "application/json" }, method: "GET" })
+        .then(res => res.json()).then(res => res.data)
+
+    // exclude name include Faceless && Compass Rose 
+    formatedData = formatedData.filter((item: any) => !item.name.includes('Faceless') && !item.name.includes('Compass Rose'))
+
+    // add Faceless Common, Rare, Legendary
+    formatedData.unshift({ name: 'Compass Rose' })
+    formatedData.unshift({ name: 'Faceless Legendary' })
+    formatedData.unshift({ name: 'Faceless Rare' })
+    formatedData.unshift({ name: 'Faceless Common' })
+
+    formatedData.forEach((item: any) => {
+        item.rarity = daa.find((nft: any) => nft.name === item.name)?.rarity || 0;
+        item.listed = daa.find((nft: any) => nft.name === item.name)?.count || 0;
+        item.floor = daa.find((nft: any) => nft.name === item.name)?.price || 0;
     })
+
+    formatedData.forEach((item: any) => item.name = item.name.trim().replace(/\\/g, '').replace(/"/g, ''))
 
     res.status(200).send(formatedData);
 }));
 
 
 router.get("/degen", asyncHandler(async (req, res, next) => {
-    const degen = await fetch("https://drip-value.herokuapp.com/degen_poet_all", {
-        headers: {
-            "accept": "application/json"
-        },
-        method: "GET"
-    }).then(res => res.json());
-
-    let data = degen.data;
-
-    data.sort((a: any, b: any) => (a.drop < b.drop) ? 1 : -1)
-
     let formatedData = []
+    const nftList = await fetch("https://nox.solanaspaces.com/drip/v2/channels/degenpoet?limit=100", { headers: { accept: "application/json", Referer: "https://drip.haus/", }, method: 'GET' })
+        .then(res => res.json()).then(({ results }) => results.map(({ name }) => name));
 
-    data.forEach((item: any) => {
-        formatedData.push({
-            name: item.name.trim().replace(/\\/g, '').replace(/"/g, ''),
-            rarity: item.rarity,
-            listed: item.count,
-            floor: item.price
-        })
+    nftList.map((name: string) => formatedData.push({
+        name: name.trim().replace(/\\/g, '').replace(/"/g, ''),
+        rarity: "N/A",
+        listed: "N/A",
+        floor: "N/A"
+    }))
+
+    let daa = await fetch("https://drip-value.herokuapp.com/degen_poet_all", { headers: { accept: "application/json" }, method: "GET" })
+        .then(res => res.json()).then(res => res.data)
+
+    formatedData.forEach((item: any) => {
+        item.rarity = daa.find((nft: any) => nft.name === item.name)?.rarity || 0;
+        item.listed = daa.find((nft: any) => nft.name === item.name)?.count || 0;
+        item.floor = daa.find((nft: any) => nft.name === item.name)?.price || 0;
     })
 
     res.status(200).send(formatedData);
 }));
 
 router.get("/daa", asyncHandler(async (req, res, next) => {
-    const daa = await fetch("https://drip-value.herokuapp.com/daa_all", {
-        headers: {
-            "accept": "application/json"
-        },
-        method: "GET"
-    }).then(res => res.json());
-
-    let data = daa.data;
-
-    data.sort((a: any, b: any) => (a.drop < b.drop) ? 1 : -1)
-
     let formatedData = []
+    const nftList = await fetch("https://nox.solanaspaces.com/drip/v2/channels/daa?limit=100", { headers: { accept: "application/json", Referer: "https://drip.haus/", }, method: 'GET' })
+        .then(res => res.json()).then(({ results }) => results.map(({ name }) => name));
 
-    data.forEach((item: any) => {
-        formatedData.push({
-            name: item.name.trim().replace(/\\/g, '').replace(/"/g, ''),
-            rarity: item.rarity,
-            listed: item.count,
-            floor: item.price
-        })
+    nftList.map((name: string) => formatedData.push({
+        name: name.trim().replace(/\\/g, '').replace(/"/g, ''),
+        rarity: "N/A",
+        listed: "N/A",
+        floor: "N/A"
+    }))
+
+    let daa = await fetch("https://drip-value.herokuapp.com/daa_all", { headers: { accept: "application/json" }, method: "GET" })
+        .then(res => res.json()).then(res => res.data)
+
+    formatedData.forEach((item: any) => {
+        item.rarity = daa.find((nft: any) => nft.name === item.name)?.rarity || 0;
+        item.listed = daa.find((nft: any) => nft.name === item.name)?.count || 0;
+        item.floor = daa.find((nft: any) => nft.name === item.name)?.price || 0;
     })
 
     res.status(200).send(formatedData);
 }));
 
 router.get("/vault", asyncHandler(async (req, res, next) => {
-    const vault = await fetch("https://drip-value.herokuapp.com/vault_all", {
-        headers: {
-            "accept": "application/json"
-        },
-        method: "GET"
-    }).then(res => res.json());
-
-    let data = vault.data;
-
-    data.sort((a: any, b: any) => (a.drop < b.drop) ? 1 : -1)
-
     let formatedData = []
+    const nftList = await fetch("https://nox.solanaspaces.com/drip/v2/channels/vaultmusic?limit=100", { headers: { accept: "application/json", Referer: "https://drip.haus/", }, method: 'GET' })
+        .then(res => res.json()).then(({ results }) => results.map(({ name }) => name));
 
-    data.forEach((item: any) => {
-        formatedData.push({
-            name: item.name.trim().replace(/\\/g, '').replace(/"/g, ''),
-            rarity: item.rarity,
-            listed: item.count,
-            floor: item.price
-        })
+    nftList.map((name: string) => formatedData.push({
+        name: name.trim().replace(/\\/g, '').replace(/"/g, ''),
+        rarity: "N/A",
+        listed: "N/A",
+        floor: "N/A"
+    }))
+
+    let daa = await fetch("https://drip-value.herokuapp.com/vault_all", { headers: { accept: "application/json" }, method: "GET" })
+        .then(res => res.json()).then(res => res.data)
+
+    formatedData.forEach((item: any) => {
+        item.rarity = daa.find((nft: any) => nft.name === item.name)?.rarity || 0;
+        item.listed = daa.find((nft: any) => nft.name === item.name)?.count || 0;
+        item.floor = daa.find((nft: any) => nft.name === item.name)?.price || 0;
     })
 
     res.status(200).send(formatedData);
