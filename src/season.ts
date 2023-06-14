@@ -191,11 +191,11 @@ router.get("/daa", asyncHandler(async (req, res, next) => {
 router.get("/vault", asyncHandler(async (req, res, next) => {
     let formatedData = []
     const nftList = await fetch("https://nox.solanaspaces.com/drip/v2/channels/vaultmusic?limit=100", { headers: { accept: "application/json", Referer: "https://drip.haus/", }, method: 'GET' })
-        .then(res => res.json()).then(({ results }) => results.map(({ name }) => name));
+        .then(res => res.json());
 
-    nftList.map((name: string) => formatedData.push({
+    nftList.map(({ name, attributes: { rarity }}) => formatedData.push({
         name: name.trim().replace(/\\/g, '').replace(/"/g, ''),
-        rarity: "N/A",
+        rarity: rarity,
         listed: "N/A",
         floor: "N/A"
     }))
@@ -204,7 +204,7 @@ router.get("/vault", asyncHandler(async (req, res, next) => {
         .then(res => res.json()).then(res => res.data)
 
     formatedData.forEach((item: any) => {
-        item.rarity = daa.find((nft: any) => nft.name === item.name)?.rarity || '';
+        item.rarity = item.rarity ? item.rarity : daa.find((nft: any) => nft.name === item.name)?.rarity || '';
         item.listed = daa.find((nft: any) => nft.name === item.name)?.count || 0;
         item.floor = daa.find((nft: any) => nft.name === item.name)?.price || 0;
     })
