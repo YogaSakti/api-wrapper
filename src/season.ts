@@ -191,7 +191,7 @@ router.get("/daa", asyncHandler(async (req, res, next) => {
 router.get("/vault", asyncHandler(async (req, res, next) => {
     let formatedData = []
     const nftList = await fetch("https://nox.solanaspaces.com/drip/v2/channels/vaultmusic?limit=100", { headers: { accept: "application/json", Referer: "https://drip.haus/", }, method: 'GET' })
-        .then(res => res.json());
+        .then(res => res.json()).then(res => res.results);
 
     nftList.map(({ name, attributes: { rarity }}) => formatedData.push({
         name: name.trim().replace(/\\/g, '').replace(/"/g, ''),
