@@ -112,9 +112,9 @@ router.get("/two", asyncHandler(async (req, res, next) => {
 
     // add Faceless Common, Rare, Legendary
     formatedData.unshift({ name: 'Compass Rose' })
-    formatedData.unshift({ name: 'Faceless Legendary' })
-    formatedData.unshift({ name: 'Faceless Rare' })
-    formatedData.unshift({ name: 'Faceless Common' })
+    formatedData.unshift({ name: 'Faceless (l)' })
+    formatedData.unshift({ name: 'Faceless (r)' })
+    formatedData.unshift({ name: 'Faceless (c)' })
 
     formatedData.forEach((item: any) => {
         item.rarity = daa.find((nft: any) => nft.name === item.name)?.rarity || "";
@@ -124,9 +124,9 @@ router.get("/two", asyncHandler(async (req, res, next) => {
 
     formatedData.forEach((item: any) => item.name = item.name.trim().replace(/\\/g, '').replace(/"/g, ''))
     formatedData.forEach((item: any) => {
-        if (item.name == 'Faceless Legendary') item.rarity = 'legendary'
-        if (item.name == 'Faceless Rare') item.rarity = 'rare'
-        if (item.name == 'Faceless Common') item.rarity = 'common'
+        if (item.name == 'Faceless (l)') item.rarity = 'legendary'
+        if (item.name == 'Faceless (r)') item.rarity = 'rare'
+        if (item.name == 'Faceless (c)') item.rarity = 'common'
     })
 
     res.status(200).send(formatedData);
@@ -228,9 +228,15 @@ router.get("/floor", asyncHandler(async (req, res, next) => {
         .then(res => res.json()).then(res => res.data)
 
     formatedData.forEach((item: any) => {
-        item.rarity = item.rarity ? item.rarity : floor.find((nft: any) => nft.name === item.name)?.rarity || '';
-        item.listed = floor.find((nft: any) => nft.name === item.name && nft.rarity == item.rarity.toLowerCase())?.count || 0;
-        item.floor = floor.find((nft: any) => nft.name === item.name && nft.rarity == item.rarity.toLowerCase())?.price || 0;
+        item.rarity = item.rarity ? item.rarity.toLowerCase() : floor.find((nft: any) => nft.name === item.name)?.rarity.toLowerCase() || '';
+        item.listed = floor.find((nft: any) => nft.name === item.name && nft.rarity == item.rarity)?.count || 0;
+        item.floor = floor.find((nft: any) => nft.name === item.name && nft.rarity == item.rarity)?.price || 0;
+    })
+
+    // add rarity on nft name in formatedData
+    formatedData.forEach((item: any) => {
+        // add rarity in name from item.rarity add first char from rarity
+        if (item.name.includes('SEC')) item.name = `${item.name} (${item.rarity.charAt(0)})`
     })
  
     res.status(200).send(formatedData);
