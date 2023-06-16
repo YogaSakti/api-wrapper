@@ -43,16 +43,15 @@ router.get("/owned/:address", asyncHandler(async (req, res, next) => {
     }).then((res) => res.json())
 
     nfts.collectibles = nfts.collectibles.filter((nft: { collection: { name: string | string[]; }; }) => !nft.collection.name.includes('Compass Rose'))
-    // nfts.collectibles = nfts.collectibles.filter((nft: { collection: { name: string | string[]; }; }) => !nft.collection.name.includes('Compass'))
-    // nfts.collectibles = nfts.collectibles.filter((nft: { collection: { name: string | string[]; }; }) => !nft.collection.name.includes('Rose'))
-
+    
     let formatedData = {
         seasonOne: nfts.collectibles.filter((nft: { collection: { name: string; }; }) => nft.collection.name === 'DRiP').length,
         seasonTwo: nfts.collectibles.filter((nft: { collection: { name: string | string[]; }; }) => nft.collection.name?.includes('#2')).length,
         degen: nfts.collectibles.filter((nft: { collection: { name: string | string[]; }; }) => nft.collection.name?.includes('Degen')).length,
         daa: nfts.collectibles.filter((nft: { collection: { name: string | string[]; }; }) => nft.collection.name?.includes('DAA')).length,
         vault: nfts.collectibles.filter((nft: { collection: { name: string | string[]; }; }) => nft.collection.name?.includes('Vault')).length,
-        faceless: nfts.collectibles.filter((nft: { collection: { name: string | string[]; }; }) => nft.collection.name?.includes('Faceless')).length
+        faceless: nfts.collectibles.filter((nft: { collection: { name: string | string[]; }; }) => nft.collection.name?.includes('Faceless')).length,
+        floor: nfts.collectibles.filter((nft: { collection: { name: string | string[]; }; }) => nft.collection.name?.includes('Floor')).length,
     }
 
     res.status(200).send(formatedData);
