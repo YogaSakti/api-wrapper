@@ -212,5 +212,29 @@ router.get("/vault", asyncHandler(async (req, res, next) => {
     res.status(200).send(formatedData);
 }));
 
+router.get("/floor", asyncHandler(async (req, res, next) => {
+    let formatedData = []
+    const nftList = await fetch("https://nox.solanaspaces.com/drip/v2/channels/floor?limit=100", { headers: { accept: "application/json", Referer: "https://drip.haus/", }, method: 'GET' })
+        .then(res => res.json()).then(res => res.results);
+
+    nftList.map(({ name, attributes: { Rarity }}) => formatedData.push({
+        name: name.trim().replace(/\\/g, '').replace(/"/g, ''),
+        rarity: Rarity,
+        listed: "N/A",
+        floor: "N/A"
+    }))
+
+    let floor = await fetch("https://drip-value.herokuapp.com/floor_all", { headers: { accept: "application/json" }, method: "GET" })
+        .then(res => res.json()).then(res => res.data)
+
+    formatedData.forEach((item: any) => {
+        item.rarity = item.rarity ? item.rarity : floor.find((nft: any) => nft.name === item.name)?.rarity || '';
+        item.listed = floor.find((nft: any) => nft.name === item.name && nft.rarity == item.rarity.toLowerCase())?.count || 0;
+        item.floor = floor.find((nft: any) => nft.name === item.name && nft.rarity == item.rarity.toLowerCase())?.price || 0;
+    })
+ 
+    res.status(200).send(formatedData);
+}));
+
 
 export default router;
