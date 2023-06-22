@@ -43,7 +43,7 @@ router.get("/owned/:address", asyncHandler(async (req, res, next) => {
     }).then((res) => res.json())
 
     nfts.collectibles = nfts.collectibles.filter((nft: { collection: { name: string | string[]; }; }) => !nft.collection.name.includes('Compass Rose'))
-    
+
     let formatedData = {
         seasonOne: nfts.collectibles.filter((nft: { collection: { name: string; }; }) => nft.collection.name === 'DRiP').length,
         seasonTwo: nfts.collectibles.filter((nft: { collection: { name: string | string[]; }; }) => nft.collection.name?.includes('#2')).length,
@@ -131,13 +131,14 @@ router.get("/two", asyncHandler(async (req, res, next) => {
     res.status(200).send(formatedData);
 }));
 
+// artist
 
 router.get("/degen", asyncHandler(async (req, res, next) => {
     let formatedData = []
     const nftList = await fetch("https://nox.solanaspaces.com/drip/v2/channels/degenpoet?limit=100", { headers: { accept: "application/json", Referer: "https://drip.haus/", }, method: 'GET' })
-        .then(res => res.json()).then(({ results }) => results.map(({ name }) => name));
+    .then(res => res.json()).then(({ results }) => results);
 
-    nftList.map((name: string) => formatedData.push({
+    nftList.map(({ name }) => formatedData.push({
         name: name.trim().replace(/\\/g, '').replace(/"/g, ''),
         rarity: "N/A",
         listed: "N/A",
@@ -159,9 +160,9 @@ router.get("/degen", asyncHandler(async (req, res, next) => {
 router.get("/daa", asyncHandler(async (req, res, next) => {
     let formatedData = []
     const nftList = await fetch("https://nox.solanaspaces.com/drip/v2/channels/daa?limit=100", { headers: { accept: "application/json", Referer: "https://drip.haus/", }, method: 'GET' })
-        .then(res => res.json()).then(({ results }) => results.map(({ name }) => name));
+        .then(res => res.json()).then(({ results }) => results);
 
-    nftList.map((name: string) => formatedData.push({
+    nftList.map(({ name }) => formatedData.push({
         name: name.trim().replace(/\\/g, '').replace(/"/g, ''),
         rarity: "N/A",
         listed: "N/A",
@@ -172,17 +173,12 @@ router.get("/daa", asyncHandler(async (req, res, next) => {
         .then(res => res.json()).then(res => res.data)
 
     formatedData.forEach((item: any) => {
-        item.rarity = daa.find((nft: any) => nft.name === item.name)?.rarity || '';
+        item.rarity = daa.find((nft: any) => nft.name === item.name)?.rarity || nftList.find((nft: any) => nft.name === item.name)?.attributes?.Rarity.toLowerCase() || '';
         item.listed = daa.find((nft: any) => nft.name === item.name)?.count || 0;
         item.floor = daa.find((nft: any) => nft.name === item.name)?.price || 0;
     })
 
     formatedData.forEach((item: any) => item.name = item.name.trim().replace(/\\/g, '').replace(/"/g, '').replace(/’/g, '\''))
-
-    formatedData.forEach((item: any) => {
-        if (item.name == `I'm Not Going To Lick It (Rare)`) item.rarity = 'rare'
-        if (item.name == `I'm Not Going To Lick It`) item.rarity = 'common'
-    })
 
     res.status(200).send(formatedData);
 }));
@@ -190,9 +186,9 @@ router.get("/daa", asyncHandler(async (req, res, next) => {
 router.get("/vault", asyncHandler(async (req, res, next) => {
     let formatedData = []
     const nftList = await fetch("https://nox.solanaspaces.com/drip/v2/channels/vaultmusic?limit=100", { headers: { accept: "application/json", Referer: "https://drip.haus/", }, method: 'GET' })
-        .then(res => res.json()).then(res => res.results);
+        .then(res => res.json()).then(({ results }) => results);
 
-    nftList.map(({ name, attributes: { rarity }}) => formatedData.push({
+    nftList.map(({ name, attributes: { rarity } }) => formatedData.push({
         name: name.trim().replace(/\\/g, '').replace(/"/g, ''),
         rarity: rarity,
         listed: "N/A",
@@ -214,9 +210,9 @@ router.get("/vault", asyncHandler(async (req, res, next) => {
 router.get("/floor", asyncHandler(async (req, res, next) => {
     let formatedData = []
     const nftList = await fetch("https://nox.solanaspaces.com/drip/v2/channels/floor?limit=100", { headers: { accept: "application/json", Referer: "https://drip.haus/", }, method: 'GET' })
-        .then(res => res.json()).then(res => res.results);
+        .then(res => res.json()).then(({ results }) => results);
 
-    nftList.map(({ name, attributes: { Rarity }}) => formatedData.push({
+    nftList.map(({ name, attributes: { Rarity } }) => formatedData.push({
         name: name.trim().replace(/\\/g, '').replace(/"/g, ''),
         rarity: Rarity,
         listed: "N/A",
@@ -237,7 +233,7 @@ router.get("/floor", asyncHandler(async (req, res, next) => {
         // add rarity in name from item.rarity add first char from rarity
         if (item.name.includes('SEC')) item.name = `${item.name} (${item.rarity.charAt(0)})`
     })
- 
+
     res.status(200).send(formatedData);
 }));
 
