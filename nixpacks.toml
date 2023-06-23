@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ['...', 'nodejs', 'yarn']
+nixPkgs = ['...', 'yarn']
 aptPkgs = ['...', "libfontconfig", "libfontconfig1", "libfontconfig1-dev", "libxrender-dev", "fontconfig", "build-essential", "curl", "git", "libbz2-dev", "libcurl4-openssl-dev", "libexpat-dev", "libncurses-dev", "zlib1g-dev", "gcc"]
 
 [start]
