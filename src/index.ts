@@ -1,4 +1,4 @@
-require(`dotenv-vault-core`).config()
+require(`dotenv`).config()
 // call after config() to access the env variables
 import { app } from './api';
 

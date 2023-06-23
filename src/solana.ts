@@ -3,10 +3,12 @@ import express from 'express';
 // import asyncHandler from 'express-async-handler'
 // import { TransactionConfirmationStrategy,   } from '@solana/web3.js'
 
-import { Connection, Keypair, PublicKey, SystemProgram, Transaction  } from '@solana/web3.js'
+import { Connection, Keypair, SystemProgram, Transaction  } from '@solana/web3.js'
+// @ts-ignore
+import { Metaplex, PublicKey } from '@metaplex-foundation/js';
 import * as base58 from "base-58";
 import { createQROptions } from '@solana/pay';
-import { QRCodeCanvas } from '@loskir/styled-qr-code-node';
+import { QRCodeCanvas } from 'styled-qr-code-node-typescript';
 // import QRCode from "qrcode"
 
 const router = express.Router();
