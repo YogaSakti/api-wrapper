@@ -1,6 +1,3 @@
 [phases.setup]
 nixPkgs = ['...']
 aptPkgs = ["libfontconfig", "libfontconfig1", "libfontconfig1-dev", "libxrender-dev", "fontconfig", "build-essential", "gcc"]
-
-[start]
-  runImage = 'ubuntu:jammy'
