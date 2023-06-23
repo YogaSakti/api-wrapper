@@ -1,4 +1,5 @@
 [start]
   runImage = 'ubuntu:jammy'
 [phases.setup]
+nixPkgs = ['nodejs', 'yarn']
 aptPkgs = ["libfontconfig", "libfontconfig1", "libfontconfig1-dev", "libxrender-dev", "fontconfig", "build-essential", "curl", "git", "m4", "ruby", "texinfo", "libbz2-dev", "libcurl4-openssl-dev", "libexpat-dev", "libncurses-dev", "zlib1g-dev"]
