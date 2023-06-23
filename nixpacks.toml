@@ -1,2 +1,2 @@
 [phases.setup]
-aptPkgs = ["libfontconfig1:i386", "libfontconfig1-dev"]
+aptPkgs = ["libfontconfig1", "libfontconfig1-dev"]
