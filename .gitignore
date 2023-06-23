@@ -30,3 +30,9 @@ yarn-error.log*
 # out dir
 dist/
 src/api.ts
+
+.env
+.flaskenv*
+!.env.project
+!.env.vault
+.env*
