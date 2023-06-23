@@ -83,8 +83,8 @@ router.get("/qr/", async (req, res) => {
 
     const SOLANA_PAY_URL = "solana:dari.asia/api/solana";
     const qrOption = createQROptions(SOLANA_PAY_URL, 360, 'white', 'black');
-
-    qrOption.image = require('path').join(__dirname, 'solana.png')
+    const imagePath = require('path').join(__dirname, 'solana.png')
+    qrOption.image = imagePath
     const qr = new QRCodeCanvas(qrOption)
     const dataQR = await qr.toDataUrl()
 
