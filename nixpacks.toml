@@ -1,5 +1,20 @@
-[phases.setup]
-aptPkgs = ["...", "libfontconfig1", "libfontconfig1-dev", "libxrender-dev", "fontconfig", "build-essential", "gcc"]
+# nixpacks.toml
+providers = ["node"]
 
 [start]
-  cmd = "npm run start"
+cmd = "npm start"
+
+[phases.setup]
+nixPkgs = ['...']
+aptPkgs = [
+    "libfontconfig1",
+    "libfontconfig1-dev",
+    "libxrender-dev",
+    "fontconfig",
+    "build-essential",
+    "gcc"
+]
+
+[phases.build]
+# cmds = ["ldconfig -p | grep libfontconfig", "sudo find / -iname *libfontconfig*.so*", "echo $PATH", "echo $LD_LIBRARY_PATH", "echo  'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu' >> ~/.bash_profile ", "source ~/.bash_profile && source ~/.bashrc && source ~/.profile", "echo $LD_LIBRARY_PATH", "npm run build"]
+cmds = ["echo  'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu' >> ~/.bash_profile ", "source ~/.bash_profile && source ~/.bashrc && source ~/.profile", "npm run build"]
