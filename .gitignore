@@ -29,3 +29,4 @@ yarn-error.log*
 
 # out dir
 dist/
+src/api.ts

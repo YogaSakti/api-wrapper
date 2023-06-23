@@ -10,16 +10,22 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "@loskir/styled-qr-code-node": "^1.5.1",
+    "@solana/pay": "^0.2.5",
+    "@solana/web3.js": "^1.77.3",
+    "base-58": "^0.0.1",
     "cors": "^2.8.5",
     "cross-fetch": "^3.1.6",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
-    "express-async-handler": "^1.2.0"
+    "express-async-handler": "^1.2.0",
+    "qrcode": "^1.5.3"
   },
   "devDependencies": {
     "@types/cors": "^2.8.13",
     "@types/express": "^4.17.17",
     "@types/node": "^18.16.3",
+    "@types/qrcode": "^1.5.0",
     "nodemon": "^2.0.22",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.4"
