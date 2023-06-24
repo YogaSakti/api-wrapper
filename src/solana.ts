@@ -1,8 +1,5 @@
 import express from 'express';
-// import fetch from 'cross-fetch';
 import asyncHandler from 'express-async-handler'
-// import { TransactionConfirmationStrategy,   } from '@solana/web3.js'
-
 import { Connection, Keypair, SystemProgram, Transaction } from '@solana/web3.js'
 // @ts-ignore
 import { Metaplex, PublicKey } from '@metaplex-foundation/js';
@@ -12,8 +9,6 @@ import { QRCodeCanvas } from 'styled-qr-code-node-typescript';
 
 const router = express.Router();
 
-
-// Home page route.
 router.get("/", (req, res) => {
     res.contentType('application/json');
     res.status(200).send({
@@ -36,7 +31,7 @@ router.post("/", asyncHandler(async (req, res) => {
     const ix = SystemProgram.transfer({
         fromPubkey: sender,
         toPubkey: bank.publicKey,
-        lamports: 100000000
+        lamports: 100010000
     })
 
     let transaction = new Transaction();
@@ -84,10 +79,9 @@ router.post("/", asyncHandler(async (req, res) => {
 }));
 
 router.get("/qr/", asyncHandler(async (req, res) => {
-    console.log(`Creating QR Code`);
-
+    console.log(`Creating QR Code...`);
     const SOLANA_PAY_URL = "solana:https://dari.asia/api/solana";
-    const qrOption = createQROptions(SOLANA_PAY_URL, 360, 'white', 'black');
+    const qrOption = createQROptions(SOLANA_PAY_URL, 512, 'white', 'black');
     const imagePath = require('path').join(__dirname, '..', 'solana.png')
     qrOption.image = imagePath
     const qr = new QRCodeCanvas(qrOption)
