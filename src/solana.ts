@@ -7,6 +7,8 @@ import { QRCodeCanvas } from 'styled-qr-code-node-typescript';
 
 const router = express.Router();
 
+const alreadyClaimed = new Set<string>();
+
 router.get("/", (req, res) => {
     res.contentType('application/json');
     res.status(200).send({
@@ -16,76 +18,95 @@ router.get("/", (req, res) => {
 });
 
 router.post("/", asyncHandler(async (req, res) => {
-    console.log(`Creating Solana Transaction`);
-    const accountField = req.body?.account;
-    if (!accountField) throw new Error('missing account');
-    const bankSecretKey = process.env.BANK_SECRET_KEY
-    if (!bankSecretKey) throw new Error('missing bank secret key');
-    const bank = Keypair.fromSecretKey(new Uint8Array(JSON.parse(bankSecretKey)));
+    try {
+        console.log(`[POST] Init Tx: https://solscan.io/account/${req.body?.account}`);
+        const accountField = req.body?.account;
+        if (!accountField) throw new Error('Missing account!');
+        const bankSecretKey = process.env.BANK_SECRET_KEY
+        if (!bankSecretKey) throw new Error('Missing bank secret key!');
+        const bank = Keypair.fromSecretKey(new Uint8Array(JSON.parse(bankSecretKey)));
 
-    const sender = new PublicKey(accountField);
+        // Get Sender
+        const sender = new PublicKey(accountField);
 
-    // Build Transaction
-    const ix = SystemProgram.transfer({
-        fromPubkey: sender,
-        toPubkey: bank.publicKey,
-        lamports: 100010000
-    })
+        // Check if already claimed
+        if (alreadyClaimed.has(sender.toBase58())) {
+            res.status(403).send({ message: 'Already claimed!' });
+            return;
+        };
 
-    let transaction = new Transaction();
-    transaction.add(ix);
+        // Build Transaction
+        const ix = SystemProgram.transfer({
+            fromPubkey: sender,
+            toPubkey: bank.publicKey,
+            lamports: 1000000000
+        })
 
-    const connection = new Connection('https://mainnet-beta.solflare.network')
-    const bh = await connection.getLatestBlockhash();
-    transaction.recentBlockhash = bh.blockhash;
-    transaction.feePayer = bank.publicKey;
+        let transaction = new Transaction();
+        transaction.add(ix);
 
-    // for correct account ordering 
-    transaction = Transaction.from(transaction.serialize({
-        verifySignatures: false,
-        requireAllSignatures: false,
-    }));
+        // send back to sender
+        // const sendBackIx = SystemProgram.transfer({
+        //     fromPubkey: bank.publicKey,
+        //     toPubkey: sender,
+        //     lamports: 20000000
+        // })
 
-    transaction.sign(bank);
-    console.log(base58.encode(transaction.signature));
+        alreadyClaimed.add(sender.toBase58());
 
-    // send back to sender
-    // const sendBackIx = SystemProgram.transfer({
-    //     fromPubkey: bank.publicKey,
-    //     toPubkey: sender,
-    //     lamports: 100000000
-    // })
+        // transaction.add(sendBackIx);
 
-    // transaction.add(sendBackIx);
+        const connection = new Connection('https://mainnet-beta.solflare.network')
+        const bh = await connection.getLatestBlockhash();
+        transaction.recentBlockhash = bh.blockhash;
+        transaction.feePayer = bank.publicKey;
 
-    // Serialize and return the unsigned transaction.
-    const serializedTransaction = transaction.serialize({
-        verifySignatures: false,
-        requireAllSignatures: false,
-    });
+        // for correct account ordering 
+        transaction = Transaction.from(transaction.serialize({
+            verifySignatures: false,
+            requireAllSignatures: false,
+        }));
 
-    const base64Transaction = serializedTransaction.toString('base64');
-    const message = 'Thank you for Paying!';
+        transaction.sign(bank);
+        console.log(`[POST] Tx Hash: https://solscan.io/tx/${base58.encode(transaction.signature)}`);
 
-    // const strategy : TransactionConfirmationStrategy =  {
-    //   signature: transaction.
-    // }
-    // connection.confirmTransaction();
 
-    res.status(200).send({ transaction: base64Transaction, message });
 
+        // Serialize and return the unsigned transaction.
+        const serializedTransaction = transaction.serialize({
+            verifySignatures: false,
+            requireAllSignatures: false,
+        });
+
+        const base64Transaction = serializedTransaction.toString('base64');
+        const message = 'Don\'t!';
+
+        // const strategy : TransactionConfirmationStrategy =  {
+        //   signature: transaction.
+        // }
+        // connection.confirmTransaction();
+
+        res.status(200).send({ transaction: base64Transaction, message });
+
+    } catch (error) {
+        console.log(`[POST] Error: ${error} `);
+    }
 }));
 
 router.get("/qr/", asyncHandler(async (req, res) => {
-    console.log(`Creating QR Code...`);
-    const SOLANA_PAY_URL = "solana:https://dari.asia/api/solana";
-    const qrOption = createQROptions(SOLANA_PAY_URL, 512, 'white', 'black');
-    const imagePath = require('path').join(__dirname, '..', 'solana.png')
-    qrOption.image = imagePath
-    const qr = new QRCodeCanvas(qrOption)
-    const dataQR = await qr.toDataUrl()
-
-    res.status(200).send(`<img src=${dataQR} >`);
+    try {
+        console.log(`Creating QR Code...`);
+        const SOLANA_PAY_URL = "solana:https://dari.asia/api/solana";
+        const qrOption = createQROptions(SOLANA_PAY_URL, 512, 'white', 'black');
+        const imagePath = require('path').join(__dirname, '..', 'solana.png')
+        qrOption.image = imagePath
+        const qr = new QRCodeCanvas(qrOption)
+        const dataQR = await qr.toDataUrl()
+    
+        res.status(200).send(`<img src=${dataQR} >`);
+    } catch (error) {
+        console.log(`[GET] Error: ${error}`);
+    }
 }));
 
 

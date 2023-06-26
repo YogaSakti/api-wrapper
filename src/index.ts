@@ -2,18 +2,17 @@ require(`dotenv`).config()
 // call after config() to access the env variables
 import express from 'express';
 import cors from 'cors';
-
+import morgan from "morgan";
 export const app = express();
 
 app.use(cors({ origin: true }));
+app.use(morgan(':remote-addr - :remote-user [:date] [:method] :url => :status | :res[content-length] | :response-time ms'))
 
 app.use(express.json());
-app.use(express.raw({ type: 'application/vnd.custom-type' }));
-app.use(express.text({ type: 'text/html' }));
 
 // Healthcheck endpoint
 app.get('/', (req, res) => {
-  res.status(200).send({ status: 'ok' });
+  res.status(200).json({ status: 'ok' });
 });
 
 import route from './route';

@@ -16,6 +16,26 @@ router.get("/", function (req, res) {
     });
 });
 
+router.get("/channels", asyncHandler(async (req, res, next) => {
+    let  nftChannels = await fetch("https://nox.solanaspaces.com/drip/channels", { headers: { accept: "application/json", Referer: "https://drip.haus/", }, method: 'GET' })
+    .then(res => res.json()).then(({ results }) => results);
+
+    nftChannels = nftChannels.filter(({ slug }) => slug !== 'showcase');
+
+    nftChannels.unshift({ name: 'Showcase S2', slug: 'Seasons 2' })
+    nftChannels.unshift({ name: 'Showcase S1', slug: 'Seasons 1' })
+    
+
+    const categories = nftChannels.map(({ name, slug }) => {
+        //change slug from 'bork' to 'Bork'
+        const slugNew = slug.charAt(0).toUpperCase() + slug.slice(1);
+
+        return { name, slug: slugNew }
+    })
+
+    res.status(200).json(categories);
+}));
+
 router.get("/owned/:address", asyncHandler(async (req, res, next) => {
     const address = req.params.address
     let nfts = await fetch('https://api.phantom.app/collectibles/v1', {
@@ -95,7 +115,6 @@ router.get("/one", asyncHandler(async (req, res, next) => {
     res.status(200).send(formatedData);
 }));
 
-
 router.get("/two", asyncHandler(async (req, res, next) => {
     let formatedData = []
     const nftList = await fetch("https://nox.solanaspaces.com/drip/v2/channels/showcase?limit=100", { headers: { accept: "application/json", Referer: "https://drip.haus/", }, method: 'GET' })
@@ -130,8 +149,6 @@ router.get("/two", asyncHandler(async (req, res, next) => {
 
     res.status(200).send(formatedData);
 }));
-
-// artist
 
 router.get("/degen", asyncHandler(async (req, res, next) => {
     let formatedData = []
@@ -233,6 +250,58 @@ router.get("/floor", asyncHandler(async (req, res, next) => {
         // add rarity in name from item.rarity add first char from rarity
         if (item.name.includes('SEC')) item.name = `${item.name} (${item.rarity.charAt(0)})`
     })
+
+    res.status(200).send(formatedData);
+}));
+
+router.get("/bork", asyncHandler(async (req, res, next) => {
+    let formatedData = []
+    const nftList = await fetch("https://nox.solanaspaces.com/drip/v2/channels/bork?limit=100", { headers: { accept: "application/json", Referer: "https://drip.haus/", }, method: 'GET' })
+        .then(res => res.json()).then(({ results }) => results);
+
+    nftList.map(({ name, attributes: { Rarity } }) => formatedData.push({
+        name: name.trim().replace(/\\/g, '').replace(/"/g, ''),
+        rarity: Rarity,
+        listed: "N/A",
+        floor: "N/A"
+    }))
+
+    let floor = await fetch("https://drip-value.herokuapp.com/bork_all", { headers: { accept: "application/json" }, method: "GET" })
+        .then(res => res.json()).then(res => res.data)
+
+    formatedData.forEach((item: any) => {
+        item.rarity = item.rarity ? item.rarity.toLowerCase() : floor.find((nft: any) => nft.name === item.name)?.rarity.toLowerCase() || '';
+        item.listed = floor.find((nft: any) => nft.name === item.name && nft.rarity == item.rarity)?.count || 0;
+        item.floor = floor.find((nft: any) => nft.name === item.name && nft.rarity == item.rarity)?.price || 0;
+    })
+
+    // add rarity on nft name in formatedData
+
+    res.status(200).send(formatedData);
+}));
+
+router.get("/tiiinydenise", asyncHandler(async (req, res, next) => {
+    let formatedData = []
+    const nftList = await fetch("https://nox.solanaspaces.com/drip/v2/channels/tiiinydenise?limit=100", { headers: { accept: "application/json", Referer: "https://drip.haus/", }, method: 'GET' })
+        .then(res => res.json()).then(({ results }) => results);
+
+    nftList.map(({ name, attributes: { Rarity } }) => formatedData.push({
+        name: name.trim().replace(/\\/g, '').replace(/"/g, ''),
+        rarity: Rarity,
+        listed: "N/A",
+        floor: "N/A"
+    }))
+
+    let floor = await fetch("https://drip-value.herokuapp.com/tiiinydenise_all", { headers: { accept: "application/json" }, method: "GET" })
+        .then(res => res.json()).then(res => res.data)
+
+    formatedData.forEach((item: any) => {
+        item.rarity = item.rarity ? item.rarity.toLowerCase() : floor.find((nft: any) => nft.name === item.name)?.rarity.toLowerCase() || '';
+        item.listed = floor.find((nft: any) => nft.name === item.name && nft.rarity == item.rarity)?.count || 0;
+        item.floor = floor.find((nft: any) => nft.name === item.name && nft.rarity == item.rarity)?.price || 0;
+    })
+
+    // add rarity on nft name in formatedData
 
     res.status(200).send(formatedData);
 }));

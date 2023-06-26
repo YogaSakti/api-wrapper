@@ -1,9 +1,6 @@
 # nixpacks.toml
 providers = ["node"]
 
-[start]
-cmd = "npm start"
-
 [phases.setup]
 nixPkgs = ['...']
 aptPkgs = [
@@ -15,6 +12,12 @@ aptPkgs = [
     "gcc"
 ]
 
+[phases.install]
+cmds = ["npm install --omit=dev"]
+
 [phases.build]
 # cmds = ["ldconfig -p | grep libfontconfig", "sudo find / -iname *libfontconfig*.so*", "echo $PATH", "echo $LD_LIBRARY_PATH", "echo  'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu' >> ~/.bash_profile ", "source ~/.bash_profile && source ~/.bashrc && source ~/.profile", "echo $LD_LIBRARY_PATH", "npm run build"]
 cmds = ["echo  'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu' >> ~/.bash_profile ", "source ~/.bash_profile && source ~/.bashrc && source ~/.profile", "npm run build"]
+
+[start]
+cmd = "npm start"
