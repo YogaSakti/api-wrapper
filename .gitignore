@@ -29,3 +29,4 @@ yarn-error.log*
 
 # out dir
 dist/
+drip-serve.code-workspace

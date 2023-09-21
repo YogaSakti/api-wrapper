@@ -1,13 +1,12 @@
-import { config } from 'dotenv';
+import { config } from 'dotenv'
 
-if (process.env.NODE_ENV !== 'production') {
-  config();
-}
+if (process.env.NODE_ENV !== 'production') config()
+
 // call after config() to access the env variables
-import { app } from './api';
+import { app } from './api'
 
-const port = process.env.PORT || 3333;
+const port = process.env.PORT || 3333
 
 app.listen(port, () =>
-  console.log(`API available on http://localhost:${port}`)
-);
+    console.log(`API available on http://localhost:${port}`)
+)
