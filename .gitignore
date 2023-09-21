@@ -36,3 +36,6 @@ src/api.ts
 !.env.project
 !.env.vault
 .env*
+drip*
+cleaner.ts
+.eslintrc.json
