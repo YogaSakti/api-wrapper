@@ -14,7 +14,7 @@ app.use(express.raw({ type: 'application/vnd.custom-type' }))
 app.use(express.text({ type: 'text/html' }))
 
 // Healthcheck endpoint
-app.get('/', (req, res) => res.status(200).send({ status: 'ok' }))
+app.get('/', (req, res) => res.status(200).send({ status: 'ok', message: 'Hello world' }))
 
 const api = express.Router()
 
