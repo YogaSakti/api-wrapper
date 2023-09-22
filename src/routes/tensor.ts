@@ -90,7 +90,11 @@ const getListedTensor = async (slug: string, filters: nftsFilter): Promise<Array
         method: 'POST'
     })
         .then((res) => res.json())
-        .then((json) => json.data.activeListingsV2.txs)
+        .then((json) => {
+            // console.log(json)
+
+            return json.data.activeListingsV2.txs
+        })
         .then((txs) => txs.map((nft: { mint: { owner: any; name: any; sellRoyaltyFeeBPS: any; attributes: any; }; tx: { txType: any; grossAmount: any; }; }) => ({
             owner: nft.mint.owner,
             name: nft.mint.name,

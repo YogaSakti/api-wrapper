@@ -22,7 +22,6 @@ const convertKeysToLowercase = (obj: any) => {
 
 const updateFloor = async (slug: string, filter: any) => {
     const listedNft = await getListed(slug, filter)
-
     return parseFloat(listedNft[0]?.listPrice) || 0
 }
 
@@ -111,7 +110,7 @@ router.get('/channels', asyncHandler(async (req, res, next) => {
     // default filters
     categories = categories.filter(({ slug }) => slug !== 'Soljakey' && slug !== 'Stepn' && slug !== 'Jakey')
 
-// categories slug is not contain filters array value
+    // categories slug is not contain filters array value
     categories = categories.filter(({ slug }) => !filters.includes(slug.toLowerCase()))
 
     res.status(200).json(categories)
@@ -129,7 +128,7 @@ router.get('/allNFTs', asyncHandler(async (req, res, next) => {
 
     // combine all nfts into one array
     const nfts = nftsFetch.reduce((acc, val) => acc.concat(val), [])
-    
+
     res.status(200).json(nfts)
 }))
 
@@ -343,7 +342,7 @@ router.get('/daa', asyncHandler(async (req, res, next) => {
                 const tensorSlug = 'bbec8d70-1abd-479d-9478-2b17ade33996'
                 if (!tensorSlug) return
                 // @ts-ignore
-                const filter = { nameFilter: name, traits: [{ 'traitType': 'Rarity', 'values': [rarity] }] } 
+                const filter = { nameFilter: name, traits: [{ 'traitType': 'Rarity', 'values': [rarity] }] }
                 floor = await updateFloor(tensorSlug, filter)
             }
 
@@ -430,12 +429,12 @@ router.get('/floor', asyncHandler(async (req, res, next) => {
                     let filter = { nameFilter: name }
                     // @ts-ignore
                     filter = { nameFilter: name, traits: [{ 'traitType': 'Rarity', 'values': [rarity] }] }
-    
+
                     floor = await updateFloor(tensorSlug, filter)
-                } 
+                }
             }
 
-            
+
 
             formatedData.push({
                 name: name.trim().replace(/\\/g, '').replace(/"/g, ''),
@@ -1007,7 +1006,7 @@ router.get('/findingsathosi', asyncHandler(async (req, res, next) => {
                 if (tensorSlug) {
                     let filter = { nameFilter: name }
                     // @ts-ignore
-                    filter = { nameFilter: name, traits: [{ 'traitType': 'Rarity', 'values': [rarity] }, {'traitType': 'Variation','values': [variation]}] }
+                    filter = { nameFilter: name, traits: [{ 'traitType': 'Rarity', 'values': [rarity] }, { 'traitType': 'Variation', 'values': [variation] }] }
 
                     floor = await updateFloor(tensorSlug, filter)
                 }
@@ -1242,12 +1241,12 @@ router.get('/awag', asyncHandler(async (req, res, next) => {
                     filter = { nameFilter: name, traits: [{ 'traitType': 'Rarity', 'values': [rarity] }] }
 
                     floor = await updateFloor(tensorSlug, filter)
-                } 
+                }
 
                 if (floor === 0) {
                     const filter = { nameFilter: name }
                     floor = await updateFloor(tensorSlug, filter)
-                } 
+                }
             }
 
             formatedData.push({
@@ -1293,12 +1292,12 @@ router.get('/radiant', asyncHandler(async (req, res, next) => {
                     filter = { nameFilter: name, traits: [{ 'traitType': 'Rarity', 'values': [rarity] }] }
 
                     floor = await updateFloor(tensorSlug, filter)
-                } 
+                }
 
                 if (floor === 0) {
                     const filter = { nameFilter: name }
                     floor = await updateFloor(tensorSlug, filter)
-                } 
+                }
             }
 
             formatedData.push({
@@ -1343,10 +1342,10 @@ router.get('/bad', asyncHandler(async (req, res, next) => {
                 if (tensorSlug) {
                     let filter = { nameFilter: name }
                     // @ts-ignore
-                    filter = { nameFilter: name, traits: [{ 'traitType': 'Rarity', 'values': [rarity] }, {'traitType': 'Variation','values': [variation]}] }
+                    filter = { nameFilter: name, traits: [{ 'traitType': 'Rarity', 'values': [rarity] }, { 'traitType': 'Variation', 'values': [variation] }] }
 
                     floor = await updateFloor(tensorSlug, filter)
-                } 
+                }
             }
 
             formatedData.push({
@@ -1392,12 +1391,12 @@ router.get('/enigma', asyncHandler(async (req, res, next) => {
                     filter = { nameFilter: name, traits: [{ 'traitType': 'Rarity', 'values': [rarity] }] }
 
                     floor = await updateFloor(tensorSlug, filter)
-                } 
+                }
 
                 if (floor === 0) {
                     const filter = { nameFilter: name }
                     floor = await updateFloor(tensorSlug, filter)
-                } 
+                }
             }
 
             formatedData.push({
@@ -1443,12 +1442,12 @@ router.get('/nation', asyncHandler(async (req, res, next) => {
                     filter = { nameFilter: name, traits: [{ 'traitType': 'Rarity', 'values': [rarity] }] }
 
                     floor = await updateFloor(tensorSlug, filter)
-                } 
+                }
 
                 if (floor === 0) {
                     const filter = { nameFilter: name }
                     floor = await updateFloor(tensorSlug, filter)
-                } 
+                }
             }
 
             formatedData.push({
@@ -1481,25 +1480,23 @@ router.get('/cactus', asyncHandler(async (req, res, next) => {
         ])
 
 
-        for (let i = 0; i < nftList.length; i++) {                                                  
+        for (let i = 0; i < nftList.length; i++) {
             const { name, attributes: { rarity } } = nftList[i]
-
             // const nft = nofacenocase.find((nft: any) => nft.name === name && nft.rarity?.toLowerCase() === rarity?.toLowerCase());
             let floor = null //nft?.price;
             if (!floor) {
                 const tensorSlug = '077397a6-cd06-4b9c-821b-97dc9128a588'
                 if (tensorSlug) {
                     let filter = { nameFilter: name }
-                    // @ts-ignore
-                    filter = { nameFilter: name, traits: [{ 'traitType': 'Rarity', 'values': [rarity] }] }
+
+                    // if has rarity
+                    if (rarity) {
+                        // @ts-ignore
+                        filter = { nameFilter: name, traits: [{ 'traitType': 'Rarity', 'values': [rarity] }] }
+                    }
 
                     floor = await updateFloor(tensorSlug, filter)
-                } 
-
-                if (floor === 0) {
-                    const filter = { nameFilter: name }
-                    floor = await updateFloor(tensorSlug, filter)
-                } 
+                }
             }
 
             formatedData.push({
