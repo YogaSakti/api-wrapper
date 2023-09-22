@@ -339,15 +339,11 @@ router.get('/daa', asyncHandler(async (req, res, next) => {
 
             const nft = daa.find((nft: any) => nft.name === name && nft.rarity?.toLowerCase() === rarity?.toLowerCase())
             let floor = nft?.price
-            if (!floor) {
+            if (!floor || floor == 0) {
                 const tensorSlug = 'bbec8d70-1abd-479d-9478-2b17ade33996'
                 if (!tensorSlug) return
-                let filter = { nameFilter: name }
-                if (name.includes('Robert') || name.includes('Responsibility')) {
-                    // @ts-ignore
-                    filter = { nameFilter: name, traits: [{ 'traitType': 'Rarity', 'values': [rarity] }] }
-                }
-
+                // @ts-ignore
+                const filter = { nameFilter: name, traits: [{ 'traitType': 'Rarity', 'values': [rarity] }] } 
                 floor = await updateFloor(tensorSlug, filter)
             }
 
