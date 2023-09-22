@@ -129,6 +129,11 @@ router.get('/allNFTs', asyncHandler(async (req, res, next) => {
     // combine all nfts into one array
     const nfts = nftsFetch.reduce((acc, val) => acc.concat(val), [])
 
+    // split name inside object in nfts if contain '#' and use the first part only
+    nfts.forEach((nft: any) => {
+        if (nft.name.includes('#')) nft.name = nft.name.split('#')[0].trim()
+    })
+    
     res.status(200).json(nfts)
 }))
 
@@ -1486,6 +1491,55 @@ router.get('/cactus', asyncHandler(async (req, res, next) => {
             let floor = null //nft?.price;
             if (!floor) {
                 const tensorSlug = '077397a6-cd06-4b9c-821b-97dc9128a588'
+                if (tensorSlug) {
+                    let filter = { nameFilter: name }
+
+                    // if has rarity
+                    if (rarity) {
+                        // @ts-ignore
+                        filter = { nameFilter: name, traits: [{ 'traitType': 'Rarity', 'values': [rarity] }] }
+                    }
+
+                    floor = await updateFloor(tensorSlug, filter)
+                }
+            }
+
+            formatedData.push({
+                name: name.trim().replace(/\\/g, '').replace(/"/g, '').replace(/;/g, ''),
+                rarity: rarity?.toLowerCase(), // || nft?.rarity,
+                listed: 0, //nft?.count || 0,
+                floor: floor || 0
+            })
+
+        }
+
+        // this is for custom rarity in name
+        await appendRarityToDuplicates(formatedData)
+        // end of custom rarity in name
+
+
+        res.status(200).send(formatedData)
+    } catch (error) {
+        res.status(500).send(error)
+    }
+
+}))
+
+router.get('/vfxfreek', asyncHandler(async (req, res, next) => {
+    try {
+        const formatedData = []
+
+        const [nftList] = await Promise.all([
+            fetch('https://nox.solanaspaces.com/drip/v2/channels/vfxfreek?limit=100', { headers: { Referer: 'https://drip.haus/' } }).then(response => response.json()).then(({ results }) => results.map(convertKeysToLowercase))
+        ])
+
+
+        for (let i = 0; i < nftList.length; i++) {
+            const { name, attributes: { rarity } } = nftList[i]
+            // const nft = nofacenocase.find((nft: any) => nft.name === name && nft.rarity?.toLowerCase() === rarity?.toLowerCase());
+            let floor = null //nft?.price;
+            if (!floor) {
+                const tensorSlug = 'de5c4653-3314-4db1-8929-c9c34df35b26'
                 if (tensorSlug) {
                     let filter = { nameFilter: name }
 
