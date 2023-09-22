@@ -1337,7 +1337,9 @@ router.get('/bad', asyncHandler(async (req, res, next) => {
             // const nft = nofacenocase.find((nft: any) => nft.name === name && nft.rarity?.toLowerCase() === rarity?.toLowerCase());
             let floor = null //nft?.price;
             if (!floor) {
-                const tensorSlug = '664e08cd-2b9d-4343-a4dd-ae3b5920e217'
+                let tensorSlug = '664e08cd-2b9d-4343-a4dd-ae3b5920e217'
+                if (!name.includes('Trading')) tensorSlug = '1dd6df8d-f3f9-46d1-91c1-2b69d6d7b659'
+
                 if (tensorSlug) {
                     let filter = { nameFilter: name }
                     // @ts-ignore
@@ -1484,7 +1486,7 @@ router.get('/cactus', asyncHandler(async (req, res, next) => {
         ])
 
 
-        for (let i = 0; i < nftList.length; i++) {
+        for (let i = 0; i < nftList.length; i++) {                                                  
             const { name, attributes: { rarity } } = nftList[i]
 
             // const nft = nofacenocase.find((nft: any) => nft.name === name && nft.rarity?.toLowerCase() === rarity?.toLowerCase());
