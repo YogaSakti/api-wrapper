@@ -1332,7 +1332,7 @@ router.get('/bad', asyncHandler(async (req, res, next) => {
 
 
         for (let i = 0; i < nftList.length; i++) {
-            const { name, attributes: { rarity } } = nftList[i]
+            const { name, attributes: { rarity, variation } } = nftList[i]
 
             // const nft = nofacenocase.find((nft: any) => nft.name === name && nft.rarity?.toLowerCase() === rarity?.toLowerCase());
             let floor = null //nft?.price;
@@ -1343,13 +1343,8 @@ router.get('/bad', asyncHandler(async (req, res, next) => {
                 if (tensorSlug) {
                     let filter = { nameFilter: name }
                     // @ts-ignore
-                    filter = { nameFilter: name, traits: [{ 'traitType': 'Rarity', 'values': [rarity] }] }
+                    filter = { nameFilter: name, traits: [{ 'traitType': 'Rarity', 'values': [rarity] }, {'traitType': 'Variation','values': [variation]}] }
 
-                    floor = await updateFloor(tensorSlug, filter)
-                } 
-
-                if (floor === 0) {
-                    const filter = { nameFilter: name }
                     floor = await updateFloor(tensorSlug, filter)
                 } 
             }
@@ -1357,7 +1352,7 @@ router.get('/bad', asyncHandler(async (req, res, next) => {
             formatedData.push({
                 name: name.trim().replace(/\\/g, '').replace(/"/g, ''),
                 rarity: rarity?.toLowerCase(), // || nft?.rarity,
-                listed: 0, //nft?.count || 0,
+                listed: variation, //nft?.count || 0,
                 floor: floor || 0
             })
 
