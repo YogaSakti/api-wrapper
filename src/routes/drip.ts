@@ -310,7 +310,7 @@ router.get('/degen', asyncHandler(async (req, res, next) => {
                 const tensorSlug = 'e83d8eba-269e-4af8-889b-e26d4287fd52'
                 if (!tensorSlug) return
                 const listedNft = await getListed(tensorSlug, { nameFilter: name })
-                floor = parseFloat(listedNft[0].listPrice) || 0
+                floor = parseFloat(listedNft[0]?.listPrice) || 0
             }
 
             formatedData.push({
