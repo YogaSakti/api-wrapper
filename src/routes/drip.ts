@@ -45,6 +45,59 @@ const appendRarityToDuplicates = (formatedData: any[]): void => {
     })
 }
 
+//@ts-ignore
+const specialDrop = async () => {
+    let formatedData = []
+
+    // Mapping for name to slug
+    const nameToSlugMap = {
+        'Faceless': '64d4ab62-64f7-4963-b95a-114d2a574979',
+        'The Dashers': '05c52d84-2e49-4ed9-a473-b43cab41e129',
+        'MOOAR Cat': '40d3fc20-f3f7-47a3-b8b0-18a90b6719d6',
+        'Binary Force': '01142ee4-bb23-4d66-9806-f10672a1fbfe',
+        'Moonshiners': '207ac744-558a-4811-9206-ac321e995adf'
+    }
+
+    const manualData = [
+        'Faceless (l)','Faceless (r)','Faceless (c)',
+        'The Dashers (l)', 'The Dashers (r)', 'The Dashers (c)',
+        'Binary Force (l)', 'Binary Force (r)', 'Binary Force (c)',
+        'Moonshiners (l)', 'Moonshiners (r)', 'Moonshiners (c)',
+    ]
+    formatedData = manualData.map((name: string) => ({
+        name,
+        rarity: name.includes('(l)') ? 'Legendary' : name.includes('(r)') ? 'Rare' : 'Common',
+        listed: 0, floor: 0
+    }))
+
+    const promises = formatedData.map(async (item) => {
+        const { name, rarity } = item
+        const filteredName = name.split(' (')[0]
+        const slug = nameToSlugMap[Object.keys(nameToSlugMap).find(key => filteredName.includes(key))] || '';
+
+        if (!slug) {
+            return {
+                ...item,
+                floor: 0,
+                rarity: rarity.toLowerCase()
+            }
+        }
+
+        const listedNft = await getListed(slug, { nameFilter: filteredName, traits: [{ 'traitType': 'Rarity', 'values': [rarity] }] })
+        return {
+            ...item,
+            floor: parseFloat(listedNft[0]?.listPrice) || 0,
+            rarity: rarity.toLowerCase()
+        }
+    })
+
+    // Wait for all promises to complete
+    const resolvedData = await Promise.all(promises)
+
+    return resolvedData
+}
+
+
 // Home page route.
 router.get('/', function (req, res) {
     const endpoints = [
@@ -133,7 +186,7 @@ router.get('/allNFTs', asyncHandler(async (req, res, next) => {
     nfts.forEach((nft: any) => {
         if (nft.name.includes('#')) nft.name = nft.name.split('#')[0].trim()
     })
-    
+
     res.status(200).json(nfts)
 }))
 
@@ -191,58 +244,6 @@ router.get('/one', asyncHandler(async (req, res, next) => {
     }
 }))
 
-//@ts-ignore
-const specialDrop = async () => {
-    const formatedData = []
-
-    const manualData = [
-        'Faceless (l)',
-        'Faceless (r)',
-        'Faceless (c)',
-        'The Dashers (l)',
-        'The Dashers (r)',
-        'The Dashers (c)',
-        'Binary Force (l)',
-        'Binary Force (r)',
-        'Binary Force (c)',
-        'Moonshiners (l)',
-        'Moonshiners (r)',
-        'Moonshiners (c)',
-    ]
-
-    manualData.forEach((name: string) => formatedData.push({
-        name,
-        rarity: name.includes('(l)') ? 'Legendary' : name.includes('(r)') ? 'Rare' : 'Common',
-        listed: 0,
-        floor: 0
-    }))
-
-    for (let i = 0; i < formatedData.length; i++) {
-        const item = formatedData[i]
-        const rarity = item.rarity
-        const name = item.name.split(' (')[0]
-        let slug = ''
-        if (name.includes('Faceless')) slug = '64d4ab62-64f7-4963-b95a-114d2a574979'
-        if (name.includes('The Dashers')) slug = '05c52d84-2e49-4ed9-a473-b43cab41e129'
-        if (name.includes('MOOAR Cat')) slug = '40d3fc20-f3f7-47a3-b8b0-18a90b6719d6'
-        if (name.includes('Binary Force')) slug = '01142ee4-bb23-4d66-9806-f10672a1fbfe'
-        if (name.includes('Moonshiners')) slug = '207ac744-558a-4811-9206-ac321e995adf'
-
-        if (!slug) {
-            item.floor = 0
-            item.rarity = rarity.toLowerCase()
-            continue
-        }
-
-        const listedNft = await getListed(slug, { nameFilter: name, traits: [{ 'traitType': 'Rarity', 'values': [rarity] }] })
-        item.floor = parseFloat(listedNft[0]?.listPrice) || 0
-        item.rarity = rarity.toLowerCase()
-
-    }
-
-    return formatedData
-}
-
 router.get('/two', asyncHandler(async (req, res, next) => {
     try {
         let formatedData = []
@@ -252,25 +253,29 @@ router.get('/two', asyncHandler(async (req, res, next) => {
             fetch('https://drip-value.herokuapp.com/all?channel=s2').then(response => response.json()).then(({ data }) => data)
         ])
 
-        for (let i = 0; i < nftList.length; i++) {
-            const { name, attributes: { rarity } } = nftList[i]
+        const promises = nftList.map(async (nftItem) => {
+            const { name, attributes: { rarity } } = nftItem
 
             const nft = season2.find((nft: any) => nft.name === name)
             let floor = nft?.price
             if (!floor) {
                 const tensorSlug = '40d3fc20-f3f7-47a3-b8b0-18a90b6719d6'
-                if (!tensorSlug) return
-                const listedNft = await getListed(tensorSlug, { nameFilter: name })
-                floor = parseFloat(listedNft[0]?.listPrice) || 0
+                if (tensorSlug) {
+                    const listedNft = await getListed(tensorSlug, { nameFilter: name })
+                    floor = parseFloat(listedNft[0]?.listPrice) || 0
+                }
             }
 
-            formatedData.push({
+            return {
                 name: name.trim().replace(/\\/g, '').replace(/"/g, ''),
                 rarity: rarity?.toLowerCase() || nft?.rarity,
                 listed: nft?.count || 0,
                 floor: floor
-            })
-        }
+            }
+        })
+
+        // Wait for all promises to complete
+        formatedData = await Promise.all(promises)
 
         // exclude name include Faceless & Compass Rose & The Dashers 
         formatedData = formatedData.filter((item: any) => !item.name.includes('Faceless') && !item.name.includes('Compass Rose') && !item.name.includes('The Dashers') && !item.name.includes('Binary Force') && !item.name.includes('Moonshiners'))
@@ -282,11 +287,10 @@ router.get('/two', asyncHandler(async (req, res, next) => {
         res.status(200).send(formatedData)
     } catch (error) {
         console.log(error)
-
         res.status(500).send(error)
     }
-
 }))
+
 
 router.get('/degen', asyncHandler(async (req, res, next) => {
     try {
@@ -299,9 +303,6 @@ router.get('/degen', asyncHandler(async (req, res, next) => {
 
         for (let i = 0; i < nftList.length; i++) {
             const { name, attributes: { rarity } } = nftList[i]
-
-            console.log(`name: ${name} rarity: ${rarity}`)
-
 
             const nft = degenpoet.find((nft: any) => nft.name === name)
             let floor = nft?.price
@@ -514,37 +515,43 @@ router.get('/bork', asyncHandler(async (req, res, next) => {
 // trying new way to get floor and implement caching 
 router.get('/tiiinydenise', asyncHandler(async (req, res, next) => {
     try {
+        // @ts-ignore
         const formatedData = []
         const [nftList, tiiiny] = await Promise.all([
             fetch('https://nox.solanaspaces.com/drip/v2/channels/tiiinydenise?limit=100', { headers: { Referer: 'https://drip.haus/' } }).then(response => response.json()).then(({ results }) => results.map(convertKeysToLowercase)),
             fetch('https://drip-value.herokuapp.com/all?channel=tiiinydenise').then(response => response.json()).then(({ data }) => data)
         ])
 
-        for (let i = 0; i < nftList.length; i++) {
-            const { name, attributes: { rarity } } = nftList[i]
+        const promises = nftList.map(async (nftItem) => {
+            const { name, attributes: { rarity } } = nftItem
 
             const nft = tiiiny.find((nft: any) => nft.name === name)
             let floor = nft?.price
             if (!floor) {
                 const tensorSlug = '6e0b7232-7f50-4752-834e-62a4c2e14540'
-                if (!tensorSlug) return
-                const listedNft = await getListed(tensorSlug, { nameFilter: name })
-                floor = parseFloat(listedNft[0].listPrice) || 0
+                if (tensorSlug) {
+                    const listedNft = await getListed(tensorSlug, { nameFilter: name })
+                    floor = parseFloat(listedNft[0].listPrice) || 0
+                }
             }
 
-            formatedData.push({
+            return {
                 name: name.trim().replace(/\\/g, '').replace(/"/g, ''),
                 rarity: rarity?.toLowerCase() || nft?.rarity,
                 listed: nft?.count || 0,
                 floor: floor
-            })
-        }
+            }
+        })
 
-        res.status(200).send(formatedData)
+        // Wait for all promises to complete
+        const resolvedData = await Promise.all(promises)
+
+        res.status(200).send(resolvedData)
     } catch (error) {
         res.status(500).send(error)
     }
 }))
+
 
 router.get('/bangerz', asyncHandler(async (req, res, next) => {
     try {
@@ -720,6 +727,7 @@ router.get('/geneftee', asyncHandler(async (req, res, next) => {
 
 router.get('/andrewmason', asyncHandler(async (req, res, next) => {
     try {
+        // @ts-ignore
         const formatedData = []
 
         const [nftList, andrew] = await Promise.all([
@@ -727,9 +735,8 @@ router.get('/andrewmason', asyncHandler(async (req, res, next) => {
             fetch('https://drip-value.herokuapp.com/all?channel=andrewmason').then(response => response.json()).then(({ data }) => data)
         ])
 
-
-        for (let i = 0; i < nftList.length; i++) {
-            const { name, attributes: { rarity } } = nftList[i]
+        const promises = nftList.map(async (nftItem) => {
+            const { name, attributes: { rarity } } = nftItem
 
             const nft = andrew.find((nft: any) => nft.name === name && nft.rarity?.toLowerCase() === rarity?.toLowerCase())
             let floor = null // nft?.price;
@@ -744,26 +751,27 @@ router.get('/andrewmason', asyncHandler(async (req, res, next) => {
                 floor = await updateFloor(tensorSlug, filter)
             }
 
-            formatedData.push({
+            return {
                 name: name.trim().replace(/\\/g, '').replace(/"/g, ''),
                 rarity: rarity?.toLowerCase() || nft?.rarity,
                 listed: nft?.count || 0,
                 floor: floor || 0
-            })
+            }
+        })
 
-        }
+        // Wait for all promises to complete
+        const resolvedData = await Promise.all(promises)
 
         // this is for custom rarity in name
-        await appendRarityToDuplicates(formatedData)
+        await appendRarityToDuplicates(resolvedData)
         // end of custom rarity in name
 
-
-        res.status(200).send(formatedData)
+        res.status(200).send(resolvedData)
     } catch (error) {
         res.status(500).send(error)
     }
-
 }))
+
 
 router.get('/0xgrime', asyncHandler(async (req, res, next) => {
     try {
@@ -947,6 +955,7 @@ router.get('/portals', asyncHandler(async (req, res, next) => {
 
 router.get('/nofacenocase', asyncHandler(async (req, res, next) => {
     try {
+        // @ts-ignore
         const formatedData = []
 
         const [nftList, nofacenocase] = await Promise.all([
@@ -954,9 +963,8 @@ router.get('/nofacenocase', asyncHandler(async (req, res, next) => {
             fetch('https://drip-value.herokuapp.com/all?channel=nofacenocase').then(response => response.json()).then(({ data }) => data)
         ])
 
-
-        for (let i = 0; i < nftList.length; i++) {
-            const { name, attributes: { rarity } } = nftList[i]
+        const promises = nftList.map(async (nftItem) => {
+            const { name, attributes: { rarity } } = nftItem
 
             const nft = nofacenocase.find((nft: any) => nft.name === name && nft.rarity?.toLowerCase() === rarity?.toLowerCase())
             let floor = null //nft?.price;
@@ -971,26 +979,27 @@ router.get('/nofacenocase', asyncHandler(async (req, res, next) => {
                 }
             }
 
-            formatedData.push({
+            return {
                 name: name.trim().replace(/\\/g, '').replace(/"/g, ''),
                 rarity: rarity?.toLowerCase() || nft?.rarity,
                 listed: nft?.count || 0,
                 floor: floor || 0
-            })
+            }
+        })
 
-        }
+        // Wait for all promises to complete
+        const resolvedData = await Promise.all(promises)
 
         // this is for custom rarity in name
-        await appendRarityToDuplicates(formatedData)
+        await appendRarityToDuplicates(resolvedData)
         // end of custom rarity in name
 
-
-        res.status(200).send(formatedData)
+        res.status(200).send(resolvedData)
     } catch (error) {
         res.status(500).send(error)
     }
-
 }))
+
 
 router.get('/findingsathosi', asyncHandler(async (req, res, next) => {
     try {
@@ -1000,45 +1009,48 @@ router.get('/findingsathosi', asyncHandler(async (req, res, next) => {
             fetch('https://nox.solanaspaces.com/drip/v2/channels/fs?limit=100', { headers: { Referer: 'https://drip.haus/' } }).then(response => response.json()).then(({ results }) => results.map(convertKeysToLowercase))
         ])
 
+        const promises = nftList.map(async (nftItem: any) => {
+            const { name, attributes: { rarity, variation } } = nftItem
 
-        for (let i = 0; i < nftList.length; i++) {
-            const { name, attributes: { rarity, variation } } = nftList[i]
-
-            // const nft = nofacenocase.find((nft: any) => nft.name === name && nft.rarity?.toLowerCase() === rarity?.toLowerCase());
             let floor = null //nft?.price;
             if (!floor) {
                 const tensorSlug = '602e1be7-16f7-4894-981a-8c65414707a3'
                 if (tensorSlug) {
-                    let filter = { nameFilter: name }
+                    const filter = { nameFilter: name, traits: [] }
+
                     // @ts-ignore
-                    filter = { nameFilter: name, traits: [{ 'traitType': 'Rarity', 'values': [rarity] }, { 'traitType': 'Variation', 'values': [variation] }] }
+                    if (rarity) filter.traits.push({ 'traitType': 'Rarity', 'values': [rarity] })
+                    // @ts-ignore
+                    if (variation) filter.traits.push({ 'traitType': 'Variation', 'values': [variation] })
 
                     floor = await updateFloor(tensorSlug, filter)
                 }
             }
 
-            formatedData.push({
+            return {
                 name: name.trim().replace(/\\/g, '').replace(/"/g, ''),
                 rarity: rarity?.toLowerCase(), // || nft?.rarity,
-                listed: variation, //nft?.count || 0,
+                listed: variation || 0, //nft?.count 
                 floor: floor || 0
-            })
-
-        }
-
-        // custom rarity in name
-        formatedData.forEach((item: any) => {
-            item.name = item.name.trim().replace(/[\\"]/g, '').replace(/’/g, '\'')
-            item.name = `${item.name} ${item.listed} (${item.rarity.charAt(0)})`
+            }
         })
 
+        // Wait for all promises to complete
+        const resolvedData = await Promise.all(promises)
+
+        // custom rarity in name
+        resolvedData.forEach((item) => {
+            item.name = item.name.trim().replace(/[\\"]/g, '').replace(/’/g, '\'')
+            item.name = `${item.name}${item.listed != 0 ? ` ${item.listed} `: ' '}(${item.rarity.charAt(0)})`
+            formatedData.push(item)
+        })
 
         res.status(200).send(formatedData)
     } catch (error) {
         res.status(500).send(error)
     }
-
 }))
+
 
 router.get('/madhouse', asyncHandler(async (req, res, next) => {
     try {

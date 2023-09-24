@@ -5,9 +5,7 @@ import fetch from 'cross-fetch'
 export const router = express.Router()
 
 // Home page route.
-router.get('/', function (req, res) {
-    res.status(200).send({ status: 'ok' })
-})
+router.get('/', (req, res) =>res.status(200).send({ status: 'ok' }))
 
 router.get('/events', (req, res, next) => {
     console.log('Fetching events...')
