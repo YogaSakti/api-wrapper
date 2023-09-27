@@ -73,7 +73,7 @@ const specialDrop = async () => {
     const promises = formatedData.map(async (item) => {
         const { name, rarity } = item
         const filteredName = name.split(' (')[0]
-        const slug = nameToSlugMap[Object.keys(nameToSlugMap).find(key => filteredName.includes(key))] || '';
+        const slug = nameToSlugMap[Object.keys(nameToSlugMap).find(key => filteredName.includes(key))] || ''
 
         if (!slug) {
             return {
