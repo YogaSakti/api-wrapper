@@ -5,7 +5,7 @@ import fetch from 'cross-fetch'
 export const router = express.Router()
 
 // Home page route.
-router.get('/', (req, res) =>res.status(200).send({ status: 'ok' }))
+router.get('/', (req, res) => res.status(200).send({ status: 'ok' }))
 
 router.get('/events', (req, res, next) => {
     console.log('Fetching events...')
@@ -62,6 +62,42 @@ router.get('/tensor', (req, res, next) => fetch('https://search.tensor.trade/mul
             }))
     })
     .catch(next))
+
+// endpoint to get price from coingecko with slug as parameter 
+router.get('/gecko/:slug', (req, res, next) =>
+    // https://api.coingecko.com/api/v3/coins/bridged-wrapped-hbar-heliswap/tickers
+    fetch(`https://pro-api.coingecko.com/api/v3/simple/price/?ids=${req.params.slug}&vs_currencies=usd&x_cg_pro_api_key=CG-ZRUJUuYGELw13WB13DptYbFc`, {
+        headers: {
+            accept: 'application/json'
+        },
+        method: 'GET'
+    }).then((response) => response.json())
+        .then(response => res.status(200).send(response))
+        .catch(next))
+
+router.get('/geckoFiltered/:slug', (req, res, next) =>
+    // https://api.coingecko.com/bridged-wrapped-hbar-heliswap
+    fetch(`https://pro-api.coingecko.com/api/v3/coins/${req.params.slug}/tickers?&vs_currencies=usd&x_cg_pro_api_key=CG-ZRUJUuYGELw13WB13DptYbFc`, {
+        headers: {
+            accept: 'application/json'
+        },
+        method: 'GET'
+    }).then((response) => response.json())
+        .then(response => {
+            let filteredData: any = []
+
+            const filteredTickersByMarket = response.tickers.filter(({ market: { name } }) => name !== 'LATOKEN')
+            const filteredTickersByTrust = filteredTickersByMarket.filter(({ trust_score }) => trust_score == 'green')
+
+            filteredData = filteredTickersByTrust.length > 0 ? filteredTickersByTrust[0] : filteredTickersByMarket[0]
+            
+            res.status(200).send({
+                [filteredData.target_coin_id]: {
+                    'usd': filteredData.converted_last.usd
+                }
+            })
+        })
+        .catch(next))
 
 import dripRoute from './drip'
 router.use('/drip', dripRoute)
