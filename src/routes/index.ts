@@ -63,41 +63,33 @@ router.get('/tensor', (req, res, next) => fetch('https://search.tensor.trade/mul
     })
     .catch(next))
 
+
+const getSimpleTokenPrice = (ids: string) => fetch(`https://pro-api.coingecko.com/api/v3/simple/price/?ids=${ids}&vs_currencies=usd&x_cg_pro_api_key=CG-ZRUJUuYGELw13WB13DptYbFc`, { headers: { accept: 'application/json' }, method: 'GET' }).then((response) => response.json())
+const getPriceByMarket = (ids: string) => fetch(`https://pro-api.coingecko.com/api/v3/coins/${ids}/tickers?&vs_currencies=usd&x_cg_pro_api_key=CG-ZRUJUuYGELw13WB13DptYbFc`, { headers: { accept: 'application/json' }, method: 'GET' }).then((response) => response.json())
 // endpoint to get price from coingecko with slug as parameter 
-router.get('/gecko/:slug', (req, res, next) =>
-    // https://api.coingecko.com/api/v3/coins/bridged-wrapped-hbar-heliswap/tickers
-    fetch(`https://pro-api.coingecko.com/api/v3/simple/price/?ids=${req.params.slug}&vs_currencies=usd&x_cg_pro_api_key=CG-ZRUJUuYGELw13WB13DptYbFc`, {
-        headers: {
-            accept: 'application/json'
-        },
-        method: 'GET'
-    }).then((response) => response.json())
-        .then(response => res.status(200).send(response))
-        .catch(next))
+router.get('/gecko/:slug', (req, res, next) => getSimpleTokenPrice(req.params.slug).then(response => res.status(200).send(response)).catch(next))
 
-router.get('/geckoFiltered/:slug', (req, res, next) =>
-    // https://api.coingecko.com/bridged-wrapped-hbar-heliswap
-    fetch(`https://pro-api.coingecko.com/api/v3/coins/${req.params.slug}/tickers?&vs_currencies=usd&x_cg_pro_api_key=CG-ZRUJUuYGELw13WB13DptYbFc`, {
-        headers: {
-            accept: 'application/json'
-        },
-        method: 'GET'
-    }).then((response) => response.json())
-        .then(response => {
-            let filteredData: any = []
+router.get('/geckoFiltered/:slug', (req, res, next) => getPriceByMarket(req.params.slug)
+    .then(response => {
+        let filteredData: any = []
+        if (response.error || response.status) {
+            if (response?.error?.includes('coin not found')) getSimpleTokenPrice(req.params.slug).then(response => res.status(200).send(response)).catch(next)
+            if (response?.status?.error_message || response?.status?.error_code) res.status(400).send(response.status)
+            return
+        }
 
-            const filteredTickersByMarket = response.tickers.filter(({ market: { name } }) => name !== 'LATOKEN')
-            const filteredTickersByTrust = filteredTickersByMarket.filter(({ trust_score }) => trust_score == 'green')
+        const filteredTickersByMarket = response.tickers.filter(({ market: { name } }) => name !== 'LATOKEN')
+        const filteredTickersByTrust = filteredTickersByMarket.filter(({ trust_score }) => trust_score == 'green')
 
-            filteredData = filteredTickersByTrust.length > 0 ? filteredTickersByTrust[0] : filteredTickersByMarket[0]
-            
-            res.status(200).send({
-                [filteredData.target_coin_id]: {
-                    'usd': filteredData.converted_last.usd
-                }
-            })
+        filteredData = filteredTickersByTrust.length > 0 ? filteredTickersByTrust[0] : filteredTickersByMarket[0]
+
+        res.sendStatus(200).send({
+            [filteredData.target_coin_id]: {
+                'usd': filteredData.converted_last.usd
+            }
         })
-        .catch(next))
+    })
+    .catch(next))
 
 import dripRoute from './drip'
 router.use('/drip', dripRoute)
