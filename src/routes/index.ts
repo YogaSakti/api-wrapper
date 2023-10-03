@@ -64,8 +64,8 @@ router.get('/tensor', (req, res, next) => fetch('https://search.tensor.trade/mul
     .catch(next))
 
 
-const getSimpleTokenPrice = (ids: string) => fetch(`https://pro-api.coingecko.com/api/v3/simple/price/?ids=${ids}&vs_currencies=usd&x_cg_pro_api_key=CG-ZRUJUuYGELw13WB13DptYbFc`, { headers: { accept: 'application/json' }, method: 'GET' }).then((response) => response.json())
-const getPriceByMarket = (ids: string) => fetch(`https://pro-api.coingecko.com/api/v3/coins/${ids}/tickers?&vs_currencies=usd&x_cg_pro_api_key=CG-ZRUJUuYGELw13WB13DptYbFc`, { headers: { accept: 'application/json' }, method: 'GET' }).then((response) => response.json())
+const getSimpleTokenPrice = (ids: string) => fetch(`https://pro-api.coingecko.com/api/v3/simple/price/?ids=${ids}&vs_currencies=usd&x_cg_pro_api_key=${process.env.CG_API_KEY}`, { headers: { accept: 'application/json' }, method: 'GET' }).then((response) => response.json())
+const getPriceByMarket = (ids: string) => fetch(`https://pro-api.coingecko.com/api/v3/coins/${ids}/tickers?&vs_currencies=usd&x_cg_pro_api_key=${process.env.CG_API_KEY}`, { headers: { accept: 'application/json' }, method: 'GET' }).then((response) => response.json())
 // endpoint to get price from coingecko with slug as parameter 
 router.get('/gecko/:slug', (req, res, next) => getSimpleTokenPrice(req.params.slug).then(response => res.status(200).send(response)).catch(next))
 
