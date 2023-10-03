@@ -83,7 +83,7 @@ router.get('/geckoFiltered/:slug', (req, res, next) => getPriceByMarket(req.para
 
         filteredData = filteredTickersByTrust.length > 0 ? filteredTickersByTrust[0] : filteredTickersByMarket[0]
 
-        res.sendStatus(200).send({
+        res.status(200).send({
             [filteredData.target_coin_id]: {
                 'usd': filteredData.converted_last.usd
             }
