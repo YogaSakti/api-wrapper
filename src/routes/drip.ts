@@ -59,7 +59,7 @@ const specialDrop = async () => {
     }
 
     const manualData = [
-        'Faceless (l)','Faceless (r)','Faceless (c)',
+        'Faceless (l)', 'Faceless (r)', 'Faceless (c)',
         'The Dashers (l)', 'The Dashers (r)', 'The Dashers (c)',
         'Binary Force (l)', 'Binary Force (r)', 'Binary Force (c)',
         'Moonshiners (l)', 'Moonshiners (r)', 'Moonshiners (c)',
@@ -253,7 +253,7 @@ router.get('/two', asyncHandler(async (req, res, next) => {
             fetch('https://drip-value.herokuapp.com/all?channel=s2').then(response => response.json()).then(({ data }) => data)
         ])
 
-        const promises = nftList.map(async (nftItem) => {
+        const promises = nftList.map(async (nftItem: { name: any; attributes: { rarity: any } }) => {
             const { name, attributes: { rarity } } = nftItem
 
             const nft = season2.find((nft: any) => nft.name === name)
@@ -522,7 +522,7 @@ router.get('/tiiinydenise', asyncHandler(async (req, res, next) => {
             fetch('https://drip-value.herokuapp.com/all?channel=tiiinydenise').then(response => response.json()).then(({ data }) => data)
         ])
 
-        const promises = nftList.map(async (nftItem) => {
+        const promises = nftList.map(async (nftItem: { name: any; attributes: { rarity: any } }) => {
             const { name, attributes: { rarity } } = nftItem
 
             const nft = tiiiny.find((nft: any) => nft.name === name)
@@ -735,7 +735,7 @@ router.get('/andrewmason', asyncHandler(async (req, res, next) => {
             fetch('https://drip-value.herokuapp.com/all?channel=andrewmason').then(response => response.json()).then(({ data }) => data)
         ])
 
-        const promises = nftList.map(async (nftItem) => {
+        const promises = nftList.map(async (nftItem: { name: any; attributes: { rarity: any } }) => {
             const { name, attributes: { rarity } } = nftItem
 
             const nft = andrew.find((nft: any) => nft.name === name && nft.rarity?.toLowerCase() === rarity?.toLowerCase())
@@ -963,7 +963,7 @@ router.get('/nofacenocase', asyncHandler(async (req, res, next) => {
             fetch('https://drip-value.herokuapp.com/all?channel=nofacenocase').then(response => response.json()).then(({ data }) => data)
         ])
 
-        const promises = nftList.map(async (nftItem) => {
+        const promises = nftList.map(async (nftItem: { name: any; attributes: { rarity: any } }) => {
             const { name, attributes: { rarity } } = nftItem
 
             const nft = nofacenocase.find((nft: any) => nft.name === name && nft.rarity?.toLowerCase() === rarity?.toLowerCase())
@@ -1041,7 +1041,7 @@ router.get('/findingsathosi', asyncHandler(async (req, res, next) => {
         // custom rarity in name
         resolvedData.forEach((item) => {
             item.name = item.name.trim().replace(/[\\"]/g, '').replace(/’/g, '\'')
-            item.name = `${item.name}${item.listed != 0 ? ` ${item.listed} `: ' '}(${item.rarity.charAt(0)})`
+            item.name = `${item.name}${item.listed != 0 ? ` ${item.listed} ` : ' '}(${item.rarity.charAt(0)})`
             formatedData.push(item)
         })
 
@@ -1146,44 +1146,39 @@ router.get('/designz', asyncHandler(async (req, res, next) => {
 
 router.get('/silicons', asyncHandler(async (req, res, next) => {
     try {
-        const formatedData = []
 
-        const [nftList] = await Promise.all([
-            fetch('https://nox.solanaspaces.com/drip/v2/channels/silicons?limit=100', { headers: { Referer: 'https://drip.haus/' } }).then(response => response.json()).then(({ results }) => results.map(convertKeysToLowercase))
-        ])
+        const [nftList] = await Promise.all([fetch('https://nox.solanaspaces.com/drip/v2/channels/silicons?limit=100', { headers: { Referer: 'https://drip.haus/' } }).then(response => response.json()).then(({ results }) => results.map(convertKeysToLowercase))])
 
+        const promises = nftList.map(async (nftItem: { name: any; attributes: { rarity: any } }) => {
+            const { name, attributes: { rarity } } = nftItem
 
-        for (let i = 0; i < nftList.length; i++) {
-            const { name, attributes: { rarity } } = nftList[i]
-
-            // const nft = nofacenocase.find((nft: any) => nft.name === name && nft.rarity?.toLowerCase() === rarity?.toLowerCase());
-            let floor = null //nft?.price;
+            // const nft = andrew.find((nft: any) => nft.name === name && nft.rarity?.toLowerCase() === rarity?.toLowerCase())
+            let floor = null
             if (!floor) {
                 const tensorSlug = 'e5866d80-0b4b-4d9b-8436-f9397e505cc5'
-                if (tensorSlug) {
-                    let filter = { nameFilter: name }
-                    // @ts-ignore
-                    filter = { nameFilter: name, traits: [{ 'traitType': 'Rarity', 'values': [rarity] }] }
+                let filter = { nameFilter: name }
+                // @ts-ignore
+                filter = { nameFilter: name, traits: [{ 'traitType': 'Rarity', 'values': [rarity] }] }
 
-                    floor = await updateFloor(tensorSlug, filter)
-                }
+                floor = await updateFloor(tensorSlug, filter)
             }
 
-            formatedData.push({
+            return {
                 name: name.trim().replace(/\\/g, '').replace(/"/g, ''),
-                rarity: rarity?.toLowerCase(), // || nft?.rarity,
-                listed: 0, //nft?.count || 0,
+                rarity: rarity?.toLowerCase(),
+                listed: 0,
                 floor: floor || 0
-            })
+            }
+        })
 
-        }
+        // Wait for all promises to complete
+        const resolvedData = await Promise.all(promises)
 
         // this is for custom rarity in name
-        await appendRarityToDuplicates(formatedData)
+        await appendRarityToDuplicates(resolvedData)
         // end of custom rarity in name
 
-
-        res.status(200).send(formatedData)
+        res.status(200).send(resolvedData)
     } catch (error) {
         res.status(500).send(error)
     }
@@ -1538,6 +1533,55 @@ router.get('/cactus', asyncHandler(async (req, res, next) => {
 }))
 
 router.get('/vfxfreek', asyncHandler(async (req, res, next) => {
+    try {
+        const formatedData = []
+
+        const [nftList] = await Promise.all([
+            fetch('https://nox.solanaspaces.com/drip/v2/channels/vfxfreek?limit=100', { headers: { Referer: 'https://drip.haus/' } }).then(response => response.json()).then(({ results }) => results.map(convertKeysToLowercase))
+        ])
+
+
+        for (let i = 0; i < nftList.length; i++) {
+            const { name, attributes: { rarity } } = nftList[i]
+            // const nft = nofacenocase.find((nft: any) => nft.name === name && nft.rarity?.toLowerCase() === rarity?.toLowerCase());
+            let floor = null //nft?.price;
+            if (!floor) {
+                const tensorSlug = 'de5c4653-3314-4db1-8929-c9c34df35b26'
+                if (tensorSlug) {
+                    let filter = { nameFilter: name }
+
+                    // if has rarity
+                    if (rarity) {
+                        // @ts-ignore
+                        filter = { nameFilter: name, traits: [{ 'traitType': 'Rarity', 'values': [rarity] }] }
+                    }
+
+                    floor = await updateFloor(tensorSlug, filter)
+                }
+            }
+
+            formatedData.push({
+                name: name.trim().replace(/\\/g, '').replace(/"/g, '').replace(/;/g, ''),
+                rarity: rarity?.toLowerCase(), // || nft?.rarity,
+                listed: 0, //nft?.count || 0,
+                floor: floor || 0
+            })
+
+        }
+
+        // this is for custom rarity in name
+        await appendRarityToDuplicates(formatedData)
+        // end of custom rarity in name
+
+
+        res.status(200).send(formatedData)
+    } catch (error) {
+        res.status(500).send(error)
+    }
+
+}))
+
+router.get('/monmonmon', asyncHandler(async (req, res, next) => {
     try {
         const formatedData = []
 
