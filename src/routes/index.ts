@@ -70,7 +70,7 @@ const getPriceByMarket = (ids: string) => fetch(`https://pro-api.coingecko.com/a
 router.get('/gecko/:slug', (req, res, next) => getSimpleTokenPrice(req.params.slug).then(response => res.status(200).send(response)).catch(next))
 
 router.get('/geckoFiltered/:slug', (req, res, next) => getPriceByMarket(req.params.slug)
-    .then(response => {
+    .then((response) => {
         let filteredData: any = []
         if (response.error || response.status) {
             if (response?.error?.includes('coin not found')) getSimpleTokenPrice(req.params.slug).then(response => res.status(200).send(response)).catch(next)
@@ -80,14 +80,17 @@ router.get('/geckoFiltered/:slug', (req, res, next) => getPriceByMarket(req.para
 
         const filteredTickersByMarket = response.tickers.filter(({ market: { name } }) => name !== 'LATOKEN')
         const filteredTickersByTrust = filteredTickersByMarket.filter(({ trust_score }) => trust_score == 'green')
-
         filteredData = filteredTickersByTrust.length > 0 ? filteredTickersByTrust[0] : filteredTickersByMarket[0]
 
-        res.status(200).send({
-            [filteredData.target_coin_id]: {
-                'usd': filteredData.converted_last.usd
-            }
-        })
+        if (!Array.isArray(filteredData)) {
+            getSimpleTokenPrice(req.params.slug).then(response => res.status(200).send(response)).catch(next)
+        } else if (filteredData.length > 0) {
+            res.status(200).send({ [filteredData[0].target_coin_id]: { 'usd': filteredData[0].converted_last.usd } })
+        } else {
+            res.status(404).send('No data found')
+        }
+
+
     })
     .catch(next))
 
