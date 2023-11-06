@@ -26,6 +26,7 @@ router.get('/events', (req, res, next) => {
                     .filter((event: any) => !/nft|nfts/i.test(event.title))
                     .map((event: any) => ({ id: event.id, tokenName: event.tokenName, tokenAmount: event.tokenAmount }))
                     .filter((event: any) => event.id >= 86)
+                    .filter((event: any) => event.id !== 126)
                     .sort((a: any, b: any) => a.id - b.id)
             )
         )
