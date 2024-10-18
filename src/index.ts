@@ -13,18 +13,19 @@ app.use(morgan('[:method] :url => :status | :res[content-length] | :response-tim
 
 app.use(express.json())
 
-
 // Healthcheck endpoint
 app.get('/', (req, res) => res.status(200).json({ status: 'ok' }))
 
 import route from './route'
 import season from './season'
-import solana from './solana'
+import artatix from './artatix'
+// import solana from './solana'
 
 // Version the api
 app.use('/api/v1', route)
 app.use('/api/season', season)
-app.use('/api/solana', solana)
+app.use('/api/artatix', artatix)
+// app.use('/api/solana', solana)
 
 const port = process.env.PORT || 3333
 
