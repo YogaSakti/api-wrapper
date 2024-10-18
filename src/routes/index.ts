@@ -98,4 +98,7 @@ router.get('/geckoFiltered/:slug', (req, res, next) => getPriceByMarket(req.para
 import dripRoute from './drip'
 router.use('/drip', dripRoute)
 
+import artatixRoute from './artatix'
+router.use('/artatix', artatixRoute)
+
 export default router
