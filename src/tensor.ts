@@ -4,7 +4,7 @@ import { nftsFilter, nftList, nftsRequest } from './utils/nfts.interface'
 import CacheService from './utils/cache.service'
 
 // cache for 10 minutes
-const ttl = 60 * 30
+const ttl = 60 * 10
 const cache = new CacheService(ttl) // Create a new cache service instance
 
 
