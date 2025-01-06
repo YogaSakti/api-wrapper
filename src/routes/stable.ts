@@ -42,7 +42,7 @@ const data_OKX = async () => {
         .then((json: any) => json.map((i: { investCurrency: { currencyName: any; }; rate: { rateNum: { value: any[]; }; }; }) => {
             return {
                 name: i.investCurrency.currencyName,
-                APR: parseFloat(i.rate.rateNum.value[0])/100
+                APR: parseFloat(i.rate.rateNum.value[0]) / 100
             }
         }))
 
@@ -80,10 +80,53 @@ const data_Bybit = async () => {
             const apy_e8 = parseInt(savingProd.tiered_non_reward_apy_e8)
             return {
                 name: i.coin === 5 ? 'USDT' : 'USDC',
-                APR: apy_e8/10000000
+                APR: apy_e8 / 100000000
             }
         }))
 }
+
+const data_Binance = async () => {
+    return fetch("https://www.binance.com/bapi/earn/v1/friendly/finance-earn/homepage/overview?searchCoin=FDUSD&pageSize=100", {
+        "headers": {
+            "accept": "*/*",
+            "accept-language": "en-US,en;q=0.9",
+            "bnc-currency": "USD_USD",
+            "bnc-location": "BINANCE",
+            "bnc-uuid": "9c7f4b6f-b75f-41d5-9872-98e1e1827126",
+            "clienttype": "web",
+            "content-type": "application/json",
+            "csrftoken": "d41d8cd98f00b204e9800998ecf8427e",
+            "device-info": "eyJzY3JlZW5fcmVzb2x1dGlvbiI6Ijk3OSwxNzM5IiwiYXZhaWxhYmxlX3NjcmVlbl9yZXNvbHV0aW9uIjoiOTQ4LDE3MzkiLCJzeXN0ZW1fdmVyc2lvbiI6IldpbmRvd3MgMTAiLCJicmFuZF9tb2RlbCI6InVua25vd24iLCJzeXN0ZW1fbGFuZyI6ImVuLVVTIiwidGltZXpvbmUiOiJHTVQrMDc6MDAiLCJ0aW1lem9uZU9mZnNldCI6LTQyMCwidXNlcl9hZ2VudCI6Ik1vemlsbGEvNS4wIChXaW5kb3dzIE5UIDEwLjA7IFdpbjY0OyB4NjQpIEFwcGxlV2ViS2l0LzUzNy4zNiAoS0hUTUwsIGxpa2UgR2Vja28pIENocm9tZS8xMzIuMC4wLjAgU2FmYXJpLzUzNy4zNiIsImxpc3RfcGx1Z2luIjoiUERGIFZpZXdlcixDaHJvbWUgUERGIFZpZXdlcixDaHJvbWl1bSBQREYgVmlld2VyLE1pY3Jvc29mdCBFZGdlIFBERiBWaWV3ZXIsV2ViS2l0IGJ1aWx0LWluIFBERiIsImNhbnZhc19jb2RlIjoiN2UxOTRiNTciLCJ3ZWJnbF92ZW5kb3IiOiJHb29nbGUgSW5jLiAoSW50ZWwpIiwid2ViZ2xfcmVuZGVyZXIiOiJBTkdMRSAoSW50ZWwsIEludGVsKFIpIFVIRCBHcmFwaGljcyA2MzAgKDB4MDAwMDNFOUIpIERpcmVjdDNEMTEgdnNfNV8wIHBzXzVfMCwgRDNEMTEpIiwiYXVkaW8iOiIxMjQuMDQzNDc1Mjc1MTYwNzQiLCJwbGF0Zm9ybSI6IldpbjMyIiwid2ViX3RpbWV6b25lIjoiQXNpYS9KYWthcnRhIiwiZGV2aWNlX25hbWUiOiJDaHJvbWUgVjEzMi4wLjAuMCAoV2luZG93cykiLCJmaW5nZXJwcmludCI6IjM2MWU1ZDZjZDc0YWY5MjZmNTQwOTk0ZmUxZDNlNWJjIiwiZGV2aWNlX2lkIjoiIiwicmVsYXRlZF9kZXZpY2VfaWRzIjoiIn0=",
+            "fvideo-id": "331f80ef711aac5391991bf66ac9863061aedb66",
+            "fvideo-token": "5iosW5F+kv/vuVddm3z6CZY4KYUZm3hLgMrBNZ/3tU6rEKat7+dALiX3OBRyaQzLXtOdKHawBNoXy9maWKIKnKnDH4z0PsZosImnXhkI8lkF1CRFlhtEUYNQaiM0H/JGoQhSZaDw1GesRHLKpawhCI7U57qaDAlL8Tx/Jv9VWCtjY3Lr4e1l8AgJXyIcfY56A=4f",
+            "lang": "en",
+            "priority": "u=1, i",
+            "sec-ch-ua": "\"Not A(Brand\";v=\"8\", \"Chromium\";v=\"132\", \"Google Chrome\";v=\"132\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "x-passthrough-token": "",
+            "x-trace-id": "e3b264c3-6475-4876-8751-573290b8cffb",
+            "x-ui-request-trace": "e3b264c3-6475-4876-8751-573290b8cffb",
+            "cookie": "theme=dark; bnc-uuid=9c7f4b6f-b75f-41d5-9872-98e1e1827126; userPreferredCurrency=USD_USD; se_sd=lYKWhXgQFERER5XMFAQpgZZFQBRsTEYVFAGNcWkRldTUwEFNWUMJ1; se_gd=FQKC1UVkbFUWRQaJRFAtgZZFVEQIFBYVFYNNcWkRldTUwGVNWUEO1; se_gsd=eDAlPyNWIjc2NwkBIVU2JDIuBggHDgAVWF5EU1BXU1dVJFNT1; BNC-Location=BINANCE; source=referral; campaign=accounts.binance.com; pl-id=53099796; changeBasisTimeZone=; fiat-prefer-currency=IDR; _ga=GA1.2.424957941.1706704532; _ga_3WP50LGEEC=GS1.1.1708666171.6.1.1708670893.50.0.0; __BNC_USER_DEVICE_ID__={\"d41d8cd98f00b204e9800998ecf8427e\":{\"date\":1727946125789,\"value\":\"\"}}; p20t=web.53099796.365B40B7D967B9425405A920560B4C87; lang=en; sensorsdata2015jssdkcross=%7B%22distinct_id%22%3A%2253099796%22%2C%22first_id%22%3A%2218d5f839beb279-0979ecc1900c5c8-26001b51-2073600-18d5f839bec367%22%2C%22props%22%3A%7B%22%24latest_traffic_source_type%22%3A%22%E7%9B%B4%E6%8E%A5%E6%B5%81%E9%87%8F%22%2C%22%24latest_search_keyword%22%3A%22%E6%9C%AA%E5%8F%96%E5%88%B0%E5%80%BC_%E7%9B%B4%E6%8E%A5%E6%89%93%E5%BC%80%22%2C%22%24latest_referrer%22%3A%22%22%7D%2C%22identities%22%3A%22eyIkaWRlbnRpdHlfY29va2llX2lkIjoiMThkNWY4MzliZWIyNzktMDk3OWVjYzE5MDBjNWM4LTI2MDAxYjUxLTIwNzM2MDAtMThkNWY4MzliZWMzNjciLCIkaWRlbnRpdHlfbG9naW5faWQiOiI1MzA5OTc5NiJ9%22%2C%22history_login_id%22%3A%7B%22name%22%3A%22%24identity_login_id%22%2C%22value%22%3A%2253099796%22%7D%2C%22%24device_id%22%3A%2218d5f839beb279-0979ecc1900c5c8-26001b51-2073600-18d5f839bec367%22%7D; BNC_FV_KEY=331f80ef711aac5391991bf66ac9863061aedb66; BNC_FV_KEY_T=101-5Y5CwhLS5lqRKdHdtZOliM8p5WjkxuT11iLmi9Y87zM8vskS7ipNzhbc19hVBMiMckU32HwSVVDsTxr06V%2B5Mg%3D%3D-4iJFT%2FFgZRcZ52H2JlxKxA%3D%3D-67; BNC_FV_KEY_EXPIRE=1736171989367; _gid=GA1.2.1732058184.1736150391; _gat=1; OptanonConsent=isGpcEnabled=0&datestamp=Mon+Jan+06+2025+15%3A20%3A35+GMT%2B0700+(Western+Indonesia+Time)&version=202411.2.0&browserGpcFlag=0&isIABGlobal=false&hosts=&consentId=cf298a6b-da15-4d7f-b7d9-d69454d325f5&interactionCount=1&landingPath=NotLandingPage&groups=C0001%3A1%2CC0003%3A1%2CC0004%3A0%2CC0002%3A1&AwaitingReconsent=false&isAnonUser=1",
+            "Referer": "https://www.binance.com/en/earn",
+            "Referrer-Policy": "origin-when-cross-origin"
+        },
+        "body": null,
+        "method": "GET"
+    }).then((response: { json: () => any }) => response.json())
+        .then((json: any) => json.data.list.find((i: { asset: string; }) => i.asset === 'FDUSD'))
+        .then((json: any) => json.productSummary.find((i: { productType: string; }) => i.productType === 'SIMPLE_EARN'))
+        .then((json: any) => {
+            return {
+                name: "FDUSD",
+                APR: (parseFloat(json.maxApr) * 100)/ 100
+            }
+        })
+}
+
 
 router.get('/', async (req, res, next) => {
     res.status(200).send({
@@ -99,6 +142,12 @@ router.get('/okx', asyncHandler(async (req, res) => {
 router.get('/bybit', asyncHandler(async (req, res) => {
     console.log(`Fetching Bybit data...`)
     const cachedData = await cache.get('bybit', async () => await data_Bybit())
+    res.status(200).send(cachedData)
+}))
+
+router.get('/binance', asyncHandler(async (req, res) => {
+    console.log(`Fetching Binance data...`)
+    const cachedData = await cache.get('binance', async () => await data_Binance())
     res.status(200).send(cachedData)
 }))
 
