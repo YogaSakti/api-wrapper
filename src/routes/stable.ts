@@ -1,7 +1,7 @@
 import fetch from 'cross-fetch'
 import express from 'express'
 
-// import CacheService from './utils/cache.service'
+import CacheService from '../utils/cache.service'
 
 // // cache for 10 minutes
 const ttl = 60 * 10
