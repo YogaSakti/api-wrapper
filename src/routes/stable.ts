@@ -1,10 +1,10 @@
 import fetch from 'cross-fetch'
 import express from 'express'
-
+import asyncHandler from 'express-async-handler';
 import CacheService from '../utils/cache.service'
 
 // // cache for 10 minutes
-const ttl = 60 * 10
+const ttl = 60 * 5
 const cache = new CacheService(ttl) // Create a new cache service instance
 const router = express.Router()
 
@@ -73,24 +73,29 @@ const data_Bybit = async () => {
         "body": "{\"product_area\":[0],\"page\":1,\"limit\":10,\"product_type\":0,\"coin_name\":\"USD\",\"sort_apr\":0,\"show_available\":false}",
         "method": "POST"
     })
-    .then((response: { json: () => any }) => response.json())
-    .then((json: any) => json.result.coin_products.filter((i: { coin: number; }) => i.coin === 5 || i.coin === 16))
-    .then((json: any) => json.map((i: { coin: number; apy: any; }) => {
-        return {
-            name: i.coin === 5 ? 'USDT' : 'USDC',
-            APR: parseFloat(i.apy)
-        }
-    }))
+        .then((response: { json: () => any }) => response.json())
+        .then((json: any) => json.result.coin_products.filter((i: { coin: number; }) => i.coin === 5 || i.coin === 16))
+        .then((json: any) => json.map((i: { coin: number; apy: any; }) => {
+            return {
+                name: i.coin === 5 ? 'USDT' : 'USDC',
+                APR: parseFloat(i.apy)
+            }
+        }))
 }
 
-router.get('/okx', async (req, res, next) => {
-    const cachedData = cache.get('okx', async () => data_OKX())
-    res.status(200).send(cachedData)
+router.get('/', async (req, res, next) => {
+    res.status(200).send({
+        message: "Welcome to stable API! Use /okx or /bybit to get the data"
+    })
 })
+router.get('/okx', asyncHandler(async (req, res) => {
+    const cachedData = cache.get('okx', async () => await data_OKX())
+    res.status(200).send(cachedData)
+}))
 
-router.get('/bybit', async (req, res, next) => {
-    const cachedData = cache.get('bybit', async () => data_Bybit())
+router.get('/bybit', asyncHandler(async (req, res) => {
+    const cachedData = cache.get('bybit', async () => await data_Bybit())
     res.status(200).send(cachedData)
-})
+}))
 
 export default router;
