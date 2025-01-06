@@ -91,13 +91,23 @@ const data_Bybit = async () => {
 //     console.log(dataBybit)
 // })()
 
-router.get('/', async (req, res, next) => {
+// router.get('/', async (req, res, next) => {
+//     const dataOKX = await data_OKX()
+//     const dataBybit = await data_Bybit()
+//     res.status(200).send({
+//         okx: dataOKX,
+//         bybit: dataBybit
+//     })
+// })
+
+router.get('/okx', async (req, res, next) => {
     const dataOKX = await data_OKX()
+    res.status(200).send(dataOKX)
+})
+
+router.get('/bybit', async (req, res, next) => {
     const dataBybit = await data_Bybit()
-    res.status(200).send({
-        okx: dataOKX,
-        bybit: dataBybit
-    })
+    res.status(200).send(dataBybit)
 })
 
 export default router;
