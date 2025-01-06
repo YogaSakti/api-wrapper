@@ -42,7 +42,7 @@ const data_OKX = async () => {
         .then((json: any) => json.map((i: { investCurrency: { currencyName: any; }; rate: { rateNum: { value: any[]; }; }; }) => {
             return {
                 name: i.investCurrency.currencyName,
-                APR: parseFloat(i.rate.rateNum.value[0])
+                APR: parseFloat(i.rate.rateNum.value[0]).toFixed(2)
             }
         }))
 
@@ -78,7 +78,7 @@ const data_Bybit = async () => {
         .then((json: any) => json.map((i: { coin: number; apy: any; }) => {
             return {
                 name: i.coin === 5 ? 'USDT' : 'USDC',
-                APR: parseFloat(i.apy)
+                APR: parseFloat(i.apy).toFixed(2)
             }
         }))
 }
