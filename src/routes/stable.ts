@@ -75,8 +75,9 @@ const data_Bybit = async () => {
     })
         .then((response: { json: () => any }) => response.json())
         .then((json: any) => json.result.coin_products.filter((i: { coin: number; }) => i.coin === 5 || i.coin === 16))
-        .then((json: any) => json.map((i: { coin: number; apy: any; }) => {
-            const apy_e8 = i.apy.tiered_apy_list.find((i: { from_num: string; }) => parseInt(i.from_num) >= 500)
+        .then((json: any) => json.map((i: any) => {
+            const savingProd = i.saving_products.find((x: { coin: number; }) => x.coin === i.coin)
+            const apy_e8 = parseInt(savingProd.tiered_non_reward_apy_e8)
             return {
                 name: i.coin === 5 ? 'USDT' : 'USDC',
                 APR: apy_e8/10000000
