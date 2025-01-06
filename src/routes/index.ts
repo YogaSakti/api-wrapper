@@ -101,4 +101,7 @@ router.use('/drip', dripRoute)
 import artatixRoute from './artatix'
 router.use('/artatix', artatixRoute)
 
+import stable from './stable'
+router.use('/stable', stable)
+
 export default router
