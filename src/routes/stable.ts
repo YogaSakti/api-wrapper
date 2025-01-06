@@ -4,8 +4,8 @@ import express from 'express'
 // import CacheService from './utils/cache.service'
 
 // // cache for 10 minutes
-// const ttl = 60 * 10
-// const cache = new CacheService(ttl) // Create a new cache service instance
+const ttl = 60 * 10
+const cache = new CacheService(ttl) // Create a new cache service instance
 const router = express.Router()
 
 
@@ -83,31 +83,14 @@ const data_Bybit = async () => {
     }))
 }
 
-// // testing 
-// (async () => {
-//     const dataOKX = await data_OKX()
-//     const dataBybit = await data_Bybit()
-//     console.log(dataOKX)
-//     console.log(dataBybit)
-// })()
-
-// router.get('/', async (req, res, next) => {
-//     const dataOKX = await data_OKX()
-//     const dataBybit = await data_Bybit()
-//     res.status(200).send({
-//         okx: dataOKX,
-//         bybit: dataBybit
-//     })
-// })
-
 router.get('/okx', async (req, res, next) => {
-    const dataOKX = await data_OKX()
-    res.status(200).send(dataOKX)
+    const cachedData = cache.get('okx', async () => data_OKX())
+    res.status(200).send(cachedData)
 })
 
 router.get('/bybit', async (req, res, next) => {
-    const dataBybit = await data_Bybit()
-    res.status(200).send(dataBybit)
+    const cachedData = cache.get('bybit', async () => data_Bybit())
+    res.status(200).send(cachedData)
 })
 
 export default router;
