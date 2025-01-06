@@ -89,12 +89,14 @@ router.get('/', async (req, res, next) => {
     })
 })
 router.get('/okx', asyncHandler(async (req, res) => {
-    const cachedData = cache.get('okx', async () => await data_OKX())
+    console.log(`Fetching OKX data...`)
+    const cachedData = await cache.get('okx', async () => await data_OKX())
     res.status(200).send(cachedData)
 }))
 
 router.get('/bybit', asyncHandler(async (req, res) => {
-    const cachedData = cache.get('bybit', async () => await data_Bybit())
+    console.log(`Fetching Bybit data...`)
+    const cachedData = await cache.get('bybit', async () => await data_Bybit())
     res.status(200).send(cachedData)
 }))
 
