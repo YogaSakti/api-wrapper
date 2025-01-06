@@ -31,6 +31,7 @@ const eventList = async (): Promise<Event[]> => {
     // Select the relevant elements and extract the data
     $('div#frame-card-event').each((i, element) => {
         const eventElement = $(element);
+        
         const isSoldOut = eventElement.hasClass('overlay-grey');
         const event: Event = {
             name: eventElement.find('.event-name h5').text().trim(),

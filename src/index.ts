@@ -7,6 +7,9 @@ import { app } from './api'
 
 const port = process.env.PORT || 3333
 
-app.listen(port, () =>
-    console.log(`API available on http://localhost:${port}`)
-)
+try {
+    app.listen(port, () => console.log(`API available on http://localhost:${port}`))
+} catch (error) {
+    console.error('Error starting server:', error)
+    process.exit(1)
+}
