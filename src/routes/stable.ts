@@ -1,252 +1,252 @@
-import fetch from 'cross-fetch';
-import express from 'express';
-import asyncHandler from 'express-async-handler';
-import CacheService from '../utils/cache.service';
+import fetch from 'cross-fetch'
+import express from 'express'
+import asyncHandler from 'express-async-handler'
+import CacheService from '../utils/cache.service'
 
-const ttl = 60 * 5; // 5 minutes
-const cache = new CacheService(ttl);
-const router = express.Router();
+const ttl = 60 * 5 // 5 minutes
+const cache = new CacheService(ttl)
+const router = express.Router()
 
 /**
  * Fetch data from OKX.
  */
 const data_OKX = async () => {
-  try {
-    const response = await fetch(
-      'https://www.okx.com/priapi/v1/earn/simple-earn/all-products?productsType=all&t=1736145194620',
-      {
-        headers: {
-          accept: 'application/json',
-          'accept-language': 'en-US,en;q=0.9',
-          'app-type': 'web',
-          devid: 'bd43f0b2-6764-4951-8ed1-f6a090f503ad',
-          priority: 'u=1, i',
-          'sec-ch-ua': '"Not A(Brand";v="8", "Chromium";v="132", "Google Chrome";v="132"',
-          'sec-ch-ua-mobile': '?0',
-          'sec-ch-ua-platform': '"Windows"',
-          'sec-fetch-dest': 'empty',
-          'sec-fetch-mode': 'cors',
-          'sec-fetch-site': 'same-origin',
-          'x-cdn': 'https://www.okx.com',
-          'x-id-group': '2130861432456730007-c-28',
-          'x-locale': 'en_US',
-          'x-site-info': '==QfxojI5RXa05WZiwiIMFkQPx0Rfh1SPJiOiUGZvNmIsICRJJiOi42bpdWZyJye',
-          'x-utc': '7',
-          'x-zkdex-env': '0',
-          cookie:
+    try {
+        const response = await fetch(
+            'https://www.okx.com/priapi/v1/earn/simple-earn/all-products?productsType=all&t=1736145194620',
+            {
+                headers: {
+                    accept: 'application/json',
+                    'accept-language': 'en-US,en;q=0.9',
+                    'app-type': 'web',
+                    devid: 'bd43f0b2-6764-4951-8ed1-f6a090f503ad',
+                    priority: 'u=1, i',
+                    'sec-ch-ua': '"Not A(Brand";v="8", "Chromium";v="132", "Google Chrome";v="132"',
+                    'sec-ch-ua-mobile': '?0',
+                    'sec-ch-ua-platform': '"Windows"',
+                    'sec-fetch-dest': 'empty',
+                    'sec-fetch-mode': 'cors',
+                    'sec-fetch-site': 'same-origin',
+                    'x-cdn': 'https://www.okx.com',
+                    'x-id-group': '2130861432456730007-c-28',
+                    'x-locale': 'en_US',
+                    'x-site-info': '==QfxojI5RXa05WZiwiIMFkQPx0Rfh1SPJiOiUGZvNmIsICRJJiOi42bpdWZyJye',
+                    'x-utc': '7',
+                    'x-zkdex-env': '0',
+                    cookie:
             'ok_site_info===QfxojI5RXa05WZiwiIMFkQPx0Rfh1SPJiOiUGZvNmIsICRJJiOi42bpdWZyJye; ...',
-          Referer: 'https://www.okx.com/earn/simple-earn',
-          'Referrer-Policy': 'strict-origin-when-cross-origin',
-        },
-        method: 'GET',
-      },
-    );
+                    Referer: 'https://www.okx.com/earn/simple-earn',
+                    'Referrer-Policy': 'strict-origin-when-cross-origin',
+                },
+                method: 'GET',
+            },
+        )
 
-    const json = await response.json();
-    if (!json?.data?.allProducts?.currencies) {
-      throw new Error('Unexpected OKX response structure.');
-    }
+        const json = await response.json()
+        if (!json?.data?.allProducts?.currencies) {
+            throw new Error('Unexpected OKX response structure.')
+        }
 
-    // filter out only USDT and USDC
-    const filtered = json.data.allProducts.currencies.filter(
-      (item: any) =>
-        item?.investCurrency?.currencyName === 'USDT' ||
+        // filter out only USDT and USDC
+        const filtered = json.data.allProducts.currencies.filter(
+            (item: any) =>
+                item?.investCurrency?.currencyName === 'USDT' ||
         item?.investCurrency?.currencyName === 'USDC',
-    );
+        )
 
-    // map the desired fields
-    return filtered.map((item: any) => ({
-      name: item.investCurrency.currencyName,
-      APR: parseFloat(item.rate.rateNum.value[0]) / 100,
-    }));
-  } catch (error) {
-    console.error('OKX fetch error:', error);
-    // Return an empty array or null if you want to handle gracefully
-    return [];
-  }
-};
+        // map the desired fields
+        return filtered.map((item: any) => ({
+            name: item.investCurrency.currencyName,
+            APR: parseFloat(item.rate.rateNum.value[0]) / 100,
+        }))
+    } catch (error) {
+        console.error('OKX fetch error:', error)
+        // Return an empty array or null if you want to handle gracefully
+        return []
+    }
+}
 
 /**
  * Fetch data from Bybit.
  */
 const data_Bybit = async () => {
-  try {
-    const response = await fetch(
-      'https://api2.bybit.com/s1/byfi/get-saving-homepage-product-cards',
-      {
-        headers: {
-          accept: '*/*',
-          'accept-language': 'en-US,en;q=0.9',
-          'content-type': 'application/json',
-          guid: '15b1bccb-9cc3-0a15-3bf4-3c698202505b',
-          lang: 'en',
-          platform: 'pc',
-          priority: 'u=1, i',
-          'sec-ch-ua':
+    try {
+        const response = await fetch(
+            'https://api2.bybit.com/s1/byfi/get-saving-homepage-product-cards',
+            {
+                headers: {
+                    accept: '*/*',
+                    'accept-language': 'en-US,en;q=0.9',
+                    'content-type': 'application/json',
+                    guid: '15b1bccb-9cc3-0a15-3bf4-3c698202505b',
+                    lang: 'en',
+                    platform: 'pc',
+                    priority: 'u=1, i',
+                    'sec-ch-ua':
             '"Not A(Brand";v="8", "Chromium";v="132", "Google Chrome";v="132"',
-          'sec-ch-ua-mobile': '?0',
-          'sec-ch-ua-platform': '"Windows"',
-          'sec-fetch-dest': 'empty',
-          'sec-fetch-mode': 'cors',
-          'sec-fetch-site': 'same-site',
-          traceparent:
+                    'sec-ch-ua-mobile': '?0',
+                    'sec-ch-ua-platform': '"Windows"',
+                    'sec-fetch-dest': 'empty',
+                    'sec-fetch-mode': 'cors',
+                    'sec-fetch-site': 'same-site',
+                    traceparent:
             '00-840759c0c04361e90def36f751a9b952-7ade765288fa7afd-00',
-          usertoken: '',
-          cookie: 'deviceId=5e99c56c-68b6-7e3d-0669-3050cf423011; ...',
-          Referer: 'https://www.bybit.com/',
-          'Referrer-Policy': 'strict-origin-when-cross-origin',
-        },
-        body: JSON.stringify({
-          product_area: [0],
-          page: 1,
-          limit: 10,
-          product_type: 0,
-          coin_name: 'USD',
-          sort_apr: 0,
-          show_available: false,
-        }),
-        method: 'POST',
-      },
-    );
+                    usertoken: '',
+                    cookie: 'deviceId=5e99c56c-68b6-7e3d-0669-3050cf423011; ...',
+                    Referer: 'https://www.bybit.com/',
+                    'Referrer-Policy': 'strict-origin-when-cross-origin',
+                },
+                body: JSON.stringify({
+                    product_area: [0],
+                    page: 1,
+                    limit: 10,
+                    product_type: 0,
+                    coin_name: 'USD',
+                    sort_apr: 0,
+                    show_available: false,
+                }),
+                method: 'POST',
+            },
+        )
 
-    const json = await response.json();
-    if (!json?.result?.coin_products) {
-      throw new Error('Unexpected Bybit response structure.');
+        const json = await response.json()
+        if (!json?.result?.coin_products) {
+            throw new Error('Unexpected Bybit response structure.')
+        }
+
+        // coin=5 => USDT, coin=16 => USDC
+        const filtered = json.result.coin_products.filter(
+            (i: any) => i.coin === 5 || i.coin === 16,
+        )
+
+        return filtered.map((item: any) => {
+            const savingProd = item.saving_products.find(
+                (x: { coin: number }) => x.coin === item.coin,
+            )
+            const apy_e8 = parseInt(savingProd.tiered_non_reward_apy_e8, 10)
+
+            return {
+                name: item.coin === 5 ? 'USDT' : 'USDC',
+                APR: apy_e8 / 100000000,
+            }
+        })
+    } catch (error) {
+        console.error('Bybit fetch error:', error)
+        return []
     }
-
-    // coin=5 => USDT, coin=16 => USDC
-    const filtered = json.result.coin_products.filter(
-      (i: any) => i.coin === 5 || i.coin === 16,
-    );
-
-    return filtered.map((item: any) => {
-      const savingProd = item.saving_products.find(
-        (x: { coin: number }) => x.coin === item.coin,
-      );
-      const apy_e8 = parseInt(savingProd.tiered_non_reward_apy_e8, 10);
-
-      return {
-        name: item.coin === 5 ? 'USDT' : 'USDC',
-        APR: apy_e8 / 100000000,
-      };
-    });
-  } catch (error) {
-    console.error('Bybit fetch error:', error);
-    return [];
-  }
-};
+}
 
 /**
  * Fetch data from Binance.
  */
 const data_Binance = async () => {
-  try {
-    const response = await fetch(
-      'https://www.binance.com/bapi/earn/v1/friendly/finance-earn/homepage/overview?searchCoin=FDUSD&pageSize=100',
-      {
-        headers: {
-          accept: '*/*',
-          'accept-language': 'en-US,en;q=0.9',
-          'bnc-currency': 'USD_USD',
-          'bnc-location': 'BINANCE',
-          'bnc-uuid': '9c7f4b6f-b75f-41d5-9872-98e1e1827126',
-          clienttype: 'web',
-          'content-type': 'application/json',
-          csrftoken: 'd41d8cd98f00b204e9800998ecf8427e',
-          lang: 'en',
-          priority: 'u=1, i',
-          'sec-ch-ua':
+    try {
+        const response = await fetch(
+            'https://www.binance.com/bapi/earn/v1/friendly/finance-earn/homepage/overview?searchCoin=FDUSD&pageSize=100',
+            {
+                headers: {
+                    accept: '*/*',
+                    'accept-language': 'en-US,en;q=0.9',
+                    'bnc-currency': 'USD_USD',
+                    'bnc-location': 'BINANCE',
+                    'bnc-uuid': '9c7f4b6f-b75f-41d5-9872-98e1e1827126',
+                    clienttype: 'web',
+                    'content-type': 'application/json',
+                    csrftoken: 'd41d8cd98f00b204e9800998ecf8427e',
+                    lang: 'en',
+                    priority: 'u=1, i',
+                    'sec-ch-ua':
             '"Not A(Brand";v="8", "Chromium";v="132", "Google Chrome";v="132"',
-          'sec-ch-ua-mobile': '?0',
-          'sec-ch-ua-platform': '"Windows"',
-          'sec-fetch-dest': 'empty',
-          'sec-fetch-mode': 'cors',
-          'sec-fetch-site': 'same-origin',
-          'x-passthrough-token': '',
-          'x-trace-id': 'e3b264c3-6475-4876-8751-573290b8cffb',
-          'x-ui-request-trace': 'e3b264c3-6475-4876-8751-573290b8cffb',
-          Referer: 'https://www.binance.com/en/earn',
-          'Referrer-Policy': 'origin-when-cross-origin',
-        },
-        method: 'GET',
-      },
-    );
+                    'sec-ch-ua-mobile': '?0',
+                    'sec-ch-ua-platform': '"Windows"',
+                    'sec-fetch-dest': 'empty',
+                    'sec-fetch-mode': 'cors',
+                    'sec-fetch-site': 'same-origin',
+                    'x-passthrough-token': '',
+                    'x-trace-id': 'e3b264c3-6475-4876-8751-573290b8cffb',
+                    'x-ui-request-trace': 'e3b264c3-6475-4876-8751-573290b8cffb',
+                    Referer: 'https://www.binance.com/en/earn',
+                    'Referrer-Policy': 'origin-when-cross-origin',
+                },
+                method: 'GET',
+            },
+        )
 
-    const json = await response.json();
-    if (!json?.data?.list) {
-      throw new Error('Unexpected Binance response structure.');
+        const json = await response.json()
+        if (!json?.data?.list) {
+            throw new Error('Unexpected Binance response structure.')
+        }
+
+        // find FDUSD
+        const fdusdData = json.data.list.find(
+            (item: { asset: string }) => item.asset === 'FDUSD',
+        )
+        if (!fdusdData?.productSummary) {
+            throw new Error('FDUSD data not found in Binance response.')
+        }
+
+        const simpleEarn = fdusdData.productSummary.find(
+            (p: { productType: string }) => p.productType === 'SIMPLE_EARN',
+        )
+
+        if (!simpleEarn) {
+            throw new Error('SIMPLE_EARN for FDUSD not found in Binance response.')
+        }
+
+        // e.g. maxApr is in decimal form like "0.10" => 10%
+        return {
+            name: 'FDUSD',
+            APR: (parseFloat(simpleEarn.maxApr) * 100) / 100,
+        }
+    } catch (error) {
+        console.error('Binance fetch error:', error)
+        return {}
     }
-
-    // find FDUSD
-    const fdusdData = json.data.list.find(
-      (item: { asset: string }) => item.asset === 'FDUSD',
-    );
-    if (!fdusdData?.productSummary) {
-      throw new Error('FDUSD data not found in Binance response.');
-    }
-
-    const simpleEarn = fdusdData.productSummary.find(
-      (p: { productType: string }) => p.productType === 'SIMPLE_EARN',
-    );
-
-    if (!simpleEarn) {
-      throw new Error('SIMPLE_EARN for FDUSD not found in Binance response.');
-    }
-
-    // e.g. maxApr is in decimal form like "0.10" => 10%
-    return {
-      name: 'FDUSD',
-      APR: (parseFloat(simpleEarn.maxApr) * 100) / 100,
-    };
-  } catch (error) {
-    console.error('Binance fetch error:', error);
-    return {};
-  }
-};
+}
 
 /**
  * Basic welcome route
  */
 router.get('/', (req, res) => {
-  res.status(200).send({
-    message: 'Welcome to stable API! Use /okx, /bybit, or /binance to get the data',
-  });
-});
+    res.status(200).send({
+        message: 'Welcome to stable API! Use /okx, /bybit, or /binance to get the data',
+    })
+})
 
 /**
  * OKX route - cached
  */
 router.get(
-  '/okx',
-  asyncHandler(async (req, res) => {
-    console.log('Fetching OKX data...');
-    const cachedData = await cache.get('okx', async () => data_OKX());
-    res.status(200).json(cachedData);
-  }),
-);
+    '/okx',
+    asyncHandler(async (req, res) => {
+        console.log('Fetching OKX data...')
+        const cachedData = await cache.get('okx', async () => data_OKX())
+        res.status(200).json(cachedData)
+    }),
+)
 
 /**
  * Bybit route - cached
  */
 router.get(
-  '/bybit',
-  asyncHandler(async (req, res) => {
-    console.log('Fetching Bybit data...');
-    const cachedData = await cache.get('bybit', async () => data_Bybit());
-    res.status(200).json(cachedData);
-  }),
-);
+    '/bybit',
+    asyncHandler(async (req, res) => {
+        console.log('Fetching Bybit data...')
+        const cachedData = await cache.get('bybit', async () => data_Bybit())
+        res.status(200).json(cachedData)
+    }),
+)
 
 /**
  * Binance route - cached
  */
 router.get(
-  '/binance',
-  asyncHandler(async (req, res) => {
-    console.log('Fetching Binance data...');
-    const cachedData = await cache.get('binance', async () => data_Binance());
-    res.status(200).json(cachedData);
-  }),
-);
+    '/binance',
+    asyncHandler(async (req, res) => {
+        console.log('Fetching Binance data...')
+        const cachedData = await cache.get('binance', async () => data_Binance())
+        res.status(200).json(cachedData)
+    }),
+)
 
-export default router;
+export default router
