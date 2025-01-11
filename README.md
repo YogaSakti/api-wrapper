@@ -71,6 +71,7 @@ This repository is My Personal project to support other projects.
 - **GET /stable/okx**: Retrieves stablecoin data from OKX.
 - **GET /stable/bybit**: Fetches stablecoin data from Bybit.
 - **GET /stable/binance**: Fetches stablecoin data from Binance.
+- **GET /stable/flipster**: Fetches stablecoin data from Flipster.
 
 #### Tensor
 - **GET /tensor**: Fetches filtered data from Tensor's GraphQL API.
