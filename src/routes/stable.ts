@@ -34,7 +34,7 @@ const data_OKX = async () => {
                     'x-utc': '7',
                     'x-zkdex-env': '0',
                     cookie:
-            'ok_site_info===QfxojI5RXa05WZiwiIMFkQPx0Rfh1SPJiOiUGZvNmIsICRJJiOi42bpdWZyJye; ...',
+                        'ok_site_info===QfxojI5RXa05WZiwiIMFkQPx0Rfh1SPJiOiUGZvNmIsICRJJiOi42bpdWZyJye; ...',
                     Referer: 'https://www.okx.com/earn/simple-earn',
                     'Referrer-Policy': 'strict-origin-when-cross-origin',
                 },
@@ -51,7 +51,7 @@ const data_OKX = async () => {
         const filtered = json.data.allProducts.currencies.filter(
             (item: any) =>
                 item?.investCurrency?.currencyName === 'USDT' ||
-        item?.investCurrency?.currencyName === 'USDC',
+                item?.investCurrency?.currencyName === 'USDC',
         )
 
         // map the desired fields
@@ -83,14 +83,14 @@ const data_Bybit = async () => {
                     platform: 'pc',
                     priority: 'u=1, i',
                     'sec-ch-ua':
-            '"Not A(Brand";v="8", "Chromium";v="132", "Google Chrome";v="132"',
+                        '"Not A(Brand";v="8", "Chromium";v="132", "Google Chrome";v="132"',
                     'sec-ch-ua-mobile': '?0',
                     'sec-ch-ua-platform': '"Windows"',
                     'sec-fetch-dest': 'empty',
                     'sec-fetch-mode': 'cors',
                     'sec-fetch-site': 'same-site',
                     traceparent:
-            '00-840759c0c04361e90def36f751a9b952-7ade765288fa7afd-00',
+                        '00-840759c0c04361e90def36f751a9b952-7ade765288fa7afd-00',
                     usertoken: '',
                     cookie: 'deviceId=5e99c56c-68b6-7e3d-0669-3050cf423011; ...',
                     Referer: 'https://www.bybit.com/',
@@ -156,7 +156,7 @@ const data_Binance = async () => {
                     lang: 'en',
                     priority: 'u=1, i',
                     'sec-ch-ua':
-            '"Not A(Brand";v="8", "Chromium";v="132", "Google Chrome";v="132"',
+                        '"Not A(Brand";v="8", "Chromium";v="132", "Google Chrome";v="132"',
                     'sec-ch-ua-mobile': '?0',
                     'sec-ch-ua-platform': '"Windows"',
                     'sec-fetch-dest': 'empty',
@@ -205,59 +205,112 @@ const data_Binance = async () => {
 }
 
 /**
+ * Fetch FDUSD, USDT, and USDC data from Binance.
+ */
+const data_Binance_All = async () => {
+    try {
+        let listCurrency = ['FDUSD', 'USDT', 'USDC'];
+        const getData = (currency: any) => fetch(`https://www.binance.com/bapi/earn/v3/friendly/finance-earn/calculator/product/list?asset=${currency}&type=Flexible`, {
+            "headers": {
+                "accept": "*/*",
+                "accept-language": "en-US,en;q=0.9",
+                "bnc-currency": "USD",
+                "bnc-location": "",
+                "bnc-uuid": "3f4df1c8-cd33-4b91-8e24-93ed8338275b",
+                "clienttype": "web",
+                "content-type": "application/json", "lang": "en",
+                "priority": "u=1, i",
+                "sec-ch-ua": "\"Google Chrome\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"",
+                "sec-ch-ua-mobile": "?0",
+                "sec-ch-ua-platform": "\"Windows\"",
+                "sec-fetch-dest": "empty",
+                "sec-fetch-mode": "cors",
+                "sec-fetch-site": "same-origin",
+                "x-passthrough-token": "",
+                "x-trace-id": "735af735-42db-47c7-8feb-68272939852b",
+                "x-ui-request-trace": "735af735-42db-47c7-8feb-68272939852b",
+                "Referer": "https://www.binance.com/en/earn",
+                "Referrer-Policy": "origin-when-cross-origin"
+            },
+            "body": null,
+            "method": "GET"
+        });
+
+        const promises = listCurrency.map(currency => getData(currency));
+        const responses = await Promise.all(promises);
+        const jsons = await Promise.all(responses.map(response => response.json()));
+        const result = jsons.map((json: any) => {
+            if (!json?.data?.savingFlexibleProduct?.length) {
+                throw new Error('No data found for savingFlexibleProduct.');
+            }
+            const data = json.data.savingFlexibleProduct[0];
+            return {
+                name: data.asset,
+                APR: parseFloat(data.marketApr),
+            };
+        });
+
+        return result || [];
+    } catch (error) {
+        console.error('Binance fetch error:', error);
+        return [];
+    }
+}
+
+/**
  * Fetch data from Flipster.
  */
 const data_Flipster = async () => {
-  try {
-    const response = await fetch("https://api.flipster.io/api/v1/earn", {
-      "headers": {
-        "accept": "application/json, text/plain, */*",
-        "accept-language": "en-US,en;q=0.9",
-        "priority": "u=1, i",
-        "sec-ch-ua": "\"Google Chrome\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"",
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": "\"Windows\"",
-        "sec-fetch-dest": "empty",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-site": "same-site",
-        "traceparent": "00-00000000000000004d2c1ad42bc86059-088f1775c63659c0-01",
-        "x-datadog-origin": "rum",
-        "x-datadog-parent-id": "616737468577110464",
-        "x-datadog-sampling-priority": "1",
-        "x-datadog-trace-id": "5560849138465661017",
-        "x-prex-client-platform": "web",
-        "x-prex-client-version": "release-web-2.2.105",
-        "Referer": "https://flipster.io/",
-        "Referrer-Policy": "strict-origin-when-cross-origin"
-      },
-      "body": null,
-      "method": "GET"
-    });
+    try {
+        const response = await fetch("https://api.flipster.io/api/v1/earn", {
+            "headers": {
+                "accept": "application/json, text/plain, */*",
+                "accept-language": "en-US,en;q=0.9",
+                "priority": "u=1, i",
+                "sec-ch-ua": "\"Google Chrome\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"",
+                "sec-ch-ua-mobile": "?0",
+                "sec-ch-ua-platform": "\"Windows\"",
+                "sec-fetch-dest": "empty",
+                "sec-fetch-mode": "cors",
+                "sec-fetch-site": "same-site",
+                "traceparent": "00-00000000000000004d2c1ad42bc86059-088f1775c63659c0-01",
+                "x-datadog-origin": "rum",
+                "x-datadog-parent-id": "616737468577110464",
+                "x-datadog-sampling-priority": "1",
+                "x-datadog-trace-id": "5560849138465661017",
+                "x-prex-client-platform": "web",
+                "x-prex-client-version": "release-web-2.2.105",
+                "Referer": "https://flipster.io/",
+                "Referrer-Policy": "strict-origin-when-cross-origin"
+            },
+            "body": null,
+            "method": "GET"
+        });
 
-    const json = await response.json();
-    if (json?.currencies?.length <= 0) {
-      throw new Error('Unexpected Flipster response structure.');
+        const json = await response.json();
+        if (json?.currencies?.length <= 0) {
+            throw new Error('Unexpected Flipster response structure.');
+        }
+
+        // filter out only USDT
+        const filtered = json.currencies.find(
+            (item: any) => item.currency === 'USDT',
+        );
+
+        // sum the base and vip APRs
+        const baseApr = parseFloat(filtered.aprs.base);
+        const vipApr = parseFloat(filtered.maximalAchievableAprs.aprs.find((item: any) => item.title === 'VIP').apr);
+
+        // return is 0.16 not 16 or 16% or "16"
+        return {
+            name: 'USDT',
+            APR: (baseApr + vipApr) / 100,
+        };
+    } catch (error) {
+        console.error('Flipster fetch error:', error);
+        // Return an empty array or null if you want to handle gracefully
+        return [];
     }
-
-    // filter out only USDT
-    const filtered = json.currencies.find(
-      (item: any) => item.currency === 'USDT',
-    );
-
-    // sum the base and vip APRs
-    const baseApr = parseFloat(filtered.aprs.base);
-    const vipApr = parseFloat(filtered.maximalAchievableAprs.aprs.find((item: any) => item.title === 'VIP').apr);
-
-    // return is 0.16 not 16 or 16% or "16"
-    return {
-      name: 'USDT',
-      APR: (baseApr + vipApr) / 100,
-    };
-  } catch (error) {
-    console.error('Flipster fetch error:', error);
-    // Return an empty array or null if you want to handle gracefully
-    return [];
-  }
 }
 
 /**
@@ -306,15 +359,27 @@ router.get(
 )
 
 /**
+ * Binance all route - cached
+ */
+router.get(
+    '/binance-stable',
+    asyncHandler(async (req, res) => {
+        console.log('Fetching Binance all data...')
+        const cachedData = await cache.get('binance-all', async () => data_Binance_All())
+        res.status(200).json(cachedData)
+    }),
+)
+
+/**
  * Flipster route - cached
  */
 router.get(
-  '/flipster',
-  asyncHandler(async (req, res) => {
-    console.log('Fetching Flipster data...');
-    const cachedData = await cache.get('flipster', async () => data_Flipster());
-    res.status(200).json(cachedData);
-  }),
+    '/flipster',
+    asyncHandler(async (req, res) => {
+        console.log('Fetching Flipster data...');
+        const cachedData = await cache.get('flipster', async () => data_Flipster());
+        res.status(200).json(cachedData);
+    }),
 );
 
 export default router
