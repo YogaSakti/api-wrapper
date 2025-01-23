@@ -4,7 +4,7 @@ import asyncHandler from 'express-async-handler'
 import CacheService from '../utils/cache.service'
 import { HttpsProxyAgent } from 'https-proxy-agent';
 
-const proxyAgent = new HttpsProxyAgent(process.env.PROXY_AGENT || 'http://blabla.blabla:8080');
+const proxyAgent = new HttpsProxyAgent(process.env.PROXY_AGENT || 'http://blabla.blabla:9999');
 
 const ttl = 60 * 1 // 5 minutes
 const cache = new CacheService(ttl)
@@ -17,30 +17,30 @@ const data_OKX = async () => {
     try {
         const response = await fetch("https://www.okx.com/priapi/v1/earn/simple-earn/all-products?limit=100&type=all", {
             "headers": {
-              "accept": "application/json",
-              "accept-language": "en-US,en;q=0.9",
-              "app-type": "web",
-              "cache-control": "no-cache",
-              "devid": "1d689401-801b-4dc2-ba49-7cededbf1957",
-              "pragma": "no-cache",
-              "priority": "u=1, i",
-              "sec-ch-ua": "\"Google Chrome\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"",
-              "sec-ch-ua-mobile": "?0",
-              "sec-ch-ua-platform": "\"Windows\"",
-              "sec-fetch-dest": "empty",
-              "sec-fetch-mode": "cors",
-              "sec-fetch-site": "same-origin",
-              "x-cdn": "https://www.okx.com",
-              "x-locale": "en_US",
-              "x-utc": "7",
-              "x-zkdex-env": "0",
-              "Referer": "https://www.okx.com/earn/simple-earn",
-              "Referrer-Policy": "strict-origin-when-cross-origin"
+                "accept": "application/json",
+                "accept-language": "en-US,en;q=0.9",
+                "app-type": "web",
+                "cache-control": "no-cache",
+                "devid": "1d689401-801b-4dc2-ba49-7cededbf1957",
+                "pragma": "no-cache",
+                "priority": "u=1, i",
+                "sec-ch-ua": "\"Google Chrome\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"",
+                "sec-ch-ua-mobile": "?0",
+                "sec-ch-ua-platform": "\"Windows\"",
+                "sec-fetch-dest": "empty",
+                "sec-fetch-mode": "cors",
+                "sec-fetch-site": "same-origin",
+                "x-cdn": "https://www.okx.com",
+                "x-locale": "en_US",
+                "x-utc": "7",
+                "x-zkdex-env": "0",
+                "Referer": "https://www.okx.com/earn/simple-earn",
+                "Referrer-Policy": "strict-origin-when-cross-origin"
             },
             "method": "GET",
             // @ts-ignore
             agent: proxyAgent
-          });
+        });
 
         const json = await response.json()
         if (!json?.data?.allProducts?.currencies) {
@@ -329,7 +329,17 @@ router.get(
     '/okx',
     asyncHandler(async (req, res) => {
         console.log('Fetching OKX data...')
-        const cachedData = await cache.get('okx', async () => data_OKX())
+        let cachedData = await cache.get('okx', async () => await data_OKX())
+
+        // f#ck // break the cache if the data is empty 
+        if (cachedData.length === 0) {
+            let attempts = 0;
+            do {
+                cachedData = await data_OKX();
+                attempts++;
+            } while (cachedData.length === 0 && attempts < 10);
+        }
+
         res.status(200).json(cachedData)
     }),
 )
