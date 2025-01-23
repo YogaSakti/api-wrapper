@@ -2,8 +2,11 @@ import fetch from 'cross-fetch'
 import express from 'express'
 import asyncHandler from 'express-async-handler'
 import CacheService from '../utils/cache.service'
+import { HttpsProxyAgent } from 'https-proxy-agent';
 
-const ttl = 60 * 5 // 5 minutes
+const proxyAgent = new HttpsProxyAgent(process.env.PROXY_AGENT || 'http://blabla.blabla:8080');
+
+const ttl = 60 * 1 // 5 minutes
 const cache = new CacheService(ttl)
 const router = express.Router()
 
@@ -12,35 +15,32 @@ const router = express.Router()
  */
 const data_OKX = async () => {
     try {
-        const response = await fetch(
-            'https://www.okx.com/priapi/v1/earn/simple-earn/all-products?productsType=all&t=1736145194620',
-            {
-                headers: {
-                    accept: 'application/json',
-                    'accept-language': 'en-US,en;q=0.9',
-                    'app-type': 'web',
-                    devid: 'bd43f0b2-6764-4951-8ed1-f6a090f503ad',
-                    priority: 'u=1, i',
-                    'sec-ch-ua': '"Not A(Brand";v="8", "Chromium";v="132", "Google Chrome";v="132"',
-                    'sec-ch-ua-mobile': '?0',
-                    'sec-ch-ua-platform': '"Windows"',
-                    'sec-fetch-dest': 'empty',
-                    'sec-fetch-mode': 'cors',
-                    'sec-fetch-site': 'same-origin',
-                    'x-cdn': 'https://www.okx.com',
-                    'x-id-group': '2130861432456730007-c-28',
-                    'x-locale': 'en_US',
-                    'x-site-info': '==QfxojI5RXa05WZiwiIMFkQPx0Rfh1SPJiOiUGZvNmIsICRJJiOi42bpdWZyJye',
-                    'x-utc': '7',
-                    'x-zkdex-env': '0',
-                    cookie:
-                        'ok_site_info===QfxojI5RXa05WZiwiIMFkQPx0Rfh1SPJiOiUGZvNmIsICRJJiOi42bpdWZyJye; ...',
-                    Referer: 'https://www.okx.com/earn/simple-earn',
-                    'Referrer-Policy': 'strict-origin-when-cross-origin',
-                },
-                method: 'GET',
+        const response = await fetch("https://www.okx.com/priapi/v1/earn/simple-earn/all-products?limit=100&type=all", {
+            "headers": {
+              "accept": "application/json",
+              "accept-language": "en-US,en;q=0.9",
+              "app-type": "web",
+              "cache-control": "no-cache",
+              "devid": "1d689401-801b-4dc2-ba49-7cededbf1957",
+              "pragma": "no-cache",
+              "priority": "u=1, i",
+              "sec-ch-ua": "\"Google Chrome\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"",
+              "sec-ch-ua-mobile": "?0",
+              "sec-ch-ua-platform": "\"Windows\"",
+              "sec-fetch-dest": "empty",
+              "sec-fetch-mode": "cors",
+              "sec-fetch-site": "same-origin",
+              "x-cdn": "https://www.okx.com",
+              "x-locale": "en_US",
+              "x-utc": "7",
+              "x-zkdex-env": "0",
+              "Referer": "https://www.okx.com/earn/simple-earn",
+              "Referrer-Policy": "strict-origin-when-cross-origin"
             },
-        )
+            "method": "GET",
+            // @ts-ignore
+            agent: proxyAgent
+          });
 
         const json = await response.json()
         if (!json?.data?.allProducts?.currencies) {
