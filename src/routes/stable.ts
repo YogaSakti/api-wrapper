@@ -3,6 +3,8 @@ import express from 'express'
 import asyncHandler from 'express-async-handler'
 import CacheService from '../utils/cache.service'
 import { HttpsProxyAgent } from 'https-proxy-agent';
+import { config } from 'dotenv'
+if (process.env.NODE_ENV !== 'production') config()
 
 const proxyAgent = new HttpsProxyAgent(process.env.PROXY_AGENT || 'http://blabla.blabla:9999');
 
@@ -314,6 +316,53 @@ const data_Flipster = async () => {
 }
 
 /**
+ * Fetch data from Bitget.
+ */
+const data_Bitget = async () => {
+    try {
+        const response = await fetch("https://www.bitgetapp.com/v1/finance/savings/product/list", {
+            "headers": {
+                "accept": "application/json, text/plain, */*",
+                "accept-language": "en-US,en;q=0.9",
+                "content-type": "application/json;charset=UTF-8",
+                "language": "en_US",
+                "locale": "en_US",
+                "priority": "u=1, i",
+            },
+            "referrer": "https://www.bitgetapp.com/earning/savings?source1=earn&source2=savings",
+            "referrerPolicy": "unsafe-url",
+            "body": "{\"coinName\":\"USDT\",\"matchUserAssets\":false,\"matchVipProduct\":false,\"savingsReq\":true,\"searchObj\":{},\"locale\":\"en\"}",
+            "method": "POST",
+            "mode": "cors",
+            "credentials": "include"
+        });
+
+        const json = await response.json();
+        if (!json?.data?.length) {
+            throw new Error('Unexpected Bitget response structure.');
+        }
+
+        const data = json.data[0].bizLineProductList[0].productList.find((item: any) => item.period === 0)
+        if (!data) {
+            throw new Error('No data found for period = 0.');
+        }
+
+        const apy = data.apyList.find((item: any) => item.rateLevel === 1);
+        if (!apy) {
+            throw new Error('No data found for rateLevel = 1.');
+        }
+
+        return {
+            name: data.coinName,
+            APR: parseFloat(apy.apy) / 100,
+        };
+    } catch (error) {
+        console.error('Bitget fetch error:', error);
+        return [];
+    }
+}
+
+/**
  * Basic welcome route
  */
 router.get('/', (req, res) => {
@@ -321,6 +370,18 @@ router.get('/', (req, res) => {
         message: 'Welcome to stable API! Use /okx, /bybit, or /binance to get the data',
     })
 })
+
+/**
+ * Bitget route - cached
+ */
+router.get(
+    '/bitget',
+    asyncHandler(async (req, res) => {
+        console.log('Fetching Bitget data...')
+        const cachedData = await cache.get('bitget', async () => data_Bitget())
+        res.status(200).json(cachedData)
+    }),
+)
 
 /**
  * OKX route - cached
