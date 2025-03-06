@@ -352,10 +352,26 @@ const data_Bitget = async () => {
             throw new Error('No data found for rateLevel = 1.');
         }
 
-        return {
-            name: data.coinName,
-            APR: parseFloat(apy.apy) / 100,
-        };
+        const vipData = json.data[0].bizLineProductList.find((item: any) => item.productLevel === 2).productList.find((item: any) => item.period == 14) 
+        if (!vipData) {
+            throw new Error('No data found for VIP.');
+        }
+
+        const vipApy = vipData.apyList.find((item: any) => item.rateLevel === 0)
+        if (!vipApy) {
+            throw new Error('No data found for VIP rateLevel = 0.');
+        }
+
+        return [
+            {
+                name: data.coinName,
+                APR: parseFloat(apy.apy) / 100,
+            },
+            {
+                name: `${vipData.coinName}-VIP-14`,
+                APR: parseFloat(vipApy.apy) / 100,
+            },
+        ];
     } catch (error) {
         console.error('Bitget fetch error:', error);
         return [];
