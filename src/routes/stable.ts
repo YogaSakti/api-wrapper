@@ -2,11 +2,20 @@ import fetch from 'cross-fetch'
 import express from 'express'
 import asyncHandler from 'express-async-handler'
 import CacheService from '../utils/cache.service'
+// @ts-ignore
 import { HttpsProxyAgent } from 'https-proxy-agent';
+// @ts-ignore
+import { SocksProxyAgent } from 'socks-proxy-agent'
 import { config } from 'dotenv'
 if (process.env.NODE_ENV !== 'production') config()
 
-const proxyAgent = new HttpsProxyAgent(process.env.PROXY_AGENT || 'http://blabla.blabla:9999');
+import tls from 'tls';
+tls.DEFAULT_CIPHERS = 'TLS_AES_256_GCM_SHA384:ECDHE-RSA-AES256-GCM-SHA384';
+tls.DEFAULT_MIN_VERSION = 'TLSv1.2';
+
+// @ts-ignore
+// const proxyAgent = new HttpsProxyAgent(process.env.PROXY_AGENT || 'http://blabla.blabla:9999');
+const proxyAgent = new SocksProxyAgent(process.env.SOCKS5_AGENT || 'socks5h://blabla.blabla:9999');
 
 const ttl = 60 * 1 // 5 minutes
 const cache = new CacheService(ttl)
@@ -15,6 +24,7 @@ const router = express.Router()
 /**
  * Fetch data from OKX.
  */
+
 const data_OKX = async () => {
     try {
         const response = await fetch("https://www.okx.com/priapi/v1/earn/simple-earn/all-products?limit=100&type=all", {
@@ -33,11 +43,15 @@ const data_OKX = async () => {
                 "sec-fetch-mode": "cors",
                 "sec-fetch-site": "same-origin",
                 "x-cdn": "https://www.okx.com",
+                "x-id-group": "2141230638558510002-c-17",
                 "x-locale": "en_US",
+                "x-simulated-trading": "0",
+                "x-site-info": "==QfxojI5RXa05WZiwiIMFkQPx0Rfh1SPJiOiUGZvNmIsICRJJiOi42bpdWZyJye",
                 "x-utc": "7",
                 "x-zkdex-env": "0",
                 "Referer": "https://www.okx.com/earn/simple-earn",
-                "Referrer-Policy": "strict-origin-when-cross-origin"
+                "Referrer-Policy": "strict-origin-when-cross-origin",
+                "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
             },
             "method": "GET",
             // @ts-ignore
@@ -352,7 +366,7 @@ const data_Bitget = async () => {
             throw new Error('No data found for rateLevel = 1.');
         }
 
-        const vipData = json.data[0].bizLineProductList.find((item: any) => item.productLevel === 2).productList.find((item: any) => item.period == 14) 
+        const vipData = json.data[0].bizLineProductList.find((item: any) => item.productLevel === 2).productList.find((item: any) => item.period == 14)
         if (!vipData) {
             throw new Error('No data found for VIP.');
         }
