@@ -17,7 +17,7 @@ tls.DEFAULT_MIN_VERSION = 'TLSv1.2';
 // const proxyAgent = new HttpsProxyAgent(process.env.PROXY_AGENT || 'http://blabla.blabla:9999');
 const proxyAgent = new SocksProxyAgent(process.env.SOCKS5_AGENT || 'socks5h://blabla.blabla:9999');
 
-const ttl = 60 * 1 // 5 minutes
+const ttl = 60 * 1 // 1 minutes
 const cache = new CacheService(ttl)
 const router = express.Router()
 
