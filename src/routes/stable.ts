@@ -32,20 +32,18 @@ const data_OKX = async () => {
                 "accept": "application/json",
                 "accept-language": "en-US,en;q=0.9",
                 "app-type": "web",
-                "cache-control": "no-cache",
                 "devid": "1d689401-801b-4dc2-ba49-7cededbf1957",
-                "pragma": "no-cache",
                 "priority": "u=1, i",
-                "sec-ch-ua": "\"Google Chrome\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"",
+                "sec-ch-ua": "\"Chromium\";v=\"136\", \"Google Chrome\";v=\"136\", \"Not.A/Brand\";v=\"99\"",
                 "sec-ch-ua-mobile": "?0",
                 "sec-ch-ua-platform": "\"Windows\"",
                 "sec-fetch-dest": "empty",
                 "sec-fetch-mode": "cors",
                 "sec-fetch-site": "same-origin",
                 "x-cdn": "https://www.okx.com",
-                "x-id-group": "2141230638558510002-c-17",
+                "x-id-group": "2120884786626340002-c-4",
                 "x-locale": "en_US",
-                "x-simulated-trading": "0",
+                "x-simulated-trading": "undefined",
                 "x-site-info": "==QfxojI5RXa05WZiwiIMFkQPx0Rfh1SPJiOiUGZvNmIsICRJJiOi42bpdWZyJye",
                 "x-utc": "7",
                 "x-zkdex-env": "0",
@@ -396,21 +394,21 @@ const data_pintu = async () => {
     try {
         const response = await fetch("https://api.pintu.pro/v1/public/get-candlesticks?symbol=USDT-IDR&interval=1m", {
             "headers": {
-              "accept": "application/json, text/plain, */*",
-              "accept-language": "en-US,en;q=0.9",
-              "priority": "u=1, i",
-              "sec-ch-ua": "\"Chromium\";v=\"134\", \"Not:A-Brand\";v=\"24\", \"Google Chrome\";v=\"134\"",
-              "sec-ch-ua-mobile": "?0",
-              "sec-ch-ua-platform": "\"macOS\"",
-              "sec-fetch-dest": "empty",
-              "sec-fetch-mode": "cors",
-              "sec-fetch-site": "cross-site",
-              "Referer": "https://pintu.co.id/",
-              "Referrer-Policy": "strict-origin-when-cross-origin"
+                "accept": "application/json, text/plain, */*",
+                "accept-language": "en-US,en;q=0.9",
+                "priority": "u=1, i",
+                "sec-ch-ua": "\"Chromium\";v=\"134\", \"Not:A-Brand\";v=\"24\", \"Google Chrome\";v=\"134\"",
+                "sec-ch-ua-mobile": "?0",
+                "sec-ch-ua-platform": "\"macOS\"",
+                "sec-fetch-dest": "empty",
+                "sec-fetch-mode": "cors",
+                "sec-fetch-site": "cross-site",
+                "Referer": "https://pintu.co.id/",
+                "Referrer-Policy": "strict-origin-when-cross-origin"
             },
             "body": null,
             "method": "GET"
-          });
+        });
 
         const json = await response.json();
 
