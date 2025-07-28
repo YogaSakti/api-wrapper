@@ -182,7 +182,7 @@ const data_Binance = async () => {
                     Referer: 'https://www.binance.com/en/earn',
                     'Referrer-Policy': 'origin-when-cross-origin',
                 },
-                method: 'GET',
+                method: 'GET'
             },
         )
 
@@ -349,15 +349,18 @@ const data_Bybit_USDe = async () => {
                 "sec-fetch-site": "same-origin",
                 "sec-gpc": "1",
                 "traceparent": "00-3dbf426f92cf6d3edb563a8298275bc8-bb4b4b8b3fa8efba-01",
+                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
                 "usertoken": "",
-                "x-user-agent": "undefined"
+                "x-user-agent": "undefined",
+                "cookie": "_by_l_g_d=9f3ecb05-d2c1-facf-9baa-b1a12546df95; _by_l_g_d=9f3ecb05-d2c1-facf-9baa-b1a12546df95; _tt_enable_cookie=1; _fwb=223ajaNHGCNZEmN6b6evTLN.1728477751601; _ttp=ZFdaryi7el1zQFxWZJKUL6CaJha.tt.1; wcs_bt=17470ac91156420:1746000634; deviceId=1fc248f1-fbf0-144b-d181-58c041722505; sensorsdata2015jssdkcross=%7B%22distinct_id%22%3A%2213161013%22%2C%22first_id%22%3A%2218f9920f60c1fa8-027e7d6fbdb32a4-26001d51-2073600-18f9920f60d2a90%22%2C%22props%22%3A%7B%22_a_u_v%22%3A%220.0.6%22%2C%22%24latest_traffic_source_type%22%3A%22%E7%9B%B4%E6%8E%A5%E6%B5%81%E9%87%8F%22%2C%22%24latest_search_keyword%22%3A%22%E6%9C%AA%E5%8F%96%E5%88%B0%E5%80%BC_%E7%9B%B4%E6%8E%A5%E6%89%93%E5%BC%80%22%2C%22%24latest_referrer%22%3A%22%22%2C%22%24latest_utm_content%22%3A%22web3Menu_dexPro%22%2C%22%24latest_utm_source%22%3A%22uj_header%22%2C%22%24latest_utm_medium%22%3A%22organic_comm%22%2C%22utm_content%22%3A%22web3Menu_dexPro%22%7D%2C%22identities%22%3A%22eyIkaWRlbnRpdHlfY29va2llX2lkIjoiMThmOTkyMGY2MGMxZmE4LTAyN2U3ZDZmYmRiMzJhNC0yNjAwMWQ1MS0yMDczNjAwLTE4Zjk5MjBmNjBkMmE5MCIsIiRpZGVudGl0eV9sb2dpbl9pZCI6IjEzMTYxMDEzIn0%3D%22%2C%22history_login_id%22%3A%7B%22name%22%3A%22%24identity_login_id%22%2C%22value%22%3A%2213161013%22%7D%2C%22%24device_id%22%3A%2218f99211110a98-0533d5046cb892c-26001d51-2073600-18f992111111719%22%7D; sensorsdatacard={\"source\":\"globalSearch\"}; sensorsdata2015jssdkchannel=%7B%22prop%22%3A%7B%22_sa_channel_landing_url%22%3A%22%22%7D%7D; BYBIT_REG_REF_prod={\"lang\":\"en-US\",\"g\":\"9f3ecb05-d2c1-facf-9baa-b1a12546df95\",\"referrer\":\"www.bybit.com/\",\"source\":\"bybit.com\",\"medium\":\"other\",\"url\":\"https://www.bybit.com/en/\",\"last_refresh_time\":\"Mon, 28 Jul 2025 08:40:41 GMT\",\"ext_json\":{\"dtpid\":null}}; tx_token_current=BNE; cookies_uuid_report=305911e9-522c-4bca-a11f-08bd5cc824a6; first_collect=true; trace_id_report=dab25c95-b667-4364-b9cc-272977f6f6fa; bm_mi=64DC36074FF053A57F9715F3C2DC1495~YAAQw3w2F2p8NEGYAQAAbWYxUBwFT8VaJkWOAsQPiGKVj2C3vSLzaRpSlMS5c0xM5LB9LDLtoeTB6ruCyqiDheY24ipiAPD+0WheTQoa1k6i0HMrXPVTtND5BGOoHJVygts7jFXbh5VH3CvHmsXBAuQkoNBRqWiwvExRisMpdSihduo/anCM5UwORHiQZbfppRtq5j4+uI9gjUQe+aBMPxnws2FmL+IpDOSqh1rnZlzlLbLtcjf0SYTgyxpVtaEKP7STRFNW4A0j0k28toH//qgZf3OHIzK28gyLi1jdZ8ag3PhisKFaSZH3rr66Zb6x0yim1nsbKpsnf7czxh5p422SOCyZCPit4Vv2HiX1LYtKnoBwHkE0JSsb/S0=~1; _abck=4DD7222D69A408DDDD14E02252F165C3~0~YAAQw3w2F4J8NEGYAQAA7WcxUA6oY2arsItU4Z7+H1ULaifMxy+cI2P8TCM+p/ns5PEJaS8IY9mvIwoLm2Wl0JFUCsR2PfNMxldrNrnFJg0UVQiIq2eizbyzG7dHsK+v6nFVm1e0QtGNKhURlni4W8yYMbKvLGbLActRJVh5ym7d7zB/YJ5kOpeQheXPoKq6MLwILZdUSu5RinpKs7xaV85Kz7TGcXbT5fNTqEAPNkMjJZD/hELwQghtC7auzP12cGaAabiz07jrL4VXQx4fJJTD7jy3JU+7x7zWJRBCcpqFYuHsaYR8sxcbMEpuNpYQFf2tNTnvVyibcY1kPoVq8LOAIBEpAyXQ+34cC9VxpDz98OXvXHCeydR08+zCrUAEVGt4NRV8Kw8OQx4HnWGEZxUjTM+xn4QojX0gmYPUMjS/DgkOIl4TGG/2ikveeTAvfCV8JB0N3yrhh+/nVAuNLi8GCiW9BhdE3SMV2eDRcVeFCelErSMf1qyUNmcXBE52I9BjWdRvcM7sInM6XFzYTWLAsAgiZogETDmMahFOvBnWnyuI3+sA78B1+jHKzPmpeNbUll/qivfN4FX2V74k9kB73p6fT16dn0ZQuLlHGvOanMs14k4YEocFFfGJTS/qSFGEHEOhRUESQ86/qL2XYx5WFsAorTUYUojGxaat4HHIQUlTKvRApY5ac/Odxoi0+/0opoTXEdecHu73tsVoL6H4ABMpZBCxLGzQCOcal5crEPZEfYvBBXUI7wrYTL9HgL5SC1S3MiPWqrmyz0hSpEOqJGlcUdZrmQ==~-1~-1~-1; bm_sv=ECC7CFD66CCF90A88414975978D54F8B~YAAQw3w2F2t9NEGYAQAArXgxUBxW8W/TDhPOkKftVkFJGyFx43RM4bm5E5kP3AVAJHVPd05rVdlNUZcOUBshnUUfRx8gOPGbsYbX5AaC3qUCpmzArSLM1tWSPF+Yi6Z6L5/Enyb8CFZqtNWRfeFgrr8Aa16QsXbmhLYwalWWMjXAvbjM6dGk0UcBZh6sZqoc2KIkBRRegKlSHh9eKeqalVrpH6FhY32/2OLslsmyK7pi7D/vMp0DFibQZUw+xER/~1; ak_bmsc=BABDE9CD3EA20CE422B88B588EE1CF56~000000000000000000000000000000~YAAQw3w2F26ENEGYAQAAv94xUBwY6n1ySxF071cHCXP1rhtz0TuDvKxHLaqTVihTwC8QiMhCXBM6Bv8lkgMfkwRXGm5BB5DV8m3XTZmNw1mE7uPenns+29Ery8qFnmI7NyUeK24vdLMEhydX1n9ODAZOSNfnjxfDP39BCkSRm+GnWIoJPKlbKaXBALaGYGNSQPnq4FxGB8GHPETHVR2hz0x18sSaRQm/u3POw8goF+S/WQesCxsnBa+vpYZ/lM7QhpxzxGOkufVeL1UhVb1WCe9tK5gwIYguJKIhnNdVw8GkA+fY63D72+HZTT7QdkhXRfV+0IPNqIDWMCj4IKUye7eFjVlb5Ges5v6/ZqRPyOzyBt9aFNCdg+8zUgEW4tusIznIlNE7F15rkZxViz2RgEono/Vh15Hsu3X9dI7JoiF70Ep6JsPwrgFugydHNRB96nKpj7OITRSevnvmxPHFnEi+50OsE5oNGHH6; by_token_print=9bac916397m0zl9n7wllqpd7482abdd45; deviceCodeExpire=1753692164915; bm_sz=58A9D62206F88D2430897BAA94A6D6B1~YAAQw3w2FziXNEGYAQAAWAYzUBza/DgWiWWzS3n2zQo++bvKdhq/7QQ2QswLFwHJY7D4TVJ+PrM0LOevjOP3bPO4NLH4lrJn6Cvd+H+Taoi85ZVx5svTwjrcpV0PGabZOPUrDQBRgYEm0nD+GkMtOP2k7cL/2DvNcMIfwyETTGhrTa7Y97RCqagspkVGqGHHr5uioXHBYfNz+71kb8QLHJ8wzi6nBNL5sG64/Y1lRFECdZ2d+QUfn7jmZDgUTbF06udNA3ZkHNW4oGZJlPnFO9zXPpq/gONzTklr8NRnqpqf41rrDanUEqNUavdY1Jw0sys26Z/Q79sWxmpy+gC9lRCP+D7+oPy6YpjUQToQLLnwPEyOokMlFdh1HhFKV77F30gRXI0o4E5CRYN/q0DGyuBBdf6qacijgiYmnhYfUXj13u8PD5UcQFX5q1kl7VQcN8b8y8y1/a9E~3163458~3224901; tx_token_time=1753692179355; trace_id_time=1753692179478",
+                "Referer": "https://www.bybit.com/en/earn/usde-page"
             },
-            "referrer": "https://www.bybit.com/en/earn/usde-page",
-            "body": null,
             "method": "GET",
-            "mode": "cors",
-            "credentials": "include"
+            // @ts-ignore
+            agent: proxyAgent
         });
+
+        console.log('Bybit USDe response status:', response.status);
 
         const json = await response.json();
         if (!json?.result?.product) {
