@@ -328,6 +328,56 @@ const data_Flipster = async () => {
 }
 
 /**
+ * Fetch data from Bybit USDE.
+ */
+const data_Bybit_USDe = async () => {
+    try {
+        const response = await fetch("https://www.bybit.com/x-api/s1/byfi/get-airdrop-product", {
+            "headers": {
+                "accept": "*/*",
+                "accept-language": "en-US,en;q=0.9",
+                "content-type": "application/json",
+                "guid": "9f3ecb05-d2c1-facf-9baa-b1a12546df95",
+                "lang": "en",
+                "platform": "pc",
+                "priority": "u=1, i",
+                "sec-ch-ua": "\"Not)A;Brand\";v=\"8\", \"Chromium\";v=\"138\", \"Google Chrome\";v=\"138\"",
+                "sec-ch-ua-mobile": "?0",
+                "sec-ch-ua-platform": "\"Windows\"",
+                "sec-fetch-dest": "empty",
+                "sec-fetch-mode": "cors",
+                "sec-fetch-site": "same-origin",
+                "sec-gpc": "1",
+                "traceparent": "00-3dbf426f92cf6d3edb563a8298275bc8-bb4b4b8b3fa8efba-01",
+                "usertoken": "",
+                "x-user-agent": "undefined"
+            },
+            "referrer": "https://www.bybit.com/en/earn/usde-page",
+            "body": null,
+            "method": "GET",
+            "mode": "cors",
+            "credentials": "include"
+        });
+
+        const json = await response.json();
+        if (!json?.result?.product) {
+            throw new Error('Unexpected Bybit Airdrop response structure.');
+        }
+
+        const product = json.result.product;
+        const apr_e8 = parseInt(product.apr_e8, 10);
+
+        return {
+            name: product.coin_name,
+            APR: apr_e8 / 100000000,
+        };
+    } catch (error) {
+        console.error('Bybit Airdrop fetch error:', error);
+        return {};
+    }
+}
+
+/**
  * Fetch data from Bitget.
  */
 const data_Bitget = async () => {
@@ -486,6 +536,18 @@ router.get(
     asyncHandler(async (req, res) => {
         console.log('Fetching Bybit data...')
         const cachedData = await cache.get('bybit', async () => data_Bybit())
+        res.status(200).json(cachedData)
+    }),
+)
+
+/**
+ * Bybit Airdrop route - cached
+ */
+router.get(
+    '/bybit-usde',
+    asyncHandler(async (req, res) => {
+        console.log('Fetching Bybit USDe data...')
+        const cachedData = await cache.get('bybit-usde', async () => data_Bybit_USDe())
         res.status(200).json(cachedData)
     }),
 )
