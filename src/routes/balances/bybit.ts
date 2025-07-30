@@ -1,4 +1,11 @@
 import { RestClientV5 } from 'bybit-api';
+import { webcrypto } from 'crypto';
+
+// Polyfill for Web Crypto API in Node.js 18
+if (typeof globalThis.crypto === 'undefined') {
+    (globalThis as any).crypto = webcrypto;
+}
+
 // Ensure that the environment variables are set
 if (!process.env.KEY_BYBIT || !process.env.SECRET_BYBIT) {
     throw new Error('API key and secret must be set in the environment variables.');
