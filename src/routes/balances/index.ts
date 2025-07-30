@@ -105,11 +105,7 @@ balancesRouter.get('/:key/:exchange/:coin', validateKey, validateExchange, valid
         }
 
         return res.status(200).json({
-            success: true,
-            exchange: exchangeLower,
-            coin: coinUpper,
-            amount: balance,
-            timestamp: new Date().toISOString()
+            amount: balance
         });
 
     } catch (error) {
