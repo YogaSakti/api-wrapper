@@ -188,4 +188,8 @@ router.use('/artatix', artatixRoute)
 import stable from './stable'
 router.use('/stable', stable)
 
+// balance route from index in balances folder
+import balancesRoute from './balances'
+router.use('/balances', balancesRoute)
+
 export default router

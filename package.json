@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@types/cheerio": "^0.22.35",
+    "bybit-api": "^4.2.0",
     "cheerio": "^1.0.0",
     "cors": "^2.8.5",
     "cross-fetch": "^4.0.0",
@@ -20,6 +21,7 @@
     "https-proxy-agent": "^7.0.6",
     "morgan": "^1.10.0",
     "node-cache": "^5.1.2",
+    "okx-api": "^2.0.7",
     "socks-proxy-agent": "^8.0.5",
     "tls": "^0.0.1"
   },
