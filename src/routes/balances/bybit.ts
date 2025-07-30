@@ -17,7 +17,10 @@ const getSpotBalance = async () => client
         const filteredBalances = response.result.balance.filter((balance: any) => parseInt(balance.walletBalance) !== 0);
         return filteredBalances
     })
-    .catch((error: any) => error);
+    .catch((error: any) => {
+        console.error('Error in getSpotBalance:', error);
+        throw error;
+    });
 
 const getEarnPositions = async () => client
     .getEarnPosition({ category: 'FlexibleSaving' })
@@ -25,7 +28,10 @@ const getEarnPositions = async () => client
         if (response.retCode !== 0) throw new Error(`Error fetching earn positions: ${response.retMsg}`);
         return response.result.list;
     })
-    .catch((error: any) => error);
+    .catch((error: any) => {
+        console.error('Error in getEarnPositions:', error);
+        throw error;
+    });
 
 export const getBybitBalances = async () => {
     try {
@@ -36,8 +42,8 @@ export const getBybitBalances = async () => {
 
         // return USDE from spot balance
         // return USDT and USDC from earn positions
-        const spotBalance = getData[0]?.find((balance: any) => balance.coin === 'USDE');
-        const earnPositions = getData[1]?.filter((position: any) => position.coin === 'USDT' || position.coin === 'USDC') || [];
+        const spotBalance = Array.isArray(getData[0]) ? getData[0].find((balance: any) => balance.coin === 'USDE') : null;
+        const earnPositions = Array.isArray(getData[1]) ? getData[1].filter((position: any) => position.coin === 'USDT' || position.coin === 'USDC') : [];
 
         const usdtPosition = earnPositions.find((position: any) => position.coin === 'USDT');
         const usdcPosition = earnPositions.find((position: any) => position.coin === 'USDC');
