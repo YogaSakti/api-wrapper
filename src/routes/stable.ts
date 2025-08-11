@@ -221,7 +221,7 @@ const data_Binance = async () => {
 /**
  * Fetch FDUSD, USDT, and USDC data from Binance.
  */
-const data_Binance_All = async () => {
+const data_Binance_All = async (noLimit: string) => {
     try {
         let listCurrency = ['FDUSD', 'USDT', 'USDC'];
         const getData = (currency: any) => fetch(`https://www.binance.com/bapi/earn/v3/friendly/finance-earn/calculator/product/list?asset=${currency}&type=Flexible`, {
@@ -250,21 +250,20 @@ const data_Binance_All = async () => {
             "method": "GET"
         });
 
-        const promises = listCurrency.map(currency => getData(currency));
-        const responses = await Promise.all(promises);
-        const jsons = await Promise.all(responses.map(response => response.json()));
-        const result = jsons.map((json: any) => {
-            if (!json?.data?.savingFlexibleProduct?.length) {
-                throw new Error('No data found for savingFlexibleProduct.');
-            }
-            const data = json.data.savingFlexibleProduct[0];
+        const jsons = await Promise.all(listCurrency.map(c => getData(c).then(r => r.json())));
+
+        return jsons.map(json => {
+            const data = json?.data?.savingFlexibleProduct?.[0];
+            if (!data) throw new Error('No data found.');
             return {
                 name: data.asset,
-                APR: parseFloat(data.apy),
+                APR: parseFloat(
+                    noLimit && data.asset === noLimit
+                        ? data.apy
+                        : data.marketApr
+                )
             };
-        });
-
-        return result || [];
+        }) || [];
     } catch (error) {
         console.error('Binance fetch error:', error);
         return [];
@@ -573,11 +572,13 @@ router.get(
 router.get(
     '/binance-stable',
     asyncHandler(async (req, res) => {
-        console.log('Fetching Binance all data...')
-        const cachedData = await cache.get('binance-all', async () => data_Binance_All())
-        res.status(200).json(cachedData)
+        console.log('Fetching Binance all data...');
+        const noLimit = (req.query.noLimit as string) || '';
+        const cacheKey = `binance-all:${noLimit}`;
+        const cachedData = await cache.get(cacheKey, () => data_Binance_All(noLimit));
+        res.status(200).json(cachedData);
     }),
-)
+);
 
 /**
  * Flipster route - cached
