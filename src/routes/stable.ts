@@ -260,7 +260,7 @@ const data_Binance_All = async () => {
             const data = json.data.savingFlexibleProduct[0];
             return {
                 name: data.asset,
-                APR: parseFloat(data.marketApr),
+                APR: parseFloat(data.apy),
             };
         });
 
