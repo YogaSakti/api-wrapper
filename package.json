@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@types/cheerio": "^0.22.35",
+    "binance": "^3.0.5",
     "bybit-api": "^4.2.0",
     "cheerio": "^1.0.0",
     "cors": "^2.8.5",
