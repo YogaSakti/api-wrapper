@@ -314,7 +314,7 @@ const data_Flipster = async () => {
 
         // sum the base and vip APRs
         const baseApr = parseFloat(filtered.aprs.base)
-        const vipApr = parseFloat(filtered.maximalAchievableAprs.aprs.find((item: any) => item.title === 'VIP').apr)
+        const vipApr = parseFloat(filtered.maximalAchievableAprs.aprs.find((item: any) => item.title === 'VIP').apr) || 0
 
         // return is 0.16 not 16 or 16% or "16"
         return {
