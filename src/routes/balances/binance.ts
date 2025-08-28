@@ -20,13 +20,32 @@ const getSpotBalance = async () => client
     })
 
 // Get Simple Earn flexible positions (replaces old Savings)
-const getFlexibleSavings = async () => client
-    .getFlexibleProductPosition()
-    .then((resp: any) => resp?.rows ?? [])
-    .catch((error: any) => {
+const getFlexibleSavings = async () => {
+    try {
+        const [usdtResult, usdcResult] = await Promise.all([
+            client
+                .getFlexibleProductPosition({asset: 'USDT'})
+                .then((resp: any) => resp?.rows ?? [])
+                .catch((error: any) => {
+                    console.error('Error in getFlexibleSavings USDT:', error)
+                    return []
+                }),
+            client
+                .getFlexibleProductPosition({asset: 'USDC'})
+                .then((resp: any) => resp?.rows ?? [])
+                .catch((error: any) => {
+                    console.error('Error in getFlexibleSavings USDC:', error)
+                    return []
+                })
+        ])
+        
+        // Gabungkan hasil dari USDT dan USDC
+        return [...usdtResult, ...usdcResult]
+    } catch (error) {
         console.error('Error in getFlexibleSavings:', error)
         throw error
-    })
+    }
+}
 
 export const getBinanceBalances = async () => {
     try {
