@@ -26,3 +26,17 @@ import route from './routes/index'
 
 // Version the api  
 app.use('/api/v1', route)
+
+// Error handling middleware (must be last)
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error('Error:', err)
+    
+    // Don't leak error details in production
+    const isDevelopment = process.env.NODE_ENV !== 'production'
+    
+    res.status(err.status || 500).json({
+        error: 'Internal Server Error',
+        message: isDevelopment ? err.message : 'An error occurred processing your request',
+        ...(isDevelopment && { stack: err.stack })
+    })
+})

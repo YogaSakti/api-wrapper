@@ -77,13 +77,18 @@ const router = express.Router()
 
 router.get('/', (req, res) => {
     // Healthcheck artatix endpoint
-    fetch('https://artatix.co.id').then((response) => {
-        if (response.status === 200) {
-            res.status(200).json({ status: 'ok' })
-        } else {
-            res.status(500).json({ status: 'error' })
-        }
-    })
+    fetch('https://artatix.co.id')
+        .then((response) => {
+            if (response.status === 200) {
+                res.status(200).json({ status: 'ok' })
+            } else {
+                res.status(500).json({ status: 'error' })
+            }
+        })
+        .catch((error) => {
+            console.error('Artatix healthcheck error:', error)
+            res.status(500).json({ status: 'error', message: 'Failed to reach artatix service' })
+        })
 })
 
 router.get(
