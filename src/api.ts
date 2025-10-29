@@ -17,7 +17,6 @@ app.use(express.text({ type: 'text/html' }))
 app.get('/', (req, res) => res.status(200).send({ status: 'ok', message: 'Hello world' }))
 
 const api = express.Router()
-
 api.get('/hello', (req, res) => res.status(200).send({ message: 'hello world' }))
 
 
