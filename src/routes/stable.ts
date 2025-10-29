@@ -52,8 +52,8 @@ const data_OKX = async () => {
                 'Referer': 'https://www.okx.com/earn/simple-earn',
                 'Referrer-Policy': 'strict-origin-when-cross-origin',
                 'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
-                'cookie': process.env.OKX_COOKIE || '',
-                'authorization': process.env.OKX_AUTHORIZATION || '',
+                'cookie': `${process.env.OKX_COOKIE || ''}`,
+                'authorization': `${process.env.OKX_AUTHORIZATION || ''}`
             },
             'method': 'GET',
             // @ts-ignore
