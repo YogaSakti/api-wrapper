@@ -8,10 +8,11 @@ This repository is My Personal project to support other projects.
 - **ExpressJS**: Robust web framework for building APIs.
 - **TypeScript**: Type-safe JavaScript for better maintainability.
 - **Modular Structure**: Organized routes and utilities for scalable development.
+- **Modular Exchange Integration**: Separated earn function modules for better maintainability.
 - **Caching**: In-memory caching using `node-cache` for improved performance.
 - **Error Handling**: Global error handler middleware to prevent information leakage.
 - **Security**: Constant-time key comparison and input validation.
-- **Third-Party Integrations**: Fetches data from external APIs (CoinGecko, Artatix, OKX, Bybit, Binance, and more).
+- **Third-Party Integrations**: Fetches data from external APIs.
 - **Proxy Support**: SOCKS5 and HTTPS proxy agent support for restricted APIs.
 
 ## 💻 Setup Instructions
@@ -74,13 +75,15 @@ All routes are prefixed with `/api/v1`.
 - **GET /api/v1/artatix/tickets/:slug**: Fetches ticket details for a given event.
 
 #### Stable APIs (Stablecoin APR Rates)
-- **GET /api/v1/stable/okx**: Retrieves stablecoin APR data from OKX.
-- **GET /api/v1/stable/bybit**: Fetches stablecoin APR data from Bybit.
-- **GET /api/v1/stable/binance**: Fetches stablecoin APR data from Binance.
-- **GET /api/v1/stable/flipster**: Fetches stablecoin APR data from Flipster.
-- **GET /api/v1/stable/bitget**: Fetches stablecoin APR data from Bitget.
-- **GET /api/v1/stable/bybit-usde**: Fetches Bybit USDe rates.
-- **GET /api/v1/stable/pintu**: Fetches Pintu price data.
+- **GET /api/v1/stable**: Welcome message and available endpoints.
+- **GET /api/v1/stable/okx**: Retrieves USDT/USDC APR data from OKX.
+- **GET /api/v1/stable/bybit**: Fetches USDT/USDC APR data from Bybit.
+- **GET /api/v1/stable/bybit-usde**: Fetches Bybit USDe airdrop rates.
+- **GET /api/v1/stable/binance**: Fetches FDUSD APR data from Binance.
+- **GET /api/v1/stable/binance-stable**: Fetches FDUSD/USDT/USDC APR data from Binance.
+- **GET /api/v1/stable/flipster**: Fetches USDT APR data from Flipster.
+- **GET /api/v1/stable/bitget**: Fetches combined USDT/USDC APR data from Bitget.
+- **GET /api/v1/stable/pintu**: Fetches USDT-IDR price data from Pintu.
 
 #### CoinGecko Price APIs
 - **GET /api/v1/gecko/:slug**: Fetches token prices from CoinGecko.
@@ -97,6 +100,7 @@ For detailed logic and route handling, explore the `src/routes` directory.
   - `index.ts`: Main router with CoinGecko price endpoints.
   - `artatix.ts`: Handles Artatix event and ticket data.
   - `stable.ts`: Provides stablecoin APR rate APIs.
+  - `earn/`: Modular exchange data fetching functions.
   - `balances/`: Exchange balance checking routes (protected).
 - **`src/utils/`**: Utility functions.
   - `cache.service.ts`: In-memory caching implementation using node-cache.
