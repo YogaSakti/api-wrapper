@@ -82,8 +82,9 @@ router.get(
     '/bybit-usde',
     asyncHandler(async (req, res) => {
         console.log('Fetching Bybit USDE data...')
-        const cachedData = await cache.get('bybit-usde', async () => data_Bybit_USDe())
-        res.status(200).json(cachedData)
+        // const cachedData = await cache.get('bybit-usde', async () => data_Bybit_USDe())
+        const data = await data_Bybit_USDe()
+        res.status(200).json(data)
     }),
 )
 
