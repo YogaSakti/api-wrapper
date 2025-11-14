@@ -13,7 +13,7 @@ import {
     data_pintu
 } from './earn'
 
-const ttl = 60 * 1 // 1 minutes
+const ttl = 60 * 0.5 // 0.5 minutes
 const cache = new CacheService(ttl)
 const router = express.Router()
 
@@ -76,12 +76,12 @@ router.get(
 )
 
 /**
- * Bybit Airdrop route - cached
+ * Bybit USDE route - cached
  */
 router.get(
     '/bybit-usde',
     asyncHandler(async (req, res) => {
-        console.log('Fetching Bybit USDe data...')
+        console.log('Fetching Bybit USDE data...')
         const cachedData = await cache.get('bybit-usde', async () => data_Bybit_USDe())
         res.status(200).json(cachedData)
     }),
