@@ -83,46 +83,67 @@ export const data_Bybit = async () => {
  */
 export const data_Bybit_USDe = async () => {
     try {
-        const response = await fetch('https://www.bybit.com/x-api/s1/byfi/get-airdrop-product', {
+        // Get date range - from 7 days ago to 7 days ahead to ensure we capture today's data
+        const now = new Date()
+        const startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) // 7 days ago
+        const endDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000) // 7 days ahead
+        
+        const start_at = Math.floor(startDate.getTime() / 1000)
+        const end_at = Math.floor(endDate.getTime() / 1000)
+
+        const response = await fetch('https://www.bybit.com/x-api/s1/byfi/airdrop/get-apr', {
             'headers': {
                 'accept': '*/*',
-                'accept-language': 'en-US,en;q=0.9',
+                'accept-language': 'en-US,en;q=0.9,id;q=0.8',
                 'content-type': 'application/json',
-                'guid': '9f3ecb05-d2c1-facf-9baa-b1a12546df95',
+                'guid': '9e1542d6-d26f-515f-043c-575398b7c3b1',
                 'lang': 'en',
                 'platform': 'pc',
                 'priority': 'u=1, i',
-                'sec-ch-ua': '"Not)A;Brand";v="8", "Chromium";v="138", "Google Chrome";v="138"',
+                'sec-ch-ua': '"Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"',
                 'sec-ch-ua-mobile': '?0',
-                'sec-ch-ua-platform': '"Windows"',
+                'sec-ch-ua-platform': '"macOS"',
                 'sec-fetch-dest': 'empty',
                 'sec-fetch-mode': 'cors',
                 'sec-fetch-site': 'same-origin',
-                'sec-gpc': '1',
-                'traceparent': '00-3dbf426f92cf6d3edb563a8298275bc8-bb4b4b8b3fa8efba-01',
-                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
+                'traceparent': '00-f2c93bf876a5fce34d3d6cc5f153a583-c8e288e645f396a5-01',
                 'usertoken': '',
                 'x-user-agent': 'undefined',
+                'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
                 'cookie': process.env.BYBIT_COOKIE || '',
-                'Referer': 'https://www.bybit.com/en/earn/usde-page'
             },
-            'method': 'GET',
+            'referrer': 'https://www.bybit.com/en/earn/usde-page',
+            'body': JSON.stringify({
+                'start_at': start_at,
+                'end_at': end_at,
+                'coin': 624
+            }),
+            'method': 'POST',
             // @ts-ignore
             agent: proxyAgent
         })
 
-        console.log('Bybit USDe response status:', response.status)
-
         const json = await response.json()
-        if (!json?.result?.product) {
-            throw new Error('Unexpected Bybit Airdrop response structure.')
+        
+        if (!json?.result?.daily_aprs || json.result.daily_aprs.length === 0) {
+            return {
+                name: 'USDe',
+                APR: 0,
+            }
         }
 
-        const product = json.result.product
-        const apr_e8 = parseInt(product.apr_e8, 10)
+        // Get the most recent APR (last item in the array or closest to today)
+        const todayTimestamp = Math.floor(Date.now() / 1000)
+        const closestApr = json.result.daily_aprs.reduce((closest: any, current: any) => {
+            const currentDiff = Math.abs(parseInt(current.timestamp) - todayTimestamp)
+            const closestDiff = Math.abs(parseInt(closest.timestamp) - todayTimestamp)
+            return currentDiff < closestDiff ? current : closest
+        })
+        
+        const apr_e8 = parseInt(closestApr.apr_e8, 10)
 
         return {
-            name: product.coin_name,
+            name: 'USDe',
             APR: apr_e8 / 100000000,
         }
     } catch (error) {
