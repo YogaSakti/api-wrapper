@@ -5,6 +5,7 @@ import {
     data_OKX,
     data_Bybit,
     data_Bybit_USDe,
+    data_Bybit_OnChain,
     data_Binance,
     data_Binance_All,
     data_Flipster,
@@ -85,6 +86,18 @@ router.get(
         // const cachedData = await cache.get('bybit-usde', async () => data_Bybit_USDe())
         const data = await data_Bybit_USDe()
         res.status(200).json(data)
+    }),
+)
+
+/**
+ * Bybit On-Chain route - cached
+ */
+router.get(
+    '/bybit-onchain',
+    asyncHandler(async (req, res) => {
+        console.log('Fetching Bybit On-Chain data...')
+        const cachedData = await cache.get('bybit-onchain', async () => data_Bybit_OnChain())
+        res.status(200).json(cachedData)
     }),
 )
 

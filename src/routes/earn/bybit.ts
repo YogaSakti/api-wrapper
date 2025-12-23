@@ -151,3 +151,64 @@ export const data_Bybit_USDe = async () => {
         return {}
     }
 }
+
+/**
+ * Fetch On-chain data from Bybit.
+ */
+export const data_Bybit_OnChain = async () => {
+    try {
+        const response = await fetch('https://www.bybit.com/x-api/s1/byfi/pos-staking/homepage-product-cards', {
+            headers: {
+                'accept': '*/*',
+                'accept-language': 'en-US,en;q=0.9,id;q=0.8',
+                'content-type': 'application/json',
+                'cookie': process.env.BYBIT_COOKIE || '',
+                'dnt': '1',
+                'guid': '9f3ecb05-d2c1-facf-9baa-b1a12546df95',
+                'lang': 'en',
+                'origin': 'https://www.bybit.com',
+                'platform': 'pc',
+                'priority': 'u=1, i',
+                'referer': 'https://www.bybit.com/en/earn/pos',
+                'sec-ch-ua': '"Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"',
+                'sec-ch-ua-mobile': '?0',
+                'sec-ch-ua-platform': '"Windows"',
+                'sec-fetch-dest': 'empty',
+                'sec-fetch-mode': 'cors',
+                'sec-fetch-site': 'same-origin',
+                'sec-gpc': '1',
+                'traceparent': '00-43d0dd7262b18e644dc97846df830d5a-9b8ce1a83e1e55a4-01',
+                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
+                'usertoken': '',
+                'x-user-agent': 'undefined',
+            },
+            body: JSON.stringify({ coin_name: 'USD' }),
+            method: 'POST',
+            // @ts-ignore
+            agent: proxyAgent
+        })
+
+        const json = await response.json()
+        // Defensive: check structure
+        if (!json?.result?.coin_products) {
+            throw new Error('Unexpected Bybit OnChain response structure.')
+        }
+
+        // coin=5 => USDT, coin=16 => USDC
+        return json.result.coin_products
+            .filter((i: any) => i.coin === 5 || i.coin === 16)
+            .flatMap((item: any) => {
+                // Only products with name 'Mantle Vault'
+                if (!Array.isArray(item.products)) return []
+                return item.products
+                    .filter((prod: any) => prod.name === 'Mantle Vault')
+                    .map((prod: any) => ({
+                        name: item.coin === 5 ? 'USDT' : 'USDC',
+                        APR: parseInt(prod.display_apy_e8, 10) / 100000000,
+                    }))
+            })
+    } catch (error) {
+        console.error('Bybit OnChain fetch error:', error)
+        return []
+    }
+}
