@@ -11,7 +11,8 @@ import {
     data_Flipster,
     data_Bitget,
     data_BitgetV2,
-    data_pintu
+    data_pintu,
+    data_kamino,
 } from './earn'
 
 const ttl = 60 * 0.5 // 0.5 minutes
@@ -147,6 +148,20 @@ router.get(
     asyncHandler(async (req, res) => {
         console.log('Fetching Pintu data...')
         const cachedData = await cache.get('pintu', async () => data_pintu())
+        res.status(200).json(cachedData)
+    }),
+)
+
+/**
+ * Kamino route - cached
+ */
+router.get(
+    '/kamino/:address',
+    asyncHandler(async (req, res) => {
+        console.log('Fetching Kamino data...')
+        const address = req.params.address
+        const cacheKey = `kamino:${address}`
+        const cachedData = await cache.get(cacheKey, async () => data_kamino(address))
         res.status(200).json(cachedData)
     }),
 )
