@@ -74,7 +74,7 @@ export const data_Binance = async () => {
  */
 export const data_Binance_All = async (noLimit: string) => {
     try {
-        const listCurrency = ['FDUSD', 'USDT', 'USDC']
+        const listCurrency = ['USD1', 'USDT', 'USDC']
         const getData = (currency: any) => fetch(`https://www.binance.com/bapi/earn/v3/friendly/finance-earn/calculator/product/list?asset=${currency}&type=Flexible`, {
             'headers': {
                 'accept': '*/*',
