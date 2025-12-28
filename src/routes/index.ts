@@ -110,4 +110,8 @@ router.use('/stable', stable)
 import balancesRoute from './balances'
 router.use('/balances', balancesRoute)
 
+// price route
+import priceRouter from './price'
+router.use('/price', priceRouter)
+
 export default router

@@ -11,7 +11,6 @@ import {
     data_Flipster,
     data_Bitget,
     data_BitgetV2,
-    data_pintu,
     data_kamino,
 } from './earn'
 
@@ -136,18 +135,6 @@ router.get(
     asyncHandler(async (req, res) => {
         console.log('Fetching Flipster data...')
         const cachedData = await cache.get('flipster', async () => data_Flipster())
-        res.status(200).json(cachedData)
-    }),
-)
-
-/**
- * Pintu route - cached
- */
-router.get(
-    '/pintu',
-    asyncHandler(async (req, res) => {
-        console.log('Fetching Pintu data...')
-        const cachedData = await cache.get('pintu', async () => data_pintu())
         res.status(200).json(cachedData)
     }),
 )
