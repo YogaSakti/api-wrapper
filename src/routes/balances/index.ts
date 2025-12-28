@@ -14,7 +14,7 @@ if (!ACCESS_KEY || typeof ACCESS_KEY !== 'string' || ACCESS_KEY.length < 10) {
 
 // Supported exchanges and coins
 const SUPPORTED_EXCHANGES = ['bybit', 'okx', 'binance']
-const SUPPORTED_COINS = ['usde', 'usdt', 'usdc']
+const SUPPORTED_COINS = ['usde', 'usdt', 'usdc', 'usd1']
 
 // Middleware to validate key
 const validateKey = (req: express.Request, res: express.Response, next: express.NextFunction): void => {
