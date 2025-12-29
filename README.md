@@ -11,7 +11,7 @@ This repository is My Personal project to support other projects.
 - **Modular Exchange Integration**: Separated earn function modules for better maintainability.
 - **Caching**: In-memory caching using `node-cache` for improved performance.
 - **Error Handling**: Global error handler middleware to prevent information leakage.
-- **Security**: Constant-time key comparison and input validation.
+- **Security**: Constant-time key comparison, input validation, and sanitization to prevent injection attacks.
 - **Third-Party Integrations**: Fetches data from external APIs.
 - **Proxy Support**: SOCKS5 and HTTPS proxy agent support for restricted APIs.
 
@@ -40,7 +40,9 @@ This repository is My Personal project to support other projects.
      ```bash
      cp .env.example .env
      ```
-   - Update `.env` with your specific configuration.
+   - Update `.env` with your specific configuration:
+     - Exchange keys
+     - Optional: Proxy settings for restricted APIs
 
 4. Start the development server:
    ```bash
@@ -101,7 +103,6 @@ For detailed logic and route handling, explore the `src/routes` directory.
   - `artatix.ts`: Handles Artatix event and ticket data.
   - `stable.ts`: Provides stablecoin APR rate APIs.
   - `earn/`: Modular exchange data fetching functions.
-  - `balances/`: Exchange balance checking routes (protected).
 - **`src/utils/`**: Utility functions.
   - `cache.service.ts`: In-memory caching implementation using node-cache.
 - **`src/index.ts`**: Entry point for starting the server.
@@ -123,7 +124,8 @@ For detailed logic and route handling, explore the `src/routes` directory.
 - Environment variables are required for external API integrations (CoinGecko, exchanges, proxies).
 - Caching TTL:
   - Artatix events: 5 minutes
-  - Stable APR rates: 1 minute
+  - Stable APR rates: 30 seconds
+  - Exchange: 15 minutes
 
 ## 🚀 Deployment
 

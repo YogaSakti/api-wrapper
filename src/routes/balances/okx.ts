@@ -14,7 +14,7 @@ const getOkxSavingBalances = async () => client.getSavingBalance()
         if (response.length === 0) throw new Error('Error fetching balances: No data returned')
 
         const balances = response.map((item: any) => ({
-            [item.ccy]: parseFloat(item.amt)
+            [item.ccy.toUpperCase()]: parseFloat(item.amt)
         }))
 
         // Merge balances into a single object

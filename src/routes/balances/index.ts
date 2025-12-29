@@ -2,8 +2,13 @@ import express from 'express'
 import { getBybitBalances } from './bybit'
 import { getOkxBalances } from './okx'
 import { getBinanceBalances } from './binance'
+import { getBitgetBalances } from './bitget'
+import Cache from '../../utils/cache.service'
 
 export const balancesRouter = express.Router()
+
+// Cache with 15 minutes TTL (900 seconds)
+const balanceCache = new Cache(900)
 
 // Hardcoded access key for this endpoint
 const ACCESS_KEY = process.env.ACCESS_KEY
@@ -13,19 +18,21 @@ if (!ACCESS_KEY || typeof ACCESS_KEY !== 'string' || ACCESS_KEY.length < 10) {
 }
 
 // Supported exchanges and coins
-const SUPPORTED_EXCHANGES = ['bybit', 'okx', 'binance']
+const SUPPORTED_EXCHANGES = ['bybit', 'okx', 'binance', 'bitget']
 const SUPPORTED_COINS = ['usde', 'usdt', 'usdc', 'usd1']
+// Bitget supports additional coin formats like for fixed savings
+const BITGET_FIXED_PATTERN = /^[A-Z]+-[A-Z]+-\d+$/
 
 // Middleware to validate key
 const validateKey = (req: express.Request, res: express.Response, next: express.NextFunction): void => {
     const { key } = req.params
-    // Constant time comparison to prevent timing attacks
-    if (!key || typeof key !== 'string' || key.length < 10 || key.length !== ACCESS_KEY.length || !cryptoSafeEquals(key, ACCESS_KEY)) {
-        res.status(401).json({
-            error: 'Unauthorized',
-            message: 'Access denied'
-        })
-        return
+    if (!key || typeof key !== 'string') {
+        return res.status(401).json({ error: 'Unauthorized', message: 'Access denied' })
+    }
+
+    const sanitizedKey = key.trim()
+    if (!/^[a-zA-Z0-9_]+$/.test(sanitizedKey) || sanitizedKey.length < 10 || !cryptoSafeEquals(sanitizedKey, ACCESS_KEY)) {
+        return res.status(401).json({ error: 'Unauthorized', message: 'Access denied' })
     }
     next()
 }
@@ -43,26 +50,41 @@ function cryptoSafeEquals(a: string, b: string): boolean {
 // Middleware to validate exchange
 const validateExchange = (req: express.Request, res: express.Response, next: express.NextFunction): void => {
     const { exchange } = req.params
-    if (!exchange || typeof exchange !== 'string' || !SUPPORTED_EXCHANGES.includes(exchange.toLowerCase())) {
-        res.status(400).json({
-            error: 'Invalid Exchange',
-            message: 'Exchange not supported'
-        })
-        return
+    if (!exchange || typeof exchange !== 'string') {
+        return res.status(400).json({ error: 'Invalid Exchange', message: 'Exchange parameter is required' })
     }
+
+    const sanitizedExchange = exchange.trim().toLowerCase()
+    if (!SUPPORTED_EXCHANGES.includes(sanitizedExchange) || !/^[a-z]+$/.test(sanitizedExchange)) {
+        return res.status(400).json({ error: 'Invalid Exchange', message: `Exchange not supported. Supported exchanges: ${SUPPORTED_EXCHANGES.join(', ')}` })
+    }
+
+    req.params.exchange = sanitizedExchange
     next()
 }
 
 // Middleware to validate coin
 const validateCoin = (req: express.Request, res: express.Response, next: express.NextFunction): void => {
     const { coin } = req.params
-    if (!coin || typeof coin !== 'string' || !SUPPORTED_COINS.includes(coin.toLowerCase())) {
-        res.status(400).json({
-            error: 'Invalid Coin',
-            message: 'Coin not supported'
-        })
-        return
+    if (!coin || typeof coin !== 'string') {
+        return res.status(400).json({ error: 'Invalid Coin', message: 'Coin parameter is required' })
     }
+
+    const sanitizedCoin = coin.trim().toUpperCase()
+    const coinLower = sanitizedCoin.toLowerCase()
+
+    // Check if it's a standard coin or Bitget fixed savings format
+    const isValidStandardCoin = SUPPORTED_COINS.includes(coinLower) && /^[A-Z0-9]+$/.test(sanitizedCoin)
+    const isValidBitgetFixed = BITGET_FIXED_PATTERN.test(sanitizedCoin)
+
+    if (!isValidStandardCoin && !isValidBitgetFixed) {
+        return res.status(400).json({
+            error: 'Invalid Coin',
+            message: `Coin not supported. Supported coins: ${SUPPORTED_COINS.join(', ')}. Bitget fixed format: COIN-LEVEL-PERIOD`
+        })
+    }
+
+    req.params.coin = sanitizedCoin
     next()
 }
 
@@ -70,48 +92,35 @@ const validateCoin = (req: express.Request, res: express.Response, next: express
  * GET /balances/:key/:exchange/:coin
  * Protected endpoint that requires key, exchange, and coin parameters
  */
-balancesRouter.get('/:key/:exchange/:coin', validateKey, validateExchange, validateCoin, async (req, res, next) => {
+balancesRouter.get('/:key/:exchange/:coin', validateKey, validateExchange, validateCoin, async (req, res) => {
     try {
         const { exchange, coin } = req.params
-        const coinUpper = coin.toUpperCase()
         const exchangeLower = exchange.toLowerCase()
 
-        // Remove sensitive logging in production
-        // console.log(`Fetching ${coinUpper} balance from ${exchangeLower}...`);
-
-        let balance = 0
-
-        // Handle different exchanges
-        switch (exchangeLower) {
-        case 'bybit':
-            const bybitBalances = await getBybitBalances()
-            balance = bybitBalances[coinUpper as keyof typeof bybitBalances] || 0
-            break
-
-        case 'okx':
-            const okxBalances = await getOkxBalances()
-            balance = okxBalances[coinUpper as keyof typeof okxBalances] || 0
-            break
-
-        case 'binance':
-            const binanceBalances = await getBinanceBalances()
-            balance = binanceBalances[coinUpper as keyof typeof binanceBalances] || 0
-            break
-
-        default:
-            return res.status(400).json({
-                error: 'Exchange Not Implemented',
-                message: `${exchange} integration is not yet implemented`
-            })
+        const balanceFunctions: Record<string, () => Promise<any>> = {
+            bybit: () => balanceCache.get(`balances:bybit`, getBybitBalances),
+            okx: () => balanceCache.get(`balances:okx`, getOkxBalances),
+            binance: () => balanceCache.get(`balances:binance`, getBinanceBalances),
+            bitget: () => balanceCache.get(`balances:bitget`, getBitgetBalances),
         }
 
-        return res.status(200).json({
-            amount: balance
-        })
+        const getBalance = balanceFunctions[exchangeLower]
+        if (!getBalance) {
+            return res.status(400).json({ error: 'Exchange Not Implemented', message: `${exchange} integration is not yet implemented` })
+        }
 
+        const balances = await getBalance()
+        const balance = balances[coin as keyof typeof balances] || 0
+        const validatedBalance = typeof balance === 'number' && !isNaN(balance) && isFinite(balance) ? balance : 0
+
+        return res.status(200).json({ amount: validatedBalance })
     } catch (error) {
         console.error('Error fetching balance:', error)
-        return next(error)
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+        return res.status(500).json({
+            error: 'Internal Server Error',
+            message: process.env.NODE_ENV !== 'production' ? errorMessage : 'An error occurred processing your request'
+        })
     }
 })
 
@@ -119,12 +128,8 @@ balancesRouter.get('/:key/:exchange/:coin', validateKey, validateExchange, valid
  * GET /balances/:key/:exchange
  * Get all balances for a specific exchange
  */
-balancesRouter.get('/:key/:exchange', validateKey, validateExchange, async (req, res, next) => {
-    // Do not reveal any sensitive info
-    return res.status(400).json({
-        error: 'Missing Parameters',
-        message: 'Missing coin parameter.'
-    })
+balancesRouter.get('/:key/:exchange', validateKey, validateExchange, async (req, res) => {
+    return res.status(400).json({ error: 'Missing Parameters', message: 'Missing coin parameter.' })
 })
 
 /**
@@ -132,10 +137,7 @@ balancesRouter.get('/:key/:exchange', validateKey, validateExchange, async (req,
  * Error response - missing exchange and coin parameters
  */
 balancesRouter.get('/:key', validateKey, (req, res) => {
-    return res.status(400).json({
-        error: 'Missing Parameters',
-        message: 'Missing exchange and coin parameters.'
-    })
+    return res.status(400).json({ error: 'Missing Parameters', message: 'Missing exchange and coin parameters.' })
 })
 
 /**
@@ -144,7 +146,9 @@ balancesRouter.get('/:key', validateKey, (req, res) => {
  */
 balancesRouter.get('/', (req, res) => {
     return res.status(200).json({
-        message: 'Private balances API. Access requires a valid key.'
+        message: 'Private balances API. Access requires a valid key.',
+        supportedExchanges: SUPPORTED_EXCHANGES,
+        supportedCoins: SUPPORTED_COINS
     })
 })
 
