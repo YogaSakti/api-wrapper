@@ -27,12 +27,14 @@ const BITGET_FIXED_PATTERN = /^[A-Z]+-[A-Z]+-\d+$/
 const validateKey = (req: express.Request, res: express.Response, next: express.NextFunction): void => {
     const { key } = req.params
     if (!key || typeof key !== 'string') {
-        return res.status(401).json({ error: 'Unauthorized', message: 'Access denied' })
+        res.status(401).json({ error: 'Unauthorized', message: 'Access denied' })
+        return
     }
 
     const sanitizedKey = key.trim()
     if (!/^[a-zA-Z0-9_]+$/.test(sanitizedKey) || sanitizedKey.length < 10 || !cryptoSafeEquals(sanitizedKey, ACCESS_KEY)) {
-        return res.status(401).json({ error: 'Unauthorized', message: 'Access denied' })
+        res.status(401).json({ error: 'Unauthorized', message: 'Access denied' })
+        return
     }
     next()
 }
@@ -51,12 +53,14 @@ function cryptoSafeEquals(a: string, b: string): boolean {
 const validateExchange = (req: express.Request, res: express.Response, next: express.NextFunction): void => {
     const { exchange } = req.params
     if (!exchange || typeof exchange !== 'string') {
-        return res.status(400).json({ error: 'Invalid Exchange', message: 'Exchange parameter is required' })
+        res.status(400).json({ error: 'Invalid Exchange', message: 'Exchange parameter is required' })
+        return
     }
 
     const sanitizedExchange = exchange.trim().toLowerCase()
     if (!SUPPORTED_EXCHANGES.includes(sanitizedExchange) || !/^[a-z]+$/.test(sanitizedExchange)) {
-        return res.status(400).json({ error: 'Invalid Exchange', message: `Exchange not supported. Supported exchanges: ${SUPPORTED_EXCHANGES.join(', ')}` })
+        res.status(400).json({ error: 'Invalid Exchange', message: `Exchange not supported. Supported exchanges: ${SUPPORTED_EXCHANGES.join(', ')}` })
+        return
     }
 
     req.params.exchange = sanitizedExchange
@@ -67,7 +71,8 @@ const validateExchange = (req: express.Request, res: express.Response, next: exp
 const validateCoin = (req: express.Request, res: express.Response, next: express.NextFunction): void => {
     const { coin } = req.params
     if (!coin || typeof coin !== 'string') {
-        return res.status(400).json({ error: 'Invalid Coin', message: 'Coin parameter is required' })
+        res.status(400).json({ error: 'Invalid Coin', message: 'Coin parameter is required' })
+        return
     }
 
     const sanitizedCoin = coin.trim().toUpperCase()
@@ -78,10 +83,11 @@ const validateCoin = (req: express.Request, res: express.Response, next: express
     const isValidBitgetFixed = BITGET_FIXED_PATTERN.test(sanitizedCoin)
 
     if (!isValidStandardCoin && !isValidBitgetFixed) {
-        return res.status(400).json({
+        res.status(400).json({
             error: 'Invalid Coin',
             message: `Coin not supported. Supported coins: ${SUPPORTED_COINS.join(', ')}. Bitget fixed format: COIN-LEVEL-PERIOD`
         })
+        return
     }
 
     req.params.coin = sanitizedCoin
