@@ -4,7 +4,7 @@ import fetch from 'cross-fetch'
 /**
  * Fetch Earn data from Kamino.
  */
-export const data_kamino = async (address) => {
+export const data_kamino = async (address: string) => {
     try {
         //start is 1 day ago
         const now = new Date()
