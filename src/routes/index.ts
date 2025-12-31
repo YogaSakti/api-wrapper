@@ -81,19 +81,17 @@ router.get('/geckoFiltered/:slug', async (req, res, next) => {
             ? filteredTickersByTrust[0]
             : filteredTickersByMarket[0]
 
-        // If not an array, fallback to simple price
-        if (!Array.isArray(filteredData)) {
-            const fallback = await getSimpleTokenPrice(req.params.slug)
-            return res.status(200).send(fallback)
-        }
-        // If we have an array
-        if (filteredData.length > 0) {
+        // If we have filtered ticker data, use it
+        if (filteredData && filteredData.converted_last?.usd) {
+            const coinId = filteredData.base?.toLowerCase() || req.params.slug
             return res
                 .status(200)
-                .send({ [filteredData[0].target_coin_id]: { usd: filteredData[0].converted_last.usd } })
+                .send({ [coinId]: { usd: filteredData.converted_last.usd } })
         }
-        // No data found
-        return res.status(404).send('No data found')
+
+        // Fallback to simple price if no filtered data found
+        const fallback = await getSimpleTokenPrice(req.params.slug)
+        return res.status(200).send(fallback)
     } catch (error) {
         return next(error)
     }
