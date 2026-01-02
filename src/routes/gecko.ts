@@ -5,19 +5,6 @@ import { getSimpleTokenPrice, getFilteredPrice } from '../services/coingecko.ser
 const router = express.Router()
 
 /**
- * GET /gecko/:slug
- * Get token price from coingecko
- */
-router.get('/:slug', async (req, res, next) => {
-    try {
-        const response = await getSimpleTokenPrice(req.params.slug)
-        return res.status(200).send(response)
-    } catch (error) {
-        return next(error)
-    }
-})
-
-/**
  * GET /gecko/filtered/:slug
  * Get filtered token price by market/trust_score
  */
@@ -29,6 +16,19 @@ router.get('/filtered/:slug', async (req, res, next) => {
         if (error.status) {
             return res.status(error.status).send(error.data)
         }
+        return next(error)
+    }
+})
+
+/**
+ * GET /gecko/:slug
+ * Get token price from coingecko
+ */
+router.get('/:slug', async (req, res, next) => {
+    try {
+        const response = await getSimpleTokenPrice(req.params.slug)
+        return res.status(200).send(response)
+    } catch (error) {
         return next(error)
     }
 })
