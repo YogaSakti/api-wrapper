@@ -62,7 +62,7 @@ export const data_Bitget = async () => {
         console.error('Bitget fetch error:', error)
         return []
     }
-};
+}
 
 export const data_BitgetV2 = async () => {
     try {
