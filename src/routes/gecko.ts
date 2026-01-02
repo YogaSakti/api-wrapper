@@ -13,8 +13,13 @@ router.get('/filtered/:slug', async (req, res, next) => {
         const response = await getFilteredPrice(req.params.slug)
         return res.status(200).send(response)
     } catch (error: any) {
-        if (error.status) {
-            return res.status(error.status).send(error.data)
+        try {
+            const parsed = JSON.parse(error.message)
+            if (parsed.status) {
+                return res.status(parsed.status).send(parsed.data)
+            }
+        } catch {
+            // Not a JSON error message, fall through to next
         }
         return next(error)
     }

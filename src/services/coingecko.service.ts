@@ -41,10 +41,10 @@ export const getFilteredPrice = async (slug: string) => {
         }
         // other errors from CG
         if (response?.status?.error_message || response?.status?.error_code) {
-            throw { status: 400, data: response.status }
+            throw new Error(JSON.stringify({ status: 400, data: response.status }))
         }
         // any other error
-        throw { status: 400, data: response }
+        throw new Error(JSON.stringify({ status: 400, data: response }))
     }
 
     // Filter out unwanted LATOKEN, then trust_score=green
