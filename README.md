@@ -83,7 +83,6 @@ All routes are prefixed with `/api/v1`.
 - **GET /api/v1/stable/bybit-usde**: Fetches Bybit USDe airdrop rates.
 - **GET /api/v1/stable/binance**: Fetches FDUSD APR data from Binance.
 - **GET /api/v1/stable/binance-stable**: Fetches FDUSD/USDT/USDC APR data from Binance.
-- **GET /api/v1/stable/flipster**: Fetches USDT APR data from Flipster.
 - **GET /api/v1/stable/bitget**: Fetches combined USDT/USDC APR data from Bitget.
 - **GET /api/v1/stable/pintu**: Fetches USDT-IDR price data from Pintu.
 
