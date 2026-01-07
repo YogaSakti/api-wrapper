@@ -43,34 +43,27 @@ const getEarnPositions = async (category = 'FlexibleSaving') => client
 
 export const getBybitBalances = async () => {
     try {
-        const getData = await Promise.all([
+        const [spotBalances, earnPositions, onChainBalances] = await Promise.all([
             getSpotBalance(),
             getEarnPositions(),
             getEarnPositions('OnChain')
         ])
 
-        // return USDE from spot balance
-        // return USDT and USDC from earn positions
-        const spotBalance = Array.isArray(getData[0]) ? getData[0].find((balance: any) => balance.coin === 'USDE') : null
-        const earnPositions = Array.isArray(getData[1]) ? getData[1].filter((position: any) => position.coin === 'USDT' || position.coin === 'USDC') : []
-        const onChainBalances = Array.isArray(getData[2]) ? getData[2].filter((position: any) => position.coin === 'USDT' || position.coin === 'USDC') : []
+        const findCoin = (balances: any, coin: string) =>Array.isArray(balances) ? balances.find((b: any) => b.coin === coin) : null
+        const calculateOnChainAmount = (position: any) => position ? parseFloat(position.amount) + parseFloat(position.totalPnl) : 0
 
-        const usdtPosition = earnPositions.find((position: any) => position.coin === 'USDT')
-        const usdcPosition = earnPositions.find((position: any) => position.coin === 'USDC')
-
-        // On-chain balances with yield included
-        const usdtOnChain = onChainBalances.find((position: any) => position.coin === 'USDT')
-        const usdcOnChain = onChainBalances.find((position: any) => position.coin === 'USDC')
-
-        const usdtOnChainAmount = usdtOnChain ? (parseFloat(usdtOnChain.amount) + parseFloat(usdtOnChain.totalPnl)) : 0
-        const usdcOnChainAmount = usdcOnChain ? (parseFloat(usdcOnChain.amount) + parseFloat(usdcOnChain.totalPnl)) : 0
+        const usdeBalance = findCoin(spotBalances, 'USDE')
+        const usdtPosition = findCoin(earnPositions, 'USDT')
+        const usdcPosition = findCoin(earnPositions, 'USDC')
+        const usdtOnChain = findCoin(onChainBalances, 'USDT')
+        const usdcOnChain = findCoin(onChainBalances, 'USDC')
 
         return {
-            USDE: spotBalance ? parseFloat(spotBalance.walletBalance) : 0,
+            USDE: usdeBalance ? parseFloat(usdeBalance.walletBalance) : 0,
             USDT: usdtPosition ? parseFloat(usdtPosition.amount) : 0,
             USDC: usdcPosition ? parseFloat(usdcPosition.amount) : 0,
-            'USDT-ONCHAIN': usdtOnChainAmount,
-            'USDC-ONCHAIN': usdcOnChainAmount
+            'USDT-ONCHAIN': calculateOnChainAmount(usdtOnChain),
+            'USDC-ONCHAIN': calculateOnChainAmount(usdcOnChain)
         }
     } catch (error) {
         console.error('Error fetching balance:', error)
