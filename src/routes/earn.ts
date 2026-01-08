@@ -28,6 +28,8 @@ router.get('/', (req, res) => {
 
 /**
  * Bitget route - cached
+ * Filter param: /bitget?filter=2,3,4,5
+ * Index: [1] USDT, [2] USDT-VIP, [3] USDT-VIP-14, [4] USDC, [5] USDC-VIP
  */
 router.get(
     '/bitget',
@@ -36,8 +38,19 @@ router.get(
         const cachedData = await cache.get('bitget', async () => data_Bitget())
         const cachedDataV2 = await cache.get('bitget-v2', async () => data_BitgetV2())
 
-        const combinedData = [...cachedData, ...cachedDataV2]
-        res.status(200).json(combinedData)
+        const allData = [...cachedData, ...cachedDataV2]
+
+        const filterParam = req.query.filter as string
+        if (filterParam) {
+            const indices = filterParam.split(',').map(n => parseInt(n.trim()))
+            const filtered = indices
+                .filter(i => i >= 1 && i <= allData.length)
+                .map(i => allData[i - 1])
+            res.status(200).json(filtered)
+            return
+        }
+
+        res.status(200).json(allData)
     }),
 )
 
