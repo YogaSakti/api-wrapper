@@ -22,25 +22,36 @@ export const data_kamino = async (vault: string, address: string) => {
         const start = threeHoursAgo.toISOString()
         const end = now.toISOString()
 
-        const response = await fetch(`https://api.kamino.finance/kvaults/${vaultId}/users/${address}/metrics/history?start=${start}&end=${end}`, {
-            'headers': {
-                'accept': 'application/json, text/plain, */*',
-                'accept-language': 'en-US,en;q=0.9',
-                'priority': 'u=1, i',
-                'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
-                'sec-ch-ua-mobile': '?0',
-                'sec-ch-ua-platform': '"macOS"',
-                'sec-fetch-dest': 'empty',
-                'sec-fetch-mode': 'cors',
-                'sec-fetch-site': 'cross-site',
-                'Referer': 'https://kamino.finance/',
-                'Referrer-Policy': 'strict-origin-when-cross-origin'
-            },
-            'body': null,
-            'method': 'GET'
-        })
+        const headers = {
+            'accept': 'application/json, text/plain, */*',
+            'accept-language': 'en-US,en;q=0.9',
+            'priority': 'u=1, i',
+            'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"macOS"',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'cross-site',
+            'Referer': 'https://kamino.finance/',
+            'Referrer-Policy': 'strict-origin-when-cross-origin'
+        }
 
-        const json = await response.json()
+        // Fetch both metrics and rewards in parallel
+        const [metricsResponse, rewardsResponse] = await Promise.all([
+            fetch(`https://api.kamino.finance/kvaults/${vaultId}/users/${address}/metrics/history?start=${start}&end=${end}`, {
+                headers,
+                method: 'GET'
+            }),
+            fetch(`https://api.kamino.finance/kvaults/users/${address}/rewards?source=Season5`, {
+                headers,
+                method: 'GET'
+            })
+        ])
+
+        const [json, rewardsJson] = await Promise.all([
+            metricsResponse.json(),
+            rewardsResponse.json()
+        ])
 
         if (!Array.isArray(json) || json.length === 0) {
             throw new Error('No data found in Kamino response.')
@@ -49,9 +60,19 @@ export const data_kamino = async (vault: string, address: string) => {
         // Get the latest object (assuming the last item is the latest)
         const latestData = json[json.length - 1]
 
+        // Find the reward for this specific vault
+        let tokensEarned = 0
+        if (rewardsJson.rewards && Array.isArray(rewardsJson.rewards)) {
+            const vaultReward = rewardsJson.rewards.find((r: any) => r.kvault === vaultId)
+            if (vaultReward && vaultReward.tokensEarned) {
+                tokensEarned = parseFloat(vaultReward.tokensEarned)
+            }
+        }
+
         return {
             vault: vault.toUpperCase(),
-            cumulativeInterestEarned: parseFloat(latestData.cumulativeInterestEarned)
+            cumulativeInterestEarned: parseFloat(latestData.cumulativeInterestEarned),
+            tokensEarned: tokensEarned
         }
     } catch (error) {
         console.error('Kamino fetch error:', error)
