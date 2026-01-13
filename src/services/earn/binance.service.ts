@@ -65,7 +65,10 @@ export const data_Binance = async () => {
         }
     } catch (error) {
         console.error('Binance fetch error:', error)
-        return {}
+        return {
+            name: 'FDUSD',
+            APR: 0
+        }
     }
 }
 

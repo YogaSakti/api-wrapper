@@ -87,7 +87,7 @@ export const data_Bybit_USDe = async () => {
         const now = new Date()
         const startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) // 7 days ago
         const endDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000) // 7 days ahead
-        
+
         const start_at = Math.floor(startDate.getTime() / 1000)
         const end_at = Math.floor(endDate.getTime() / 1000)
 
@@ -124,7 +124,7 @@ export const data_Bybit_USDe = async () => {
         })
 
         const json = await response.json()
-        
+
         if (!json?.result?.daily_aprs || json.result.daily_aprs.length === 0) {
             return {
                 name: 'USDe',
@@ -139,7 +139,7 @@ export const data_Bybit_USDe = async () => {
             const closestDiff = Math.abs(parseInt(closest.timestamp) - todayTimestamp)
             return currentDiff < closestDiff ? current : closest
         })
-        
+
         const apr_e8 = parseInt(closestApr.apr_e8, 10)
 
         return {
@@ -148,7 +148,10 @@ export const data_Bybit_USDe = async () => {
         }
     } catch (error) {
         console.error('Bybit Airdrop fetch error:', error)
-        return {}
+        return {
+            name: 'USDe',
+            APR: 0
+        }
     }
 }
 

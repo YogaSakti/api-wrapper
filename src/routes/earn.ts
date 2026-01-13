@@ -22,7 +22,7 @@ const router = express.Router()
  */
 router.get('/', (req, res) => {
     res.status(200).send({
-        message: 'Welcome to Earn API! Use /okx, /bybit, /binance, /bitget, or /kamino/:address',
+        message: 'Welcome to Earn API! Use /okx, /bybit, /binance, /bitget, or /kamino/:vault/:address',
     })
 })
 
@@ -143,12 +143,13 @@ router.get(
  * Kamino route - cached
  */
 router.get(
-    '/kamino/:address',
+    '/kamino/:vault/:address',
     asyncHandler(async (req, res) => {
         console.log('Fetching Kamino data...')
+        const vault = req.params.vault
         const address = req.params.address
-        const cacheKey = `kamino:${address}`
-        const cachedData = await cache.get(cacheKey, async () => data_kamino(address))
+        const cacheKey = `kamino:${vault}:${address}`
+        const cachedData = await cache.get(cacheKey, async () => data_kamino(vault, address))
         res.status(200).json(cachedData)
     }),
 )
