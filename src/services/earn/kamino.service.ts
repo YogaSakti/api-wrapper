@@ -51,7 +51,7 @@ export const data_kamino = async (vault: string, address: string) => {
 
         return {
             vault: vault.toUpperCase(),
-            cumulativeInterestEarned: latestData.cumulativeInterestEarned
+            cumulativeInterestEarned: parseInt(latestData.cumulativeInterestEarned)
         }
     } catch (error) {
         console.error('Kamino fetch error:', error)
