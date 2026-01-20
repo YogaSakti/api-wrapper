@@ -6,7 +6,8 @@ import { SocksProxyAgent } from 'socks-proxy-agent'
 import { config } from 'dotenv'
 if (process.env.NODE_ENV !== 'production') config()
 
-const proxyAgent = new SocksProxyAgent(process.env.SOCKS5_AGENT || 'socks5h://blabla.blabla:9999')
+const proxyUrl = process.env.SOCKS5_AGENT
+const proxyAgent = proxyUrl ? new SocksProxyAgent(proxyUrl) : undefined
 
 import tls from 'tls'
 tls.DEFAULT_CIPHERS = 'TLS_AES_256_GCM_SHA384:ECDHE-RSA-AES256-GCM-SHA384'
@@ -44,8 +45,7 @@ export const data_OKX = async () => {
                 'authorization': `${process.env.OKX_AUTHORIZATION || ''}`
             },
             'method': 'GET',
-            // @ts-ignore
-            agent: proxyAgent
+            ...(proxyAgent ? { agent: proxyAgent } : {})
         })
 
         const json = await response.json()

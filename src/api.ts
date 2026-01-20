@@ -4,10 +4,34 @@ import morgan from 'morgan'
 
 export const app = express()
 
-app.use(cors({ origin: true }))
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean)
 
-// app.use(morgan(':remote-addr - :remote-user [:date] [:method] :url => :status | :res[content-length] | :response-time'))
-app.use(morgan('[:method] :url => :status | :res[content-length] | :response-time ms'))
+app.use(
+    cors({
+        origin: (origin, callback) => {
+            if (!origin || allowedOrigins.length === 0) {
+                return callback(null, true)
+            }
+            return callback(null, allowedOrigins.includes(origin))
+        }
+    })
+)
+
+const sanitizeUrl = (url: string) => url.replace(/(\/balances\/)([^/]+)/gi, '$1[REDACTED]')
+
+app.use(
+    morgan((tokens, req, res) => {
+        const method = tokens.method(req, res)
+        const url = tokens.url(req, res) || ''
+        const status = tokens.status(req, res)
+        const contentLength = tokens.res(req, res, 'content-length')
+        const responseTime = tokens['response-time'](req, res)
+        return `[${method}] ${sanitizeUrl(url)} => ${status} | ${contentLength} | ${responseTime} ms`
+    })
+)
 
 app.use(express.json())
 app.use(express.raw({ type: 'application/vnd.custom-type' }))

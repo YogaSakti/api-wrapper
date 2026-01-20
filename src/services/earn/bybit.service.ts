@@ -6,7 +6,8 @@ import { SocksProxyAgent } from 'socks-proxy-agent'
 import { config } from 'dotenv'
 if (process.env.NODE_ENV !== 'production') config()
 
-const proxyAgent = new SocksProxyAgent(process.env.SOCKS5_AGENT || 'socks5h://blabla.blabla:9999')
+const proxyUrl = process.env.SOCKS5_AGENT
+const proxyAgent = proxyUrl ? new SocksProxyAgent(proxyUrl) : undefined
 
 /**
  * Fetch data from Bybit.
@@ -119,8 +120,7 @@ export const data_Bybit_USDe = async () => {
                 'coin': 624
             }),
             'method': 'POST',
-            // @ts-ignore
-            agent: proxyAgent
+            ...(proxyAgent ? { agent: proxyAgent } : {})
         })
 
         const json = await response.json()
@@ -187,8 +187,7 @@ export const data_Bybit_OnChain = async () => {
             },
             body: JSON.stringify({ coin_name: 'USD' }),
             method: 'POST',
-            // @ts-ignore
-            agent: proxyAgent
+            ...(proxyAgent ? { agent: proxyAgent } : {})
         })
 
         const json = await response.json()
