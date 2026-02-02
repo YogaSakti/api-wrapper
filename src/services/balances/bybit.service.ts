@@ -50,13 +50,16 @@ export const getBybitBalances = async () => {
         ])
 
         const findCoin = (balances: any, coin: string) =>Array.isArray(balances) ? balances.find((b: any) => b.coin === coin) : null
-        const calculateOnChainAmount = (position: any) => position ? parseFloat(position.amount) + parseFloat(position.totalPnl) : 0
+        const findAllCoins = (balances: any, coin: string) =>Array.isArray(balances) ? balances.filter((b: any) => b.coin === coin) : []
+        const calculateOnChainAmount = (positions: any[]) => 
+            positions.reduce((total, position) => 
+                total + parseFloat(position.amount) + parseFloat(position.totalPnl), 0)
 
         const usdeBalance = findCoin(spotBalances, 'USDE')
         const usdtPosition = findCoin(earnPositions, 'USDT')
         const usdcPosition = findCoin(earnPositions, 'USDC')
-        const usdtOnChain = findCoin(onChainBalances, 'USDT')
-        const usdcOnChain = findCoin(onChainBalances, 'USDC')
+        const usdtOnChain = findAllCoins(onChainBalances, 'USDT')
+        const usdcOnChain = findAllCoins(onChainBalances, 'USDC')
 
         return {
             USDE: usdeBalance ? parseFloat(usdeBalance.walletBalance) : 0,
