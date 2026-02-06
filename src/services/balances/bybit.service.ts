@@ -41,12 +41,25 @@ const getEarnPositions = async (category = 'FlexibleSaving') => client
         throw error
     })
 
+const getUnifiedBalance = async () => client
+    .getAllCoinsBalance({ accountType: 'UNIFIED', coin: 'BYUSDT' })
+    .then((response: any) => {
+        if (response.retCode !== 0) throw new Error(`Error fetching unified balance: ${response.retMsg}`)
+        const filteredBalances = response.result.balance.filter((balance: any) => parseInt(balance.walletBalance) !== 0)
+        return filteredBalances
+    })
+    .catch((error: any) => {
+        console.error('Error in getUnifiedBalance:', error)
+        throw error
+    })
+
 export const getBybitBalances = async () => {
     try {
-        const [spotBalances, earnPositions, onChainBalances] = await Promise.all([
+        const [spotBalances, earnPositions, onChainBalances, unifiedBalances] = await Promise.all([
             getSpotBalance(),
             getEarnPositions(),
-            getEarnPositions('OnChain')
+            getEarnPositions('OnChain'),
+            getUnifiedBalance()
         ])
 
         const findCoin = (balances: any, coin: string) =>Array.isArray(balances) ? balances.find((b: any) => b.coin === coin) : null
@@ -60,13 +73,15 @@ export const getBybitBalances = async () => {
         const usdcPosition = findCoin(earnPositions, 'USDC')
         const usdtOnChain = findAllCoins(onChainBalances, 'USDT')
         const usdcOnChain = findAllCoins(onChainBalances, 'USDC')
+        const byusdtBalance = findCoin(unifiedBalances, 'BYUSDT')
 
         return {
             USDE: usdeBalance ? parseFloat(usdeBalance.walletBalance) : 0,
             USDT: usdtPosition ? parseFloat(usdtPosition.amount) : 0,
             USDC: usdcPosition ? parseFloat(usdcPosition.amount) : 0,
             'USDT-ONCHAIN': calculateOnChainAmount(usdtOnChain),
-            'USDC-ONCHAIN': calculateOnChainAmount(usdcOnChain)
+            'USDC-ONCHAIN': calculateOnChainAmount(usdcOnChain),
+            BYUSDT: byusdtBalance ? parseFloat(byusdtBalance.walletBalance) : 0
         }
     } catch (error) {
         console.error('Error fetching balance:', error)

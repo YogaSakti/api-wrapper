@@ -17,7 +17,7 @@ if (!ACCESS_KEY || typeof ACCESS_KEY !== 'string' || ACCESS_KEY.length < 10) {
 
 // Supported exchanges and coins
 const SUPPORTED_EXCHANGES = ['bybit', 'okx', 'binance', 'bitget']
-const SUPPORTED_COINS = ['usde', 'usdt', 'usdc', 'usd1']
+const SUPPORTED_COINS = ['usde', 'usdt', 'usdc', 'usd1', 'byusdt']
 // Bitget supports additional coin formats like for fixed savings
 const BITGET_FIXED_PATTERN = /^[A-Z]+-[A-Z]+-\d+$/
 // Bybit supports on-chain balances with -ONCHAIN suffix
