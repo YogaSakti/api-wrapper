@@ -8,8 +8,8 @@ router.get('/', (req, res) => {
 })
 
 // Import routes
-import geckoRouter from './gecko'
-router.use('/gecko', geckoRouter)
+import cmcRouter from './cmc'
+router.use('/cmc', cmcRouter)
 
 import artatixRoute from './artatix'
 router.use('/artatix', artatixRoute)

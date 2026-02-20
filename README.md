@@ -1,5 +1,5 @@
 
-# dari.asia API Wrapper
+# API Wrapper
 
 This repository is My Personal project to support other projects.
 
@@ -86,9 +86,8 @@ All routes are prefixed with `/api/v1`.
 - **GET /api/v1/stable/bitget**: Fetches combined USDT/USDC APR data from Bitget.
 - **GET /api/v1/stable/pintu**: Fetches USDT-IDR price data from Pintu.
 
-#### CoinGecko Price APIs
-- **GET /api/v1/gecko/:slug**: Fetches token prices from CoinGecko.
-- **GET /api/v1/geckoFiltered/:slug**: Fetches filtered token price data by market and trust score.
+#### CoinMarketCap Price APIs
+- **GET /api/v1/cmc/:slug?convert=USD**: Fetches token prices from CoinMarketCap. Tries slug first, falls back to symbol. Optional `?convert=` param for fiat currency (default: USD).
 
 For detailed logic and route handling, explore the `src/routes` directory.
 
@@ -98,7 +97,8 @@ For detailed logic and route handling, explore the `src/routes` directory.
 
 - **`src/api.ts`**: Main API configuration, middleware setup, and global error handler.
 - **`src/routes/`**: Organized route definitions.
-  - `index.ts`: Main router with CoinGecko price endpoints.
+  - `index.ts`: Main router.
+  - `cmc.ts`: CoinMarketCap price route.
   - `artatix.ts`: Handles Artatix event and ticket data.
   - `stable.ts`: Provides stablecoin APR rate APIs.
   - `earn/`: Modular exchange data fetching functions.
@@ -120,11 +120,12 @@ For detailed logic and route handling, explore the `src/routes` directory.
   - **Morgan**: Logs HTTP requests for monitoring.
   - **node-cache**: Implements caching for improved performance (TTL varies by route).
   - **Error Handler**: Global middleware prevents stack trace leakage in production.
-- Environment variables are required for external API integrations (CoinGecko, exchanges, proxies).
+- Environment variables are required for external API integrations (CoinMarketCap, exchanges, proxies).
 - Caching TTL:
   - Artatix events: 5 minutes
   - Stable APR rates: 30 seconds
   - Exchange: 15 minutes
+  - CMC prices: 60 seconds
 
 ## 🚀 Deployment
 
