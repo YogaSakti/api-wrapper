@@ -3,6 +3,7 @@ import fetch from 'cross-fetch'
 import Cache from '../utils/cache.service'
 
 const CMC_API_KEY = process.env.CMC_API_KEY
+const CMC_DEX_API_KEY = process.env.CMC_DEX_API_KEY
 const CMC_BASE_URL = 'https://pro-api.coinmarketcap.com'
 
 const cmcHeaders = {
@@ -10,7 +11,13 @@ const cmcHeaders = {
     'X-CMC_PRO_API_KEY': CMC_API_KEY || '',
 }
 
+const dexHeaders = {
+    accept: 'application/json',
+    'X-CMC_PRO_API_KEY': CMC_DEX_API_KEY || '',
+}
+
 const cache = new Cache(60) // 60 seconds TTL
+const dexCache = new Cache(60) // 60 seconds TTL for DEX
 
 /**
  * Get token price from CoinMarketCap by slug or symbol.
@@ -60,5 +67,38 @@ export const getTokenPrice = async (slug: string, fiatCurrency: string = 'USD') 
         const price: number | null = coin.quote?.[fiat]?.price ?? null
 
         return { [coinSlug]: { [fiat.toLowerCase()]: price } }
+    })
+}
+
+/**
+ * Get DEX token price by contract address
+ * Returns raw CMC DEX data fields
+ */
+export const getDexTokenPrice = async (platform: string, address: string) => {
+    const cacheKey = `cmc:dex:${platform}:${address}`
+
+    return dexCache.get(cacheKey, async () => {
+        const url = `${CMC_BASE_URL}/v1/dex/token/price?platform=${platform}&address=${address}`
+        const response = await fetch(url, {
+            headers: dexHeaders,
+            method: 'GET',
+        })
+        const json = await response.json()
+
+        if (json.status?.error_code !== '0' && json.status?.error_code !== 0) {
+            throw new Error(JSON.stringify({ status: 400, data: json.status }))
+        }
+
+        const d = json.data
+        return {
+            platform: d.pdex,
+            address: d.a,
+            price: d.p,
+            priceChange24h: d.pc24h,
+            priceChange7d: d.pc7d,
+            volume24h: d.v24h,
+            liquidity: d.l,
+            marketCap: d.mc,
+        }
     })
 }

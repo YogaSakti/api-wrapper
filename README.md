@@ -98,7 +98,7 @@ For detailed logic and route handling, explore the `src/routes` directory.
 - **`src/api.ts`**: Main API configuration, middleware setup, and global error handler.
 - **`src/routes/`**: Organized route definitions.
   - `index.ts`: Main router.
-  - `cmc.ts`: CoinMarketCap price route.
+  - `cmc.ts`: CoinMarketCap price routes (Standard + DEX).
   - `artatix.ts`: Handles Artatix event and ticket data.
   - `stable.ts`: Provides stablecoin APR rate APIs.
   - `earn/`: Modular exchange data fetching functions.
