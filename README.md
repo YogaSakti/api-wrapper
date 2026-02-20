@@ -86,9 +86,6 @@ All routes are prefixed with `/api/v1`.
 - **GET /api/v1/stable/bitget**: Fetches combined USDT/USDC APR data from Bitget.
 - **GET /api/v1/stable/pintu**: Fetches USDT-IDR price data from Pintu.
 
-#### CoinMarketCap Price APIs
-- **GET /api/v1/cmc/:slug?convert=USD**: Fetches token prices from CoinMarketCap. Tries slug first, falls back to symbol. Optional `?convert=` param for fiat currency (default: USD).
-
 For detailed logic and route handling, explore the `src/routes` directory.
 
 ## 🛠️ Development Notes
