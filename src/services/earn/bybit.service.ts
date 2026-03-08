@@ -177,13 +177,13 @@ export const data_Bybit_BYUSDT = async (tier?: number) => {
             // Tier 2: >100k, only base apy (no bonus)
             const tierData = product.bonus_apr_list?.find((t: any) => t.to_amount === '-1')
             const apy_e8 = parseInt(tierData?.apy_e8 ?? '0', 10)
-            return { name: 'BYUSDT', APR: apy_e8 / 100000000, tier: 2 }
+            return { name: 'BYUSDT', APR: apy_e8 / 100000000 }
         }
 
         // Tier 1 (default): full APR (base + bonus)
         const tierData = product.bonus_apr_list?.find((t: any) => t.from_amount === '0')
         const total_e8 = parseInt(tierData?.apy_e8 ?? '0', 10) + parseInt(tierData?.bonus_apr_e8 ?? '0', 10)
-        return { name: 'BYUSDT', APR: total_e8 / 100000000, tier: 1 }
+        return { name: 'BYUSDT', APR: total_e8 / 100000000 }
     } catch (error) {
         console.error('Bybit BYUSDT fetch error:', error)
         return { name: 'BYUSDT', APR: 0 }
