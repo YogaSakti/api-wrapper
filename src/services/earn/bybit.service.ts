@@ -9,6 +9,26 @@ if (process.env.NODE_ENV !== 'production') config()
 const proxyUrl = process.env.SOCKS5_AGENT
 const proxyAgent = proxyUrl ? new SocksProxyAgent(proxyUrl) : undefined
 
+const BYBIT_HEADERS = {
+    'accept': '*/*',
+    'accept-language': 'en-US,en;q=0.9,id;q=0.8',
+    'content-type': 'application/json',
+    'guid': '9e1542d6-d26f-515f-043c-575398b7c3b1',
+    'lang': 'en',
+    'platform': 'pc',
+    'priority': 'u=1, i',
+    'sec-ch-ua': '"Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"macOS"',
+    'sec-fetch-dest': 'empty',
+    'sec-fetch-mode': 'cors',
+    'sec-fetch-site': 'same-origin',
+    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36',
+    'usertoken': '',
+    'x-user-agent': 'undefined',
+    'cookie': process.env.BYBIT_COOKIE || '',
+}
+
 /**
  * Fetch data from Bybit.
  */
@@ -18,25 +38,13 @@ export const data_Bybit = async () => {
             'https://api2.bybit.com/s1/byfi/get-saving-homepage-product-cards',
             {
                 headers: {
-                    accept: '*/*',
-                    'accept-language': 'en-US,en;q=0.9',
-                    'content-type': 'application/json',
-                    guid: '9f3ecb05-d2c1-facf-9baa-b1a12546df95',
-                    lang: 'en',
-                    platform: 'pc',
-                    priority: 'u=1, i',
-                    'sec-ch-ua': '"Not A(Brand";v="8", "Chromium";v="132", "Google Chrome";v="132"',
-                    'sec-ch-ua-mobile': '?0',
-                    'sec-ch-ua-platform': '"Windows"',
-                    'sec-fetch-dest': 'empty',
-                    'sec-fetch-mode': 'cors',
-                    'sec-fetch-site': 'same-site',
-                    traceparent: '00-54aeda26e5ff90870be888effe4a1f5b-b8682f9a572ea8cb-00',
-                    usertoken: '',
-                    cookie: process.env.BYBIT_COOKIE || '',
-                    Referer: 'https://www.bybit.com/',
-                    'Referrer-Policy': 'strict-origin-when-cross-origin',
+                    ...BYBIT_HEADERS,
+                    'guid': '9f3ecb05-d2c1-facf-9baa-b1a12546df95',
+                    'traceparent': '00-54aeda26e5ff90870be888effe4a1f5b-b8682f9a572ea8cb-00',
+                    'referer': 'https://www.bybit.com/',
+                    'referrer-policy': 'strict-origin-when-cross-origin',
                 },
+
                 body: JSON.stringify(
                     {
                         'product_area': [0],
@@ -93,27 +101,11 @@ export const data_Bybit_USDe = async () => {
         const end_at = Math.floor(endDate.getTime() / 1000)
 
         const response = await fetch('https://www.bybit.com/x-api/s1/byfi/airdrop/get-apr', {
-            'headers': {
-                'accept': '*/*',
-                'accept-language': 'en-US,en;q=0.9,id;q=0.8',
-                'content-type': 'application/json',
-                'guid': '9e1542d6-d26f-515f-043c-575398b7c3b1',
-                'lang': 'en',
-                'platform': 'pc',
-                'priority': 'u=1, i',
-                'sec-ch-ua': '"Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"',
-                'sec-ch-ua-mobile': '?0',
-                'sec-ch-ua-platform': '"macOS"',
-                'sec-fetch-dest': 'empty',
-                'sec-fetch-mode': 'cors',
-                'sec-fetch-site': 'same-origin',
+            headers: {
+                ...BYBIT_HEADERS,
+                'referer': 'https://www.bybit.com/en/earn/usde-page',
                 'traceparent': '00-f2c93bf876a5fce34d3d6cc5f153a583-c8e288e645f396a5-01',
-                'usertoken': '',
-                'x-user-agent': 'undefined',
-                'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
-                'cookie': process.env.BYBIT_COOKIE || '',
             },
-            'referrer': 'https://www.bybit.com/en/earn/usde-page',
             'body': JSON.stringify({
                 'start_at': start_at,
                 'end_at': end_at,
@@ -156,34 +148,61 @@ export const data_Bybit_USDe = async () => {
 }
 
 /**
+ * Fetch BYUSDT airdrop product data from Bybit.
+ * @param tier - 1 (default, ≤100k, full APR) or 2 (>100k, base APR only)
+ */
+export const data_Bybit_BYUSDT = async (tier?: number) => {
+    try {
+        const response = await fetch('https://www.bybit.com/x-api/s1/byfi/get-airdrop-product', {
+            headers: {
+                ...BYBIT_HEADERS,
+                'referer': 'https://www.bybit.com/en/earn/byusdt-page',
+            },
+            method: 'GET',
+            ...(proxyAgent ? { agent: proxyAgent } : {})
+        })
+
+        const json = await response.json()
+
+        if (!Array.isArray(json?.result?.products)) {
+            throw new Error('Unexpected Bybit BYUSDT response structure.')
+        }
+
+        const product = json.result.products.find((p: any) => p.coin_name === 'BYUSDT')
+        if (!product) {
+            return { name: 'BYUSDT', APR: 0 }
+        }
+
+        if (tier === 2) {
+            // Tier 2: >100k, only base apy (no bonus)
+            const tierData = product.bonus_apr_list?.find((t: any) => t.to_amount === '-1')
+            const apy_e8 = parseInt(tierData?.apy_e8 ?? '0', 10)
+            return { name: 'BYUSDT', APR: apy_e8 / 100000000, tier: 2 }
+        }
+
+        // Tier 1 (default): full APR (base + bonus)
+        const tierData = product.bonus_apr_list?.find((t: any) => t.from_amount === '0')
+        const total_e8 = parseInt(tierData?.apy_e8 ?? '0', 10) + parseInt(tierData?.bonus_apr_e8 ?? '0', 10)
+        return { name: 'BYUSDT', APR: total_e8 / 100000000, tier: 1 }
+    } catch (error) {
+        console.error('Bybit BYUSDT fetch error:', error)
+        return { name: 'BYUSDT', APR: 0 }
+    }
+}
+
+/**
  * Fetch On-chain data from Bybit.
  */
 export const data_Bybit_OnChain = async () => {
     try {
         const response = await fetch('https://www.bybit.com/x-api/s1/byfi/pos-staking/homepage-product-cards', {
             headers: {
-                'accept': '*/*',
-                'accept-language': 'en-US,en;q=0.9,id;q=0.8',
-                'content-type': 'application/json',
-                'cookie': process.env.BYBIT_COOKIE || '',
-                'dnt': '1',
+                ...BYBIT_HEADERS,
                 'guid': '9f3ecb05-d2c1-facf-9baa-b1a12546df95',
-                'lang': 'en',
-                'origin': 'https://www.bybit.com',
-                'platform': 'pc',
-                'priority': 'u=1, i',
-                'referer': 'https://www.bybit.com/en/earn/pos',
-                'sec-ch-ua': '"Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"',
-                'sec-ch-ua-mobile': '?0',
-                'sec-ch-ua-platform': '"Windows"',
-                'sec-fetch-dest': 'empty',
-                'sec-fetch-mode': 'cors',
-                'sec-fetch-site': 'same-origin',
-                'sec-gpc': '1',
-                'traceparent': '00-43d0dd7262b18e644dc97846df830d5a-9b8ce1a83e1e55a4-01',
                 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
-                'usertoken': '',
-                'x-user-agent': 'undefined',
+                'origin': 'https://www.bybit.com',
+                'referer': 'https://www.bybit.com/en/earn/pos',
+                'traceparent': '00-43d0dd7262b18e644dc97846df830d5a-9b8ce1a83e1e55a4-01',
             },
             body: JSON.stringify({ coin_name: 'USD' }),
             method: 'POST',

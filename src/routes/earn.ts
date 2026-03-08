@@ -6,6 +6,7 @@ import {
     data_Bybit,
     data_Bybit_USDe,
     data_Bybit_OnChain,
+    data_Bybit_BYUSDT,
     data_Binance,
     data_Binance_All,
     data_Bitget,
@@ -97,6 +98,21 @@ router.get(
         console.log('Fetching Bybit USDE data...')
         // const cachedData = await cache.get('bybit-usde', async () => data_Bybit_USDe())
         const data = await data_Bybit_USDe()
+        res.status(200).json(data)
+    }),
+)
+
+/**
+ * Bybit BYUSDT route - cached
+ * Optional tier param: ?tier=1 (default, ≤100k, full APR) or ?tier=2 (>100k, base APR only)
+ */
+router.get(
+    '/bybit-byusdt',
+    asyncHandler(async (req, res) => {
+        console.log('Fetching Bybit BYUSDT data...')
+        const tier = req.query.tier ? parseInt(req.query.tier as string) : undefined
+        const cacheKey = `bybit-byusdt:${tier ?? 1}`
+        const data = await cache.get(cacheKey, async () => data_Bybit_BYUSDT(tier))
         res.status(200).json(data)
     }),
 )

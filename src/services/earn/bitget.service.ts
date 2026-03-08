@@ -1,26 +1,32 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import fetch from 'cross-fetch'
 
+const BITGET_HEADERS = {
+    'accept': 'application/json, text/plain, */*',
+    'accept-language': 'en-US,en;q=0.9',
+    'content-type': 'application/json;charset=UTF-8',
+    'language': 'en_US',
+    'locale': 'en_US',
+    'priority': 'u=1, i',
+}
+
+const BITGET_FETCH_OPTIONS = {
+    headers: BITGET_HEADERS,
+    referrer: 'https://www.bitgetapp.com/earning/savings?source1=earn&source2=savings',
+    referrerPolicy: 'unsafe-url',
+    method: 'POST',
+    mode: 'cors',
+    credentials: 'include',
+} as const
+
 /**
  * Fetch data from Bitget.
  */
 export const data_Bitget = async () => {
     try {
         const response = await fetch('https://www.bitgetapp.com/v1/finance/savings/product/list', {
-            'headers': {
-                'accept': 'application/json, text/plain, */*',
-                'accept-language': 'en-US,en;q=0.9',
-                'content-type': 'application/json;charset=UTF-8',
-                'language': 'en_US',
-                'locale': 'en_US',
-                'priority': 'u=1, i',
-            },
-            'referrer': 'https://www.bitgetapp.com/earning/savings?source1=earn&source2=savings',
-            'referrerPolicy': 'unsafe-url',
-            'body': '{"coinName":"USDT","matchUserAssets":false,"matchVipProduct":false,"savingsReq":true,"searchObj":{},"locale":"en"}',
-            'method': 'POST',
-            'mode': 'cors',
-            'credentials': 'include'
+            ...BITGET_FETCH_OPTIONS,
+            body: '{"coinName":"USDT","matchUserAssets":false,"matchVipProduct":false,"savingsReq":true,"searchObj":{},"locale":"en"}',
         })
 
         const json = await response.json()
@@ -80,20 +86,8 @@ export const data_Bitget = async () => {
 export const data_BitgetV2 = async () => {
     try {
         const response = await fetch('https://www.bitgetapp.com/v1/finance/savings/product/list', {
-            'headers': {
-                'accept': 'application/json, text/plain, */*',
-                'accept-language': 'en-US,en;q=0.9',
-                'content-type': 'application/json;charset=UTF-8',
-                'language': 'en_US',
-                'locale': 'en_US',
-                'priority': 'u=1, i',
-            },
-            'referrer': 'https://www.bitgetapp.com/earning/savings?source1=earn&source2=savings',
-            'referrerPolicy': 'unsafe-url',
-            'body': '{"coinName":"USDC","matchUserAssets":false,"matchVipProduct":false,"savingsReq":true,"searchObj":{},"locale":"en"}',
-            'method': 'POST',
-            'mode': 'cors',
-            'credentials': 'include'
+            ...BITGET_FETCH_OPTIONS,
+            body: '{"coinName":"USDC","matchUserAssets":false,"matchVipProduct":false,"savingsReq":true,"searchObj":{},"locale":"en"}',
         })
 
         const json = await response.json()

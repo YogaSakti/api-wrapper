@@ -1,6 +1,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import fetch from 'cross-fetch'
 
+const BINANCE_HEADERS = {
+    'accept': '*/*',
+    'accept-language': 'en-US,en;q=0.9',
+    'clienttype': 'web',
+    'content-type': 'application/json',
+    'lang': 'en',
+    'priority': 'u=1, i',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"Windows"',
+    'sec-fetch-dest': 'empty',
+    'sec-fetch-mode': 'cors',
+    'sec-fetch-site': 'same-origin',
+    'x-passthrough-token': '',
+    'referer': 'https://www.binance.com/en/earn',
+    'referrer-policy': 'origin-when-cross-origin',
+}
+
 /**
  * Fetch data from Binance.
  */
@@ -10,28 +27,14 @@ export const data_Binance = async () => {
             'https://www.binance.com/bapi/earn/v1/friendly/finance-earn/homepage/overview?searchCoin=FDUSD&pageSize=100',
             {
                 headers: {
-                    accept: '*/*',
-                    'accept-language': 'en-US,en;q=0.9',
+                    ...BINANCE_HEADERS,
                     'bnc-currency': 'USD_USD',
                     'bnc-location': 'BINANCE',
                     'bnc-uuid': '9c7f4b6f-b75f-41d5-9872-98e1e1827126',
-                    clienttype: 'web',
-                    'content-type': 'application/json',
-                    csrftoken: 'd41d8cd98f00b204e9800998ecf8427e',
-                    lang: 'en',
-                    priority: 'u=1, i',
-                    'sec-ch-ua':
-                        '"Not A(Brand";v="8", "Chromium";v="132", "Google Chrome";v="132"',
-                    'sec-ch-ua-mobile': '?0',
-                    'sec-ch-ua-platform': '"Windows"',
-                    'sec-fetch-dest': 'empty',
-                    'sec-fetch-mode': 'cors',
-                    'sec-fetch-site': 'same-origin',
-                    'x-passthrough-token': '',
+                    'csrftoken': 'd41d8cd98f00b204e9800998ecf8427e',
+                    'sec-ch-ua': '"Not A(Brand";v="8", "Chromium";v="132", "Google Chrome";v="132"',
                     'x-trace-id': 'e3b264c3-6475-4876-8751-573290b8cffb',
                     'x-ui-request-trace': 'e3b264c3-6475-4876-8751-573290b8cffb',
-                    Referer: 'https://www.binance.com/en/earn',
-                    'Referrer-Policy': 'origin-when-cross-origin',
                 },
                 method: 'GET'
             },
@@ -79,29 +82,16 @@ export const data_Binance_All = async (noLimit: string) => {
     try {
         const listCurrency = ['USD1', 'USDT', 'USDC']
         const getData = (currency: any) => fetch(`https://www.binance.com/bapi/earn/v3/friendly/finance-earn/calculator/product/list?asset=${currency}&type=Flexible`, {
-            'headers': {
-                'accept': '*/*',
-                'accept-language': 'en-US,en;q=0.9',
+            headers: {
+                ...BINANCE_HEADERS,
                 'bnc-currency': 'USD',
                 'bnc-location': '',
                 'bnc-uuid': '3f4df1c8-cd33-4b91-8e24-93ed8338275b',
-                'clienttype': 'web',
-                'content-type': 'application/json', 'lang': 'en',
-                'priority': 'u=1, i',
                 'sec-ch-ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
-                'sec-ch-ua-mobile': '?0',
-                'sec-ch-ua-platform': '"Windows"',
-                'sec-fetch-dest': 'empty',
-                'sec-fetch-mode': 'cors',
-                'sec-fetch-site': 'same-origin',
-                'x-passthrough-token': '',
                 'x-trace-id': '735af735-42db-47c7-8feb-68272939852b',
                 'x-ui-request-trace': '735af735-42db-47c7-8feb-68272939852b',
-                'Referer': 'https://www.binance.com/en/earn',
-                'Referrer-Policy': 'origin-when-cross-origin'
             },
-            'body': null,
-            'method': 'GET'
+            method: 'GET'
         })
 
         const jsons = await Promise.all(listCurrency.map(c => getData(c).then(r => r.json())))

@@ -81,6 +81,7 @@ All routes are prefixed with `/api/v1`.
 - **GET /api/v1/stable/okx**: Retrieves USDT/USDC APR data from OKX.
 - **GET /api/v1/stable/bybit**: Fetches USDT/USDC APR data from Bybit.
 - **GET /api/v1/stable/bybit-usde**: Fetches Bybit USDe airdrop rates.
+- **GET /api/v1/stable/bybit-byusdt**: Fetches Bybit BYUSDT airdrop rates.
 - **GET /api/v1/stable/binance**: Fetches FDUSD APR data from Binance.
 - **GET /api/v1/stable/binance-stable**: Fetches FDUSD/USDT/USDC APR data from Binance.
 - **GET /api/v1/stable/bitget**: Fetches combined USDT/USDC APR data from Bitget.
