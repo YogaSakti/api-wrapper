@@ -33,6 +33,7 @@ export const data_kamino = async (vault: string, address: string) => {
             'sec-fetch-dest': 'empty',
             'sec-fetch-mode': 'cors',
             'sec-fetch-site': 'cross-site',
+            'Origin': 'https://kamino.finance/',
             'Referer': 'https://kamino.finance/',
             'Referrer-Policy': 'strict-origin-when-cross-origin'
         }
@@ -54,25 +55,22 @@ export const data_kamino = async (vault: string, address: string) => {
             rewardsResponse.json()
         ])
 
-        if (!Array.isArray(json) || json.length === 0) {
-            throw new Error('No data found in Kamino response.')
-        }
-
-        // Get the latest object (assuming the last item is the latest)
-        const latestData = json[json.length - 1]
+        const metrics = Array.isArray(json) ? json : []
+        // Metrics can be empty for some windows; treat this as 0 instead of an error.
+        const latestData = metrics.length > 0 ? metrics[metrics.length - 1] : null
 
         // Find the reward for this specific vault
         let tokensEarned = 0
-        if (rewardsJson.rewards && Array.isArray(rewardsJson.rewards)) {
+        if (Array.isArray(rewardsJson?.rewards)) {
             const vaultReward = rewardsJson.rewards.find((r: any) => r.kvault === vaultId)
-            if (vaultReward && vaultReward.tokensEarned) {
+            if (vaultReward?.tokensEarned) {
                 tokensEarned = parseFloat(vaultReward.tokensEarned)
             }
         }
 
         const result = {
             vault: vault.toUpperCase(),
-            cumulativeInterestEarned: parseFloat(latestData.cumulativeInterestEarned),
+            cumulativeInterestEarned: Number(latestData?.cumulativeInterestEarned ?? 0),
             tokensEarned: tokensEarned
         }
 
