@@ -22,6 +22,19 @@ app.use(
 
 const sanitizeUrl = (url: string) => url.replace(/(\/balances\/)([^/]+)/gi, '$1[REDACTED]')
 
+const sanitizeHeaders = (headers: express.Request['headers']) => {
+    const sanitized = { ...headers }
+
+    if (sanitized.authorization) {
+        sanitized.authorization = '[REDACTED]'
+    }
+    if (sanitized['x-api-key']) {
+        sanitized['x-api-key'] = '[REDACTED]'
+    }
+
+    return sanitized
+}
+
 app.use(
     morgan((tokens, req, res) => {
         const method = tokens.method(req, res)
@@ -48,14 +61,22 @@ app.use('/api/v1', route)
 
 // Error handling middleware (must be last)
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-    console.error('Error:', err)
+    console.error('Error:', {
+        error: err,
+        method: req.method,
+        url: sanitizeUrl(req.originalUrl || req.url),
+        headers: sanitizeHeaders(req.headers),
+    })
     
     // Don't leak error details in production
     const isDevelopment = process.env.NODE_ENV !== 'production'
     
-    res.status(err.status || 500).json({
-        error: 'Internal Server Error',
+    const status = err.status || 500
+
+    res.status(status).json({
+        error: status >= 500 ? 'Internal Server Error' : err.name || 'Request Error',
         message: isDevelopment ? err.message : 'An error occurred processing your request',
+        ...(isDevelopment && err.data && { data: err.data }),
         ...(isDevelopment && { stack: err.stack })
     })
 })

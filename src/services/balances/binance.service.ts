@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { MainClient } from 'binance'
+import { NumericBalanceMap } from '../../types/api.types'
 
 // Ensure that the environment variables are set
 if (!process.env.KEY_BINANCE || !process.env.SECRET_BINANCE) {
@@ -54,7 +55,7 @@ const getFlexibleSavings = async () => {
     }
 }
 
-export const getBinanceBalances = async () => {
+export const getBinanceBalances = async (): Promise<NumericBalanceMap> => {
     try {
         const [spotBalances, flexibleSavings] = await Promise.all([
             getSpotBalance(),

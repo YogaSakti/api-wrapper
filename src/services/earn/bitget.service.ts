@@ -1,5 +1,29 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import fetch from 'cross-fetch'
+import { EarnAprItem } from '../../types/api.types'
+
+interface BitgetApy {
+    apy: string
+    rateLevel: number
+}
+
+interface BitgetProduct {
+    coinName: string
+    period: number
+    apyList: BitgetApy[]
+}
+
+interface BitgetBizLineProduct {
+    productLevel?: number
+    productList?: BitgetProduct[]
+}
+
+interface BitgetSavingsGroup {
+    bizLineProductList?: BitgetBizLineProduct[]
+}
+
+interface BitgetSavingsResponse {
+    data?: BitgetSavingsGroup[]
+}
 
 const BITGET_HEADERS = {
     'accept': 'application/json, text/plain, */*',
@@ -19,114 +43,95 @@ const BITGET_FETCH_OPTIONS = {
     credentials: 'include',
 } as const
 
+const BITGET_SAVINGS_URL = 'https://www.bitgetapp.com/v1/finance/savings/product/list'
+
+const buildSavingsRequestBody = (coinName: string) => JSON.stringify({
+    coinName,
+    matchUserAssets: false,
+    matchVipProduct: false,
+    savingsReq: true,
+    searchObj: {},
+    locale: 'en',
+})
+
+const parseApr = (apy: string): number => parseFloat(apy) / 100
+
+const findApy = (product: BitgetProduct | undefined, rateLevel: number): BitgetApy | undefined => {
+    return product?.apyList?.find(item => item.rateLevel === rateLevel)
+}
+
+const createAprItem = (product: BitgetProduct, apy: BitgetApy, suffix = ''): EarnAprItem => ({
+    name: `${product.coinName}${suffix}`,
+    APR: parseApr(apy.apy),
+})
+
+const fetchBitgetSavings = async (coinName: string): Promise<BitgetSavingsResponse> => {
+    const response = await fetch(BITGET_SAVINGS_URL, {
+        ...BITGET_FETCH_OPTIONS,
+        body: buildSavingsRequestBody(coinName),
+    })
+
+    if (!response.ok) {
+        throw new Error(`Bitget request failed with status ${response.status}`)
+    }
+
+    return response.json() as Promise<BitgetSavingsResponse>
+}
+
+const getProductGroups = (json: BitgetSavingsResponse): BitgetBizLineProduct[] => {
+    const groups = json.data?.[0]?.bizLineProductList
+    if (!groups?.length) {
+        throw new Error('Unexpected Bitget response structure.')
+    }
+
+    return groups
+}
+
+const parseBitgetSavings = (json: BitgetSavingsResponse, includeVip14 = false): EarnAprItem[] => {
+    const groups = getProductGroups(json)
+    const standardProducts = groups[0]?.productList
+    const standardFlexible = standardProducts?.find(item => item.period === 0)
+    const standardApy = findApy(standardFlexible, 1)
+
+    if (!standardFlexible || !standardApy) {
+        throw new Error('No standard flexible product data found.')
+    }
+
+    const result: EarnAprItem[] = [createAprItem(standardFlexible, standardApy)]
+
+    const vipProducts = groups.find(item => item.productLevel === 2)?.productList
+    const vipFlexible = vipProducts?.find(item => item.period === 0)
+    const vipFlexibleApy = findApy(vipFlexible, 0)
+
+    if (vipFlexible && vipFlexibleApy) {
+        result.push(createAprItem(vipFlexible, vipFlexibleApy, '-VIP'))
+    }
+
+    if (includeVip14) {
+        const vip14 = vipProducts?.find(item => item.period === 14)
+        const vip14Apy = findApy(vip14, 0)
+
+        if (vip14 && vip14Apy) {
+            result.push(createAprItem(vip14, vip14Apy, '-VIP-14'))
+        }
+    }
+
+    return result
+}
+
+const getBitgetSavingsData = async (coinName: string, includeVip14 = false): Promise<EarnAprItem[]> => {
+    try {
+        const json = await fetchBitgetSavings(coinName)
+        return parseBitgetSavings(json, includeVip14)
+    } catch (error) {
+        console.error('Bitget fetch error:', error)
+        return []
+    }
+}
+
 /**
  * Fetch data from Bitget.
  */
-export const data_Bitget = async () => {
-    try {
-        const response = await fetch('https://www.bitgetapp.com/v1/finance/savings/product/list', {
-            ...BITGET_FETCH_OPTIONS,
-            body: '{"coinName":"USDT","matchUserAssets":false,"matchVipProduct":false,"savingsReq":true,"searchObj":{},"locale":"en"}',
-        })
+export const data_Bitget = async () => getBitgetSavingsData('USDT', true)
 
-        const json = await response.json()
-        if (!json?.data?.length) {
-            throw new Error('Unexpected Bitget response structure.')
-        }
-
-        const data = json.data[0].bizLineProductList[0].productList.find((item: any) => item.period === 0)
-        if (!data) {
-            throw new Error('No data found for period = 0.')
-        }
-
-        const apy = data.apyList.find((item: any) => item.rateLevel === 1)
-        if (!apy) {
-            throw new Error('No data found for rateLevel = 1.')
-        }
-
-        const vipProducts = json.data[0].bizLineProductList.find((item: any) => item.productLevel === 2)?.productList
-        if (!vipProducts) {
-            throw new Error('No VIP products found.')
-        }
-
-        const vipFlexible = vipProducts.find((item: any) => item.period === 0)
-        const vipFlexibleApy = vipFlexible?.apyList.find((item: any) => item.rateLevel === 0)
-
-        const vip14 = vipProducts.find((item: any) => item.period === 14)
-        const vip14Apy = vip14?.apyList.find((item: any) => item.rateLevel === 0)
-
-        const result = [
-            {
-                name: data.coinName,
-                APR: parseFloat(apy.apy) / 100,
-            },
-        ]
-
-        if (vipFlexible && vipFlexibleApy) {
-            result.push({
-                name: `${vipFlexible.coinName}-VIP`,
-                APR: parseFloat(vipFlexibleApy.apy) / 100,
-            })
-        }
-
-        if (vip14 && vip14Apy) {
-            result.push({
-                name: `${vip14.coinName}-VIP-14`,
-                APR: parseFloat(vip14Apy.apy) / 100,
-            })
-        }
-
-        return result
-    } catch (error) {
-        console.error('Bitget fetch error:', error)
-        return []
-    }
-}
-
-export const data_BitgetV2 = async () => {
-    try {
-        const response = await fetch('https://www.bitgetapp.com/v1/finance/savings/product/list', {
-            ...BITGET_FETCH_OPTIONS,
-            body: '{"coinName":"USDC","matchUserAssets":false,"matchVipProduct":false,"savingsReq":true,"searchObj":{},"locale":"en"}',
-        })
-
-        const json = await response.json()
-        if (!json?.data?.length) {
-            throw new Error('Unexpected Bitget response structure.')
-        }
-
-        const data = json.data[0].bizLineProductList[0].productList.find((item: any) => item.period === 0)
-        if (!data) {
-            throw new Error('No data found for period = 0.')
-        }
-
-        const apy = data.apyList.find((item: any) => item.rateLevel === 1)
-        if (!apy) {
-            throw new Error('No data found for rateLevel = 1.')
-        }
-
-        const vipData = json.data[0].bizLineProductList.find((item: any) => item.productLevel === 2).productList.find((item: any) => item.period === 0)
-        if (!vipData) {
-            throw new Error('No data found for VIP.')
-        }
-
-        const vipApy = vipData.apyList.find((item: any) => item.rateLevel === 0)
-        if (!vipApy) {
-            throw new Error('No data found for VIP rateLevel = 0.')
-        }
-
-        return [
-            {
-                name: data.coinName,
-                APR: parseFloat(apy.apy) / 100,
-            },
-            {
-                name: `${vipData.coinName}-VIP`,
-                APR: parseFloat(vipApy.apy) / 100,
-            },
-        ]
-    } catch (error) {
-        console.error('Bitget fetch error:', error)
-        return []
-    }
-}
+export const data_BitgetV2 = async () => getBitgetSavingsData('USDC')

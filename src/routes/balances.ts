@@ -2,11 +2,13 @@
 import express from 'express'
 import { getBybitBalances, getOkxBalances, getBinanceBalances, getBitgetBalances } from '../services/balances'
 import Cache from '../utils/cache.service'
+import { NumericBalanceMap } from '../types/api.types'
 
 export const balancesRouter = express.Router()
 
 // Cache with 15 minutes TTL (900 seconds)
 const balanceCache = new Cache(900)
+export const clearBalanceCache = () => balanceCache.flush()
 
 // Hardcoded access key for this endpoint
 const ACCESS_KEY = process.env.ACCESS_KEY
@@ -23,9 +25,26 @@ const BITGET_FIXED_PATTERN = /^[A-Z]+-[A-Z]+-\d+$/
 // Bybit supports on-chain balances with -ONCHAIN suffix
 const BYBIT_ONCHAIN_PATTERN = /^(USDT|USDC)-ONCHAIN$/
 
+const getBearerToken = (authorization: string | undefined): string | undefined => {
+    if (!authorization) return undefined
+
+    const [scheme, token] = authorization.split(' ')
+    if (scheme?.toLowerCase() !== 'bearer' || !token) return undefined
+
+    return token
+}
+
+const getRequestKey = (req: express.Request): string | undefined => {
+    const headerKey = req.header('x-api-key')
+    const bearerToken = getBearerToken(req.header('authorization'))
+    const pathKey = typeof req.params.key === 'string' ? req.params.key : undefined
+
+    return headerKey || bearerToken || pathKey
+}
+
 // Middleware to validate key
 const validateKey = (req: express.Request, res: express.Response, next: express.NextFunction): void => {
-    const { key } = req.params
+    const key = getRequestKey(req)
     if (!key || typeof key !== 'string') {
         res.status(401).json({ error: 'Unauthorized', message: 'Access denied' })
         return
@@ -97,14 +116,16 @@ const validateCoin = (req: express.Request, res: express.Response, next: express
 
 /**
  * GET /balances/:key/:exchange/:coin
- * Protected endpoint that requires key, exchange, and coin parameters
+ * Protected endpoint that requires key, exchange, and coin parameters.
+ * Key can be provided through x-api-key, Authorization: Bearer, or the legacy path key.
  */
 balancesRouter.get('/:key/:exchange/:coin', validateKey, validateExchange, validateCoin, async (req, res) => {
     try {
-        const { exchange, coin } = req.params
+        const exchange = req.params.exchange as string
+        const coin = req.params.coin as string
         const exchangeLower = exchange.toLowerCase()
 
-        const balanceFunctions: Record<string, () => Promise<any>> = {
+        const balanceFunctions: Record<string, () => Promise<NumericBalanceMap>> = {
             bybit: () => balanceCache.get(`balances:bybit`, getBybitBalances),
             okx: () => balanceCache.get(`balances:okx`, getOkxBalances),
             binance: () => balanceCache.get(`balances:binance`, getBinanceBalances),

@@ -66,6 +66,10 @@ This repository is My Personal project to support other projects.
   ```json
   { "status": "ok", "message": "Hello world" }
   ```
+- **GET /api/v1**: Returns API v1 health status.
+  ```json
+  { "status": "ok" }
+  ```
 
 ### Routes Overview
 
@@ -73,19 +77,51 @@ All routes are prefixed with `/api/v1`.
 
 #### Artatix Routes
 - **GET /api/v1/artatix**: Health check for Artatix service.
-- **GET /api/v1/artatix/events**: Retrieves event data from the Artatix platform.
+- **GET /api/v1/artatix/events**: Retrieves cached event data from the Artatix platform.
 - **GET /api/v1/artatix/tickets/:slug**: Fetches ticket details for a given event.
 
-#### Stable APIs (Stablecoin APR Rates)
-- **GET /api/v1/stable**: Welcome message and available endpoints.
-- **GET /api/v1/stable/okx**: Retrieves USDT/USDC APR data from OKX.
-- **GET /api/v1/stable/bybit**: Fetches USDT/USDC APR data from Bybit.
-- **GET /api/v1/stable/bybit-usde**: Fetches Bybit USDe airdrop rates.
-- **GET /api/v1/stable/bybit-byusdt**: Fetches Bybit BYUSDT airdrop rates.
-- **GET /api/v1/stable/binance**: Fetches FDUSD APR data from Binance.
-- **GET /api/v1/stable/binance-stable**: Fetches FDUSD/USDT/USDC APR data from Binance.
-- **GET /api/v1/stable/bitget**: Fetches combined USDT/USDC APR data from Bitget.
-- **GET /api/v1/stable/pintu**: Fetches USDT-IDR price data from Pintu.
+#### Earn APIs (Stablecoin APR Rates)
+- **GET /api/v1/earn**: Welcome message and available earn endpoints.
+- **GET /api/v1/earn/okx**: Retrieves USDT/USDC APR data from OKX.
+- **GET /api/v1/earn/bybit**: Fetches USDT/USDC APR data from Bybit.
+- **GET /api/v1/earn/bybit-usde**: Fetches Bybit USDe airdrop rates.
+- **GET /api/v1/earn/bybit-byusdt?tier=1**: Fetches Bybit BYUSDT airdrop rates. `tier` is optional; default behavior uses tier 1.
+- **GET /api/v1/earn/bybit-onchain**: Fetches Bybit on-chain earn rates.
+- **GET /api/v1/earn/binance**: Fetches Binance earn APR data.
+- **GET /api/v1/earn/binance-stable?noLimit=true**: Fetches Binance stablecoin APR data. `noLimit` is optional.
+- **GET /api/v1/earn/bitget**: Fetches combined USDT/USDC APR data from Bitget.
+- **GET /api/v1/earn/bitget?filter=1,2**: Fetches selected Bitget rows by 1-based index. Current index order: `1` USDT, `2` USDT-VIP, `3` USDT-VIP-14, `4` USDC, `5` USDC-VIP.
+- **GET /api/v1/earn/kamino/:vault/:address**: Fetches Kamino earn data for a vault and wallet address.
+
+Example earn response:
+```json
+[
+  { "name": "USDT", "APR": 0.05 },
+  { "name": "USDC", "APR": 0.04 }
+]
+```
+
+#### CoinMarketCap APIs
+- **GET /api/v1/cmc/:slug?convert=USD**: Fetches token price from CoinMarketCap by slug, with symbol fallback. `convert` is optional and defaults to `USD`.
+- **GET /api/v1/cmc/dex/:platform/:address**: Fetches DEX token price data by platform and contract address.
+
+Example CMC response:
+```json
+{
+  "bitcoin": {
+    "usd": 65000
+  }
+}
+```
+
+#### Price APIs
+- **GET /api/v1/price/pintu**: Fetches USDT-IDR price data from Pintu.
+- **GET /api/v1/price/binance?symbol=USD1USDC&limit=10**: Fetches midpoint price from Binance order book. `symbol` defaults to `USD1USDC`; `limit` defaults to `10`.
+
+Example price response:
+```json
+{ "price": 1.0001 }
+```
 
 For detailed logic and route handling, explore the `src/routes` directory.
 
@@ -98,8 +134,10 @@ For detailed logic and route handling, explore the `src/routes` directory.
   - `index.ts`: Main router.
   - `cmc.ts`: CoinMarketCap price routes (Standard + DEX).
   - `artatix.ts`: Handles Artatix event and ticket data.
-  - `stable.ts`: Provides stablecoin APR rate APIs.
-  - `earn/`: Modular exchange data fetching functions.
+  - `earn.ts`: Provides stablecoin APR and earn rate APIs.
+  - `price.ts`: Provides Pintu and Binance price APIs.
+- **`src/services/`**: External API integrations and business logic.
+  - `earn/`: Modular exchange earn data fetching functions.
 - **`src/utils/`**: Utility functions.
   - `cache.service.ts`: In-memory caching implementation using node-cache.
 - **`src/index.ts`**: Entry point for starting the server.
@@ -107,7 +145,27 @@ For detailed logic and route handling, explore the `src/routes` directory.
 ### Scripts
 - **`yarn dev`**: Starts the server in development mode with live reloading using `nodemon`.
 - **`yarn build`**: Compiles TypeScript into JavaScript.
+- **`yarn test`**: Runs mocked endpoint tests without calling external APIs.
+- **`yarn test:live`**: Runs live endpoint tests against real external APIs. Requires `RUN_LIVE_TESTS=true` and relevant `.env` credentials.
+- **`yarn test:coverage`**: Runs mocked tests with coverage output.
 - **`yarn start`**: Runs the server in production mode.
+
+### Testing
+
+Default tests are mocked endpoint tests. They exercise Express routes, validation, middleware, cache behavior, auth checks, and response shapes without making live external API calls.
+
+Live tests are stored in `test/live` and are skipped during normal `yarn test`. Run them only when real network calls are intended:
+
+```bash
+yarn test:live
+```
+
+Useful optional live-test variables:
+- `LIVE_CMC_DEX_PLATFORM`
+- `LIVE_CMC_DEX_ADDRESS`
+- `LIVE_ARTATIX_TICKET_SLUG`
+- `LIVE_KAMINO_VAULT`
+- `LIVE_KAMINO_ADDRESS`
 
 ## 📝 Notes
 
@@ -119,10 +177,15 @@ For detailed logic and route handling, explore the `src/routes` directory.
   - **node-cache**: Implements caching for improved performance (TTL varies by route).
   - **Error Handler**: Global middleware prevents stack trace leakage in production.
 - Environment variables are required for external API integrations (CoinMarketCap, exchanges, proxies).
+- Important environment variables include:
+  - `PORT`: Server port. Defaults to `3333`.
+  - `ALLOWED_ORIGINS`: Optional comma-separated CORS allowlist.
+  - `CMC_API_KEY`: CoinMarketCap API key for standard price endpoints.
+  - `CMC_DEX_API_KEY`: CoinMarketCap API key for DEX price endpoints.
+  - Exchange API credentials and optional proxy variables as required by individual exchange services.
 - Caching TTL:
   - Artatix events: 5 minutes
-  - Stable APR rates: 30 seconds
-  - Exchange: 15 minutes
+  - Earn APR rates: 30 seconds
   - CMC prices: 60 seconds
 
 ## 🚀 Deployment

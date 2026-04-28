@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { RestClient } from 'okx-api'
+import { NumericBalanceMap } from '../../types/api.types'
 
 if (!process.env.KEY_OKX || !process.env.SECRET_OKX || !process.env.PASS_OKX) {
     throw new Error('API key, secret, and passphrase must be set in the environment variables.')
@@ -11,7 +12,7 @@ const client = new RestClient({
     apiPass: process.env.PASS_OKX,
 })
 
-const getOkxSavingBalances = async () => client.getSavingBalance()
+const getOkxSavingBalances = async (): Promise<NumericBalanceMap> => client.getSavingBalance()
     .then((response: any) => {
         if (response.length === 0) throw new Error('Error fetching balances: No data returned')
 
@@ -20,14 +21,14 @@ const getOkxSavingBalances = async () => client.getSavingBalance()
         }))
 
         // Merge balances into a single object
-        return balances.reduce((acc: any, curr: any) => ({ ...acc, ...curr }), {})
+        return balances.reduce((acc: NumericBalanceMap, curr: NumericBalanceMap) => ({ ...acc, ...curr }), {})
     })
     .catch((error: any) => {
         console.error('Error fetching OKX balances:', error)
         throw error
     })
 
-export const getOkxBalances = async () => {
+export const getOkxBalances = async (): Promise<NumericBalanceMap> => {
     try {
         const savingBalances = await getOkxSavingBalances()
 

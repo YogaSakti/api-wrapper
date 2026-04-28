@@ -2,6 +2,7 @@ import express from 'express'
 import asyncHandler from 'express-async-handler'
 import CacheService from '../utils/cache.service'
 import { eventList, extractTicket, checkHealth } from '../services/artatix.service'
+import { getSingleParam } from '../utils/validation'
 
 // cache for 5 minutes
 const ttl = 60 * 5
@@ -24,7 +25,12 @@ router.get(
 router.get(
     '/tickets/:slug',
     asyncHandler(async (req, res) => {
-        const { slug } = req.params
+        const slug = getSingleParam(req.params.slug)
+        if (!slug) {
+            res.status(400).json({ error: 'Invalid Slug', message: 'Slug parameter is required' })
+            return
+        }
+
         const data = await extractTicket(slug)
         res.status(200).send(data)
     })

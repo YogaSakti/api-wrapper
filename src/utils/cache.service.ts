@@ -2,17 +2,17 @@
 import NodeCache from 'node-cache'
 
 class Cache {
-    cache: any
+    cache: NodeCache
 
     constructor(ttlSeconds: number) {
         this.cache = new NodeCache({ stdTTL: ttlSeconds, checkperiod: ttlSeconds * 0.2, useClones: false })
     }
 
-    async get(key: any, storeFunction: { (): any; }) {
+    async get<T>(key: string, storeFunction: () => Promise<T> | T): Promise<T> {
 
-        const value = this.cache.get(key)
-        if (value) {
-            return Promise.resolve(value)
+        const value = this.cache.get<T>(key)
+        if (value !== undefined) {
+            return value
         }
 
         const result = await storeFunction()
@@ -20,7 +20,7 @@ class Cache {
         return result
     }
 
-    del(keys: any) {
+    del(keys: string | string[]) {
         this.cache.del(keys)
     }
 

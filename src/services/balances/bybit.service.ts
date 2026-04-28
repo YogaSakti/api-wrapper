@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { RestClientV5 } from 'bybit-api'
 import { webcrypto } from 'crypto'
+import { NumericBalanceMap } from '../../types/api.types'
 
 // Polyfill for Web Crypto API in Node.js 18
 if (typeof globalThis.crypto === 'undefined') {
@@ -53,7 +54,7 @@ const getUnifiedBalance = async () => client
         throw error
     })
 
-export const getBybitBalances = async () => {
+export const getBybitBalances = async (): Promise<NumericBalanceMap> => {
     try {
         const [spotBalances, earnPositions, onChainBalances, unifiedBalances] = await Promise.all([
             getSpotBalance(),

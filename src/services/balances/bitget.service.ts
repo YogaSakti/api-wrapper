@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-ignore
 import { RestClientV2 } from 'bitget-api'
+import { NumericBalanceMap } from '../../types/api.types'
 
 // note the single quotes, preventing special characters such as $ from being incorrectly passed
 const client = new RestClientV2({
@@ -10,12 +11,12 @@ const client = new RestClientV2({
     apiPass: process.env.PASS_BITGET,
 })
 
-const getBitgetSavings = async () => {
+const getBitgetSavings = async (): Promise<NumericBalanceMap> => {
     try {
         const flexibleSavingsAssets = await client.getEarnSavingsAssets({periodType: 'flexible'}).then((response: any) => response?.data?.resultList)
         const fixedSavingsAssets = await client.getEarnSavingsAssets({periodType: 'fixed'}).then((response: any) => response?.data?.resultList)
 
-        const savingsByCoin: any = {}
+        const savingsByCoin: NumericBalanceMap = {}
 
         // Process flexible savings - sum by coin (vip + non-vip combined)
         if (Array.isArray(flexibleSavingsAssets)) {
@@ -45,7 +46,7 @@ const getBitgetSavings = async () => {
     }
 }
 
-export const getBitgetBalances = async () => {
+export const getBitgetBalances = async (): Promise<NumericBalanceMap> => {
     try {
         const savings = await getBitgetSavings()
 

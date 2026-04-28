@@ -1,6 +1,7 @@
 import express from 'express'
 import asyncHandler from 'express-async-handler'
 import CacheService from '../utils/cache.service'
+import { getSingleParam, isSafeAddress, parseIndexFilter, parseIntegerInRange } from '../utils/validation'
 import {
     data_OKX,
     data_Bybit,
@@ -43,10 +44,13 @@ router.get(
 
         const filterParam = req.query.filter as string
         if (filterParam) {
-            const indices = filterParam.split(',').map(n => parseInt(n.trim()))
-            const filtered = indices
-                .filter(i => i >= 1 && i <= allData.length)
-                .map(i => allData[i - 1])
+            const indices = parseIndexFilter(filterParam, allData.length)
+            if (!indices) {
+                res.status(400).json({ error: 'Invalid Filter', message: `Filter must be a comma-separated list of indexes between 1 and ${allData.length}` })
+                return
+            }
+
+            const filtered = indices.map(i => allData[i - 1])
             res.status(200).json(filtered)
             return
         }
@@ -110,7 +114,12 @@ router.get(
     '/bybit-byusdt',
     asyncHandler(async (req, res) => {
         console.log('Fetching Bybit BYUSDT data...')
-        const tier = req.query.tier ? parseInt(req.query.tier as string) : undefined
+        const tier = req.query.tier ? parseIntegerInRange(req.query.tier, 1, 2) : undefined
+        if (req.query.tier && !tier) {
+            res.status(400).json({ error: 'Invalid Tier', message: 'Tier must be 1 or 2' })
+            return
+        }
+
         const cacheKey = `bybit-byusdt:${tier ?? 1}`
         const data = await cache.get(cacheKey, async () => data_Bybit_BYUSDT(tier))
         res.status(200).json(data)
@@ -162,8 +171,18 @@ router.get(
     '/kamino/:vault/:address',
     asyncHandler(async (req, res) => {
         console.log('Fetching Kamino data...')
-        const vault = req.params.vault
-        const address = req.params.address
+        const vault = getSingleParam(req.params.vault)
+        const address = getSingleParam(req.params.address)
+        if (!vault || !address) {
+            res.status(400).json({ error: 'Invalid Parameters', message: 'Vault and address are required' })
+            return
+        }
+
+        if (!isSafeAddress(vault) || !isSafeAddress(address)) {
+            res.status(400).json({ error: 'Invalid Parameters', message: 'Vault and address contain unsupported characters or are too long' })
+            return
+        }
+
         const cacheKey = `kamino:${vault}:${address}`
         const cachedData = await cache.get(cacheKey, async () => data_kamino(vault, address))
         res.status(200).json(cachedData)

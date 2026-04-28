@@ -1,5 +1,6 @@
 import express from 'express'
 import { getPintuPrice, getBinanceOrderBookPrice } from '../services/price.service'
+import { isSafeSymbol, parseIntegerInRange } from '../utils/validation'
 
 const priceRouter = express.Router()
 
@@ -14,7 +15,14 @@ priceRouter.get('/pintu', async (req, res) => {
 
 priceRouter.get('/binance', async (req, res) => {
     const symbol = (req.query.symbol as string)?.toUpperCase() || 'USD1USDC'
-    const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10
+    const limit = req.query.limit ? parseIntegerInRange(req.query.limit, 1, 100) : 10
+    if (!isSafeSymbol(symbol)) {
+        return res.status(400).json({ error: 'Invalid Symbol', message: 'Symbol must be 2-30 uppercase alphanumeric characters' })
+    }
+    if (!limit) {
+        return res.status(400).json({ error: 'Invalid Limit', message: 'Limit must be an integer between 1 and 100' })
+    }
+
     try {
         const price = await getBinanceOrderBookPrice(symbol, limit)
         if (price === null) {
