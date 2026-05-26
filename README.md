@@ -114,8 +114,20 @@ Example CMC response:
 }
 ```
 
+#### Stable APIs (Stablecoin APR Rates)
+- **GET /api/v1/stable**: Welcome message and available endpoints.
+- **GET /api/v1/stable/okx**: Retrieves USDT/USDC APR data from OKX.
+- **GET /api/v1/stable/bybit**: Fetches USDT/USDC APR data from Bybit.
+- **GET /api/v1/stable/bybit-usde**: Fetches Bybit USDe airdrop rates.
+- **GET /api/v1/stable/bybit-byusdt**: Fetches Bybit BYUSDT airdrop rates.
+- **GET /api/v1/stable/binance**: Fetches FDUSD APR data from Binance.
+- **GET /api/v1/stable/binance-stable**: Fetches FDUSD/USDT/USDC APR data from Binance.
+- **GET /api/v1/stable/bitget**: Fetches combined USDT/USDC APR data from Bitget.
+
 #### Price APIs
 - **GET /api/v1/price/pintu**: Fetches USDT-IDR price data from Pintu.
+- **GET /api/v1/price/pintu/usdt**: Same as the default USDT price endpoint.
+- **GET /api/v1/price/pintu/usdc**: Fetches USDC-IDR price data from Pintu.
 - **GET /api/v1/price/binance?symbol=USD1USDC&limit=10**: Fetches midpoint price from Binance order book. `symbol` defaults to `USD1USDC`; `limit` defaults to `10`.
 
 Example price response:

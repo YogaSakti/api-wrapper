@@ -4,12 +4,17 @@ import { isSafeSymbol, parseIntegerInRange } from '../utils/validation'
 
 const priceRouter = express.Router()
 
-priceRouter.get('/pintu', async (req, res) => {
+priceRouter.get(['/pintu', '/pintu/:currency'], async (req, res) => {
     try {
-        const price = await getPintuPrice()
-        res.status(200).json({ price })
+        const currency = (req.params.currency || 'usdt').toLowerCase()
+        if (!['usdt', 'usdc'].includes(currency)) {
+            return res.status(400).json({ error: 'Unsupported Pintu currency. Use usdt or usdc.' })
+        }
+
+        const price = await getPintuPrice(currency)
+        return res.status(200).json({ price })
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch price from Pintu' })
+        return res.status(500).json({ error: 'Failed to fetch price from Pintu' })
     }
 })
 
