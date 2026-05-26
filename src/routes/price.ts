@@ -6,7 +6,8 @@ const priceRouter = express.Router()
 
 priceRouter.get(['/pintu', '/pintu/:currency'], async (req, res) => {
     try {
-        const currency = (req.params.currency || 'usdt').toLowerCase()
+        const rawCurrency = Array.isArray(req.params.currency) ? req.params.currency[0] : req.params.currency
+        const currency = (rawCurrency || 'usdt').toLowerCase()
         if (!isSupportedPintuCurrency(currency)) {
             return res.status(400).json({ error: 'Unsupported Pintu currency. Use usdt or usdc.' })
         }
