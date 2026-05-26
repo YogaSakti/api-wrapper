@@ -1,13 +1,13 @@
 import express from 'express'
-import { getPintuPrice, getBinanceOrderBookPrice } from '../services/price.service'
 import { isSafeSymbol, parseIntegerInRange } from '../utils/validation'
+import { getPintuPrice, getBinanceOrderBookPrice, isSupportedPintuCurrency } from '../services/price.service'
 
 const priceRouter = express.Router()
 
 priceRouter.get(['/pintu', '/pintu/:currency'], async (req, res) => {
     try {
         const currency = (req.params.currency || 'usdt').toLowerCase()
-        if (!['usdt', 'usdc'].includes(currency)) {
+        if (!isSupportedPintuCurrency(currency)) {
             return res.status(400).json({ error: 'Unsupported Pintu currency. Use usdt or usdc.' })
         }
 

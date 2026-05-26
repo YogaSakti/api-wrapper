@@ -1,12 +1,26 @@
 import fetch from 'cross-fetch'
 
+export const SUPPORTED_PINTU_CURRENCIES = ['USDT', 'USDC'] as const
+
+export const normalizePintuCurrency = (quoteCurrency: string = 'USDT'): string => {
+    return quoteCurrency.trim().toUpperCase()
+}
+
+export const isSupportedPintuCurrency = (quoteCurrency: string): boolean => {
+    return SUPPORTED_PINTU_CURRENCIES.includes(normalizePintuCurrency(quoteCurrency) as typeof SUPPORTED_PINTU_CURRENCIES[number])
+}
+
+export const buildPintuCandlesticksUrl = (quoteCurrency: string = 'USDT'): string => {
+    const normalizedCurrency = normalizePintuCurrency(quoteCurrency)
+    return `https://api.pintu.pro/v1/public/get-candlesticks?symbol=${normalizedCurrency}-IDR&interval=1m`
+}
+
 /**
  * Fetch stablecoin price from Pintu (IDR)
  */
 export const getPintuPrice = async (quoteCurrency: string = 'USDT'): Promise<number | null> => {
     try {
-        const normalizedCurrency = quoteCurrency.toUpperCase()
-        const response = await fetch(`https://api.pintu.pro/v1/public/get-candlesticks?symbol=${normalizedCurrency}-IDR&interval=1m`, {
+        const response = await fetch(buildPintuCandlesticksUrl(quoteCurrency), {
             headers: {
                 accept: 'application/json, text/plain, */*',
                 'accept-language': 'en-US,en;q=0.9',
