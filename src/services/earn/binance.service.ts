@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import fetch from 'cross-fetch'
+import { EarnAprItem } from '../../types/api.types'
 
 const BINANCE_HEADERS = {
     'accept': '*/*',
@@ -21,7 +22,7 @@ const BINANCE_HEADERS = {
 /**
  * Fetch data from Binance.
  */
-export const data_Binance = async () => {
+export const data_Binance = async (): Promise<EarnAprItem[]> => {
     try {
         const response = await fetch(
             'https://www.binance.com/bapi/earn/v1/friendly/finance-earn/homepage/overview?searchCoin=FDUSD&pageSize=100',
@@ -62,43 +63,43 @@ export const data_Binance = async () => {
         }
 
         // e.g. maxApr is in decimal form like "0.10" => 10%
-        return {
+        return [{
             name: 'FDUSD',
-            APR: (parseFloat(simpleEarn.maxApr) * 100) / 100,
-        }
+            APR: parseFloat(simpleEarn.maxApr),
+        }]
     } catch (error) {
         console.error('Binance fetch error:', error)
-        return {
-            name: 'FDUSD',
-            APR: 0
-        }
+        return []
     }
 }
 
 /**
- * Fetch FDUSD, USDT, and USDC data from Binance.
+ * Fetch USD1, USDT, and USDC flexible savings data from Binance.
  */
-export const data_Binance_All = async (noLimit: string) => {
-    try {
-        const listCurrency = ['USD1', 'USDT', 'USDC']
-        const getData = (currency: any) => fetch(`https://www.binance.com/bapi/earn/v3/friendly/finance-earn/calculator/product/list?asset=${currency}&type=Flexible`, {
-            headers: {
-                ...BINANCE_HEADERS,
-                'bnc-currency': 'USD',
-                'bnc-location': '',
-                'bnc-uuid': '3f4df1c8-cd33-4b91-8e24-93ed8338275b',
-                'sec-ch-ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
-                'x-trace-id': '735af735-42db-47c7-8feb-68272939852b',
-                'x-ui-request-trace': '735af735-42db-47c7-8feb-68272939852b',
-            },
-            method: 'GET'
-        })
+export const data_Binance_All = async (noLimit: string): Promise<EarnAprItem[]> => {
+    const listCurrency = ['USD1', 'USDT', 'USDC']
+    const getData = (currency: string) => fetch(`https://www.binance.com/bapi/earn/v3/friendly/finance-earn/calculator/product/list?asset=${currency}&type=Flexible`, {
+        headers: {
+            ...BINANCE_HEADERS,
+            'bnc-currency': 'USD',
+            'bnc-location': '',
+            'bnc-uuid': '3f4df1c8-cd33-4b91-8e24-93ed8338275b',
+            'sec-ch-ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+            'x-trace-id': '735af735-42db-47c7-8feb-68272939852b',
+            'x-ui-request-trace': '735af735-42db-47c7-8feb-68272939852b',
+        },
+        method: 'GET'
+    })
 
-        const jsons = await Promise.all(listCurrency.map(c => getData(c).then(r => r.json())))
-
-        return jsons.map(json => {
+    // Fetch per coin with individual error handling so one failing coin doesn't drop the others
+    const results = await Promise.all(listCurrency.map(async (currency): Promise<EarnAprItem | null> => {
+        try {
+            const json = await getData(currency).then(r => r.json())
             const data = json?.data?.savingFlexibleProduct?.[0]
-            if (!data) throw new Error('No data found.')
+            if (!data) {
+                throw new Error(`No data found for ${currency}.`)
+            }
+
             return {
                 name: data.asset,
                 APR: parseFloat(
@@ -107,9 +108,11 @@ export const data_Binance_All = async (noLimit: string) => {
                         : data.marketApr
                 )
             }
-        }) || []
-    } catch (error) {
-        console.error('Binance fetch error:', error)
-        return []
-    }
+        } catch (error) {
+            console.error('Binance fetch error:', error)
+            return null
+        }
+    }))
+
+    return results.filter((item): item is EarnAprItem => item !== null)
 }

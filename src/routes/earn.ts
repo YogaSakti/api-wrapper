@@ -11,8 +11,7 @@ import {
     data_Binance,
     data_Binance_All,
     data_Bitget,
-    data_BitgetV2,
-    data_kamino,
+    data_Kamino,
 } from '../services/earn'
 
 const ttl = 60 * 0.5 // 0.5 minutes
@@ -31,16 +30,13 @@ router.get('/', (req, res) => {
 /**
  * Bitget route - cached
  * Filter param: /bitget?filter=2,3,4,5
- * Index: [1] USDT, [2] USDT-VIP, [3] USDT-VIP-14, [4] USDC, [5] USDC-VIP
+ * Index: [1] USDT, [2] USDT-VIP, [3] USDT-VIP-14, [4] USDC, [5] USDC-VIP, [6] USDGO
  */
 router.get(
     '/bitget',
     asyncHandler(async (req, res) => {
         console.log('Fetching Bitget data...')
-        const cachedData = await cache.get('bitget', async () => data_Bitget())
-        const cachedDataV2 = await cache.get('bitget-v2', async () => data_BitgetV2())
-
-        const allData = [...cachedData, ...cachedDataV2]
+        const allData = await cache.get('bitget', async () => data_Bitget())
 
         const filterParam = req.query.filter as string
         if (filterParam) {
@@ -184,7 +180,7 @@ router.get(
         }
 
         const cacheKey = `kamino:${vault}:${address}`
-        const cachedData = await cache.get(cacheKey, async () => data_kamino(vault, address))
+        const cachedData = await cache.get(cacheKey, async () => data_Kamino(vault, address))
         res.status(200).json(cachedData)
     }),
 )

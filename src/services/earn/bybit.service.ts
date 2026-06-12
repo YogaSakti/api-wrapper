@@ -3,8 +3,7 @@
 import fetch from 'cross-fetch'
 // @ts-ignore
 import { SocksProxyAgent } from 'socks-proxy-agent'
-import { config } from 'dotenv'
-if (process.env.NODE_ENV !== 'production') config()
+import { EarnAprItem } from '../../types/api.types'
 
 const proxyUrl = process.env.SOCKS5_AGENT
 const proxyAgent = proxyUrl ? new SocksProxyAgent(proxyUrl) : undefined
@@ -32,7 +31,7 @@ const BYBIT_HEADERS = {
 /**
  * Fetch data from Bybit.
  */
-export const data_Bybit = async () => {
+export const data_Bybit = async (): Promise<EarnAprItem[]> => {
     try {
         const response = await fetch(
             'https://api2.bybit.com/s1/byfi/get-saving-homepage-product-cards',
@@ -90,7 +89,7 @@ export const data_Bybit = async () => {
 /**
  * Fetch data from Bybit USDE.
  */
-export const data_Bybit_USDe = async () => {
+export const data_Bybit_USDe = async (): Promise<EarnAprItem[]> => {
     try {
         // Get date range - from 7 days ago to 7 days ahead to ensure we capture today's data
         const now = new Date()
@@ -118,10 +117,7 @@ export const data_Bybit_USDe = async () => {
         const json = await response.json()
 
         if (!json?.result?.daily_aprs || json.result.daily_aprs.length === 0) {
-            return {
-                name: 'USDe',
-                APR: 0,
-            }
+            return []
         }
 
         // Get the most recent APR (last item in the array or closest to today)
@@ -134,16 +130,13 @@ export const data_Bybit_USDe = async () => {
 
         const apr_e8 = parseInt(closestApr.apr_e8, 10)
 
-        return {
+        return [{
             name: 'USDe',
             APR: apr_e8 / 100000000,
-        }
+        }]
     } catch (error) {
         console.error('Bybit Airdrop fetch error:', error)
-        return {
-            name: 'USDe',
-            APR: 0
-        }
+        return []
     }
 }
 
@@ -151,7 +144,7 @@ export const data_Bybit_USDe = async () => {
  * Fetch BYUSDT airdrop product data from Bybit.
  * @param tier - 1 (default, ≤100k, full APR) or 2 (>100k, base APR only)
  */
-export const data_Bybit_BYUSDT = async (tier?: number) => {
+export const data_Bybit_BYUSDT = async (tier?: number): Promise<EarnAprItem[]> => {
     try {
         const response = await fetch('https://www.bybit.com/x-api/s1/byfi/get-airdrop-product', {
             headers: {
@@ -170,30 +163,30 @@ export const data_Bybit_BYUSDT = async (tier?: number) => {
 
         const product = json.result.products.find((p: any) => p.coin_name === 'BYUSDT')
         if (!product) {
-            return { name: 'BYUSDT', APR: 0 }
+            return []
         }
 
         if (tier === 2) {
             // Tier 2: >100k, only base apy (no bonus)
             const tierData = product.bonus_apr_list?.find((t: any) => t.to_amount === '-1')
             const apy_e8 = parseInt(tierData?.apy_e8 ?? '0', 10)
-            return { name: 'BYUSDT', APR: apy_e8 / 100000000 }
+            return [{ name: 'BYUSDT', APR: apy_e8 / 100000000 }]
         }
 
         // Tier 1 (default): full APR (base + bonus)
         const tierData = product.bonus_apr_list?.find((t: any) => t.from_amount === '0')
         const total_e8 = parseInt(tierData?.apy_e8 ?? '0', 10) + parseInt(tierData?.bonus_apr_e8 ?? '0', 10)
-        return { name: 'BYUSDT', APR: total_e8 / 100000000 }
+        return [{ name: 'BYUSDT', APR: total_e8 / 100000000 }]
     } catch (error) {
         console.error('Bybit BYUSDT fetch error:', error)
-        return { name: 'BYUSDT', APR: 0 }
+        return []
     }
 }
 
 /**
  * Fetch On-chain data from Bybit.
  */
-export const data_Bybit_OnChain = async () => {
+export const data_Bybit_OnChain = async (): Promise<EarnAprItem[]> => {
     try {
         const response = await fetch('https://www.bybit.com/x-api/s1/byfi/pos-staking/homepage-product-cards', {
             headers: {

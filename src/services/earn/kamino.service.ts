@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import fetch from 'cross-fetch'
-import { data_kamino_sentora } from './kamino.sentora.service'
+import { data_Kamino_Sentora } from './kamino.sentora.service'
 
 /**
  * Fetch Earn data from Kamino.
  */
-export const data_kamino = async (vault: string, address: string) => {
+export const data_Kamino = async (vault: string, address: string) => {
     try {
         const vaults: Record<string, string> = {
             SENTORA: 'A2wsxhA7pF4B2UKVfXocb6TAAP9ipfPJam6oMKgDE5BK',
@@ -76,7 +76,7 @@ export const data_kamino = async (vault: string, address: string) => {
 
         // If it's SENTORA, also fetch on-chain farm rewards and merge
         if (vault.toUpperCase() === 'SENTORA') {
-            const sentoraRewards = await data_kamino_sentora(address)
+            const sentoraRewards = await data_Kamino_Sentora(address)
             return {
                 ...result,
                 ...sentoraRewards
@@ -86,6 +86,6 @@ export const data_kamino = async (vault: string, address: string) => {
         return result
     } catch (error) {
         console.error('Kamino fetch error:', error)
-        return { vault: vault.toUpperCase(), cumulativeInterestEarned: 0 }
+        return { vault: vault.toUpperCase(), cumulativeInterestEarned: 0, tokensEarned: 0 }
     }
 }

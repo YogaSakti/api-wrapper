@@ -119,9 +119,24 @@ const parseBitgetSavings = (json: BitgetSavingsResponse, includeVip14 = false): 
     return result
 }
 
-const getBitgetSavingsData = async (coinName: string, includeVip14 = false): Promise<EarnAprItem[]> => {
+const parseBitgetFlexibleByRateLevel = (json: BitgetSavingsResponse, rateLevel: number): EarnAprItem[] => {
+    const groups = getProductGroups(json)
+    const flexible = groups[0]?.productList?.find(item => item.period === 0)
+    const apy = findApy(flexible, rateLevel)
+
+    if (!flexible || !apy) {
+        throw new Error(`No flexible product data found for rate level ${rateLevel}.`)
+    }
+
+    return [createAprItem(flexible, apy)]
+}
+
+const getBitgetSavingsData = async (coinName: string, includeVip14 = false, rateLevel?: number): Promise<EarnAprItem[]> => {
     try {
         const json = await fetchBitgetSavings(coinName)
+        if (rateLevel !== undefined) {
+            return parseBitgetFlexibleByRateLevel(json, rateLevel)
+        }
         return parseBitgetSavings(json, includeVip14)
     } catch (error) {
         console.error('Bitget fetch error:', error)
@@ -129,9 +144,27 @@ const getBitgetSavingsData = async (coinName: string, includeVip14 = false): Pro
     }
 }
 
-/**
- * Fetch data from Bitget.
- */
-export const data_Bitget = async () => getBitgetSavingsData('USDT', true)
+interface BitgetCoinConfig {
+    includeVip14?: boolean
+    rateLevel?: number
+}
 
-export const data_BitgetV2 = async () => getBitgetSavingsData('USDC')
+// USDT: standard + VIP + VIP-14. USDC: standard + VIP.
+// USDGO: no VIP group, amount-tiered apyList, rateLevel 0 = headline rate (≤300k)
+const BITGET_COINS: Record<string, BitgetCoinConfig> = {
+    USDT: { includeVip14: true },
+    USDC: {},
+    USDGO: { rateLevel: 0 },
+}
+
+/**
+ * Fetch data from Bitget for all supported coins.
+ * Fetched sequentially — parallel requests get rate-limited (429) by Bitget.
+ */
+export const data_Bitget = async (): Promise<EarnAprItem[]> => {
+    const results: EarnAprItem[] = []
+    for (const [coinName, config] of Object.entries(BITGET_COINS)) {
+        results.push(...await getBitgetSavingsData(coinName, config.includeVip14 ?? false, config.rateLevel))
+    }
+    return results
+}

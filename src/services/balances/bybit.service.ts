@@ -23,7 +23,7 @@ const getSpotBalance = async () => client
     .getAllCoinsBalance({ accountType: 'FUND' })
     .then((response: any) => {
         if (response.retCode !== 0) throw new Error(`Error fetching balances: ${response.retMsg}`)
-        const filteredBalances = response.result.balance.filter((balance: any) => parseInt(balance.walletBalance) !== 0)
+        const filteredBalances = response.result.balance.filter((balance: any) => parseFloat(balance.walletBalance) !== 0)
         return filteredBalances
     })
     .catch((error: any) => {
@@ -46,7 +46,7 @@ const getUnifiedBalance = async () => client
     .getAllCoinsBalance({ accountType: 'UNIFIED', coin: 'BYUSDT' })
     .then((response: any) => {
         if (response.retCode !== 0) throw new Error(`Error fetching unified balance: ${response.retMsg}`)
-        const filteredBalances = response.result.balance.filter((balance: any) => parseInt(balance.walletBalance) !== 0)
+        const filteredBalances = response.result.balance.filter((balance: any) => parseFloat(balance.walletBalance) !== 0)
         return filteredBalances
     })
     .catch((error: any) => {

@@ -122,7 +122,7 @@ const getCurrentRps = (schedulePoints: SchedulePoint[], now: bigint): bigint => 
 /**
  * Fetch PYUSD rewards data from Kamino Sentora farms.
  */
-export const data_kamino_sentora = async (wallet: string): Promise<RewardsResult> => {
+export const data_Kamino_Sentora = async (wallet: string): Promise<RewardsResult> => {
     try {
         const connection = new Connection(RPC_URL, 'confirmed')
         const farmPubkeys = Object.keys(PYUSD_FARMS)

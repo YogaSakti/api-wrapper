@@ -3,8 +3,7 @@
 import fetch from 'cross-fetch'
 // @ts-ignore
 import { SocksProxyAgent } from 'socks-proxy-agent'
-import { config } from 'dotenv'
-if (process.env.NODE_ENV !== 'production') config()
+import { EarnAprItem } from '../../types/api.types'
 
 const proxyUrl = process.env.SOCKS5_AGENT
 const proxyAgent = proxyUrl ? new SocksProxyAgent(proxyUrl) : undefined
@@ -16,7 +15,7 @@ tls.DEFAULT_MIN_VERSION = 'TLSv1.2'
 /**
  * Fetch data from OKX.
  */
-export const data_OKX = async () => {
+export const data_OKX = async (): Promise<EarnAprItem[]> => {
     try {
         const response = await fetch('https://www.okx.com/priapi/v1/earn/simple-earn/all-products?limit=100&type=all', {
             'headers': {
