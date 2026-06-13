@@ -12,21 +12,22 @@ const client = new RestClient({
     apiPass: process.env.PASS_OKX,
 })
 
-const getOkxSavingBalances = async (): Promise<NumericBalanceMap> => client.getSavingBalance()
-    .then((response: any) => {
-        if (response.length === 0) throw new Error('Error fetching balances: No data returned')
+const toAmount = (value: any): number => {
+    const parsed = parseFloat(value)
+    return isNaN(parsed) ? 0 : parsed
+}
 
-        const balances = response.map((item: any) => ({
-            [item.ccy.toUpperCase()]: parseFloat(item.amt)
-        }))
+const getOkxSavingBalances = async (): Promise<NumericBalanceMap> => {
+    // Empty response means no savings positions, not an error
+    const response: any = await client.getSavingBalance()
+    if (!Array.isArray(response)) return {}
 
-        // Merge balances into a single object
-        return balances.reduce((acc: NumericBalanceMap, curr: NumericBalanceMap) => ({ ...acc, ...curr }), {})
-    })
-    .catch((error: any) => {
-        console.error('Error fetching OKX balances:', error)
-        throw error
-    })
+    return response.reduce((acc: NumericBalanceMap, item: any) => {
+        if (!item?.ccy) return acc
+        acc[item.ccy.toUpperCase()] = toAmount(item.amt)
+        return acc
+    }, {})
+}
 
 export const getOkxBalances = async (): Promise<NumericBalanceMap> => {
     try {

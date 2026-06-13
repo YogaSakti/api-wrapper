@@ -19,16 +19,16 @@ const client = new RestClientV5({
     secret: process.env.SECRET_BYBIT,
 })
 
+const toAmount = (value: any): number => {
+    const parsed = parseFloat(value)
+    return isNaN(parsed) ? 0 : parsed
+}
+
 const getSpotBalance = async () => client
     .getAllCoinsBalance({ accountType: 'FUND' })
     .then((response: any) => {
         if (response.retCode !== 0) throw new Error(`Error fetching balances: ${response.retMsg}`)
-        const filteredBalances = response.result.balance.filter((balance: any) => parseFloat(balance.walletBalance) !== 0)
-        return filteredBalances
-    })
-    .catch((error: any) => {
-        console.error('Error in getSpotBalance:', error)
-        throw error
+        return response.result.balance.filter((balance: any) => toAmount(balance.walletBalance) !== 0)
     })
 
 const getEarnPositions = async (category = 'FlexibleSaving') => client
@@ -37,21 +37,12 @@ const getEarnPositions = async (category = 'FlexibleSaving') => client
         if (response.retCode !== 0) throw new Error(`Error fetching earn positions: ${response.retMsg}`)
         return response.result.list
     })
-    .catch((error: any) => {
-        console.error('Error in getEarnPositions:', error)
-        throw error
-    })
 
 const getUnifiedBalance = async () => client
     .getAllCoinsBalance({ accountType: 'UNIFIED', coin: 'BYUSDT' })
     .then((response: any) => {
         if (response.retCode !== 0) throw new Error(`Error fetching unified balance: ${response.retMsg}`)
-        const filteredBalances = response.result.balance.filter((balance: any) => parseFloat(balance.walletBalance) !== 0)
-        return filteredBalances
-    })
-    .catch((error: any) => {
-        console.error('Error in getUnifiedBalance:', error)
-        throw error
+        return response.result.balance.filter((balance: any) => toAmount(balance.walletBalance) !== 0)
     })
 
 export const getBybitBalances = async (): Promise<NumericBalanceMap> => {
@@ -63,11 +54,11 @@ export const getBybitBalances = async (): Promise<NumericBalanceMap> => {
             getUnifiedBalance()
         ])
 
-        const findCoin = (balances: any, coin: string) =>Array.isArray(balances) ? balances.find((b: any) => b.coin === coin) : null
-        const findAllCoins = (balances: any, coin: string) =>Array.isArray(balances) ? balances.filter((b: any) => b.coin === coin) : []
-        const calculateOnChainAmount = (positions: any[]) => 
-            positions.reduce((total, position) => 
-                total + parseFloat(position.amount) + parseFloat(position.totalPnl), 0)
+        const findCoin = (balances: any, coin: string) => Array.isArray(balances) ? balances.find((b: any) => b.coin === coin) : null
+        const findAllCoins = (balances: any, coin: string) => Array.isArray(balances) ? balances.filter((b: any) => b.coin === coin) : []
+        const calculateOnChainAmount = (positions: any[]) =>
+            positions.reduce((total, position) =>
+                total + toAmount(position.amount) + toAmount(position.totalPnl), 0)
 
         const usdeBalance = findCoin(spotBalances, 'USDE')
         const usdtPosition = findCoin(earnPositions, 'USDT')
@@ -77,15 +68,15 @@ export const getBybitBalances = async (): Promise<NumericBalanceMap> => {
         const byusdtBalance = findCoin(unifiedBalances, 'BYUSDT')
 
         return {
-            USDE: usdeBalance ? parseFloat(usdeBalance.walletBalance) : 0,
-            USDT: usdtPosition ? parseFloat(usdtPosition.amount) : 0,
-            USDC: usdcPosition ? parseFloat(usdcPosition.amount) : 0,
+            USDE: usdeBalance ? toAmount(usdeBalance.walletBalance) : 0,
+            USDT: usdtPosition ? toAmount(usdtPosition.amount) : 0,
+            USDC: usdcPosition ? toAmount(usdcPosition.amount) : 0,
             'USDT-ONCHAIN': calculateOnChainAmount(usdtOnChain),
             'USDC-ONCHAIN': calculateOnChainAmount(usdcOnChain),
-            BYUSDT: byusdtBalance ? parseFloat(byusdtBalance.walletBalance) : 0
+            BYUSDT: byusdtBalance ? toAmount(byusdtBalance.walletBalance) : 0
         }
     } catch (error) {
-        console.error('Error fetching balance:', error)
+        console.error('Error fetching Bybit balances:', error)
         throw error
     }
 }

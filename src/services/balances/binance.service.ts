@@ -12,47 +12,27 @@ const client = new MainClient({
     api_secret: process.env.SECRET_BINANCE as string,
 })
 
+const TRACKED_ASSETS = ['USDT', 'USDC', 'USD1'] as const
+
+const toAmount = (value: any): number => {
+    const parsed = parseFloat(value)
+    return isNaN(parsed) ? 0 : parsed
+}
+
 // Get wallet balances (spot)
-const getSpotBalance = async () => client
-    .getBalances()
-    .then((balances: any[]) => balances)
-    .catch((error: any) => {
-        console.error('Error in getSpotBalance:', error)
-        throw error
-    })
+const getSpotBalance = async () => client.getBalances()
 
 // Get Simple Earn flexible positions (replaces old Savings)
 const getFlexibleSavings = async () => {
-    try {
-        const [usdtResult, usdcResult, usd1Result] = await Promise.all([
-            client
-                .getFlexibleProductPosition({asset: 'USDT'})
-                .then((resp: any) => resp?.rows ?? [])
-                .catch((error: any) => {
-                    console.error('Error in getFlexibleSavings USDT:', error)
-                    return []
-                }),
-            client
-                .getFlexibleProductPosition({asset: 'USDC'})
-                .then((resp: any) => resp?.rows ?? [])
-                .catch((error: any) => {
-                    console.error('Error in getFlexibleSavings USDC:', error)
-                    return []
-                }),
-            client
-                .getFlexibleProductPosition({asset: 'USD1'})
-                .then((resp: any) => resp?.rows ?? [])
-                .catch((error: any) => {
-                    console.error('Error in getFlexibleSavings USD1:', error)
-                    return []
-                })
-        ])
-        // Gabungkan hasil dari USDT, USDC, dan USD1
-        return [...usdtResult, ...usdcResult, ...usd1Result]
-    } catch (error) {
-        console.error('Error in getFlexibleSavings:', error)
-        throw error
-    }
+    const results = await Promise.all(TRACKED_ASSETS.map(asset => client
+        .getFlexibleProductPosition({ asset })
+        .then((resp: any) => resp?.rows ?? [])
+        .catch((error: any) => {
+            console.error(`Error in getFlexibleSavings ${asset}:`, error)
+            return []
+        })))
+
+    return results.flat()
 }
 
 export const getBinanceBalances = async (): Promise<NumericBalanceMap> => {
@@ -62,45 +42,29 @@ export const getBinanceBalances = async (): Promise<NumericBalanceMap> => {
             getFlexibleSavings()
         ])
 
-        // Aggregate USDT, USDC, and USD1 from spot balances
-        let usdt = 0
-        let usdc = 0
-        let usd1 = 0
+        const totals: NumericBalanceMap = { USDT: 0, USDC: 0, USD1: 0 }
+
+        // Aggregate tracked assets from spot balances
         if (Array.isArray(spotBalances)) {
-            const usdtSpot = spotBalances.find((b: any) => b.coin === 'USDT')
-            const usdcSpot = spotBalances.find((b: any) => b.coin === 'USDC')
-            const usd1Spot = spotBalances.find((b: any) => b.coin === 'USD1')
-            if (usdtSpot) {
-                const free = parseFloat(usdtSpot.free ?? usdtSpot.freeBalance ?? usdtSpot.available ?? '0')
-                usdt += isNaN(free) ? 0 : free
-            }
-            if (usdcSpot) {
-                const free = parseFloat(usdcSpot.free ?? usdcSpot.freeBalance ?? usdcSpot.available ?? '0')
-                usdc += isNaN(free) ? 0 : free
-            }
-            if (usd1Spot) {
-                const free = parseFloat(usd1Spot.free ?? usd1Spot.freeBalance ?? usd1Spot.available ?? '0')
-                usd1 += isNaN(free) ? 0 : free
+            for (const asset of TRACKED_ASSETS) {
+                const spot: any = spotBalances.find((b: any) => b.coin === asset)
+                if (spot) {
+                    totals[asset] += toAmount(spot.free ?? spot.freeBalance ?? spot.available ?? '0')
+                }
             }
         }
 
-        // Add USDT, USDC, and USD1 from Simple Earn flexible positions
+        // Add tracked assets from Simple Earn flexible positions
         if (Array.isArray(flexibleSavings)) {
             for (const position of flexibleSavings) {
                 const asset = position.asset || position.product?.asset
-                const amountStr = position.totalAmount ?? position.amount ?? position.total ?? '0'
-                const amount = parseFloat(amountStr)
-                if (asset === 'USDT') usdt += isNaN(amount) ? 0 : amount
-                if (asset === 'USDC') usdc += isNaN(amount) ? 0 : amount
-                if (asset === 'USD1') usd1 += isNaN(amount) ? 0 : amount
+                if (asset && asset in totals) {
+                    totals[asset] += toAmount(position.totalAmount ?? position.amount ?? position.total ?? '0')
+                }
             }
         }
 
-        return {
-            USDT: usdt,
-            USDC: usdc,
-            USD1: usd1
-        }
+        return totals
     } catch (error) {
         console.error('Error fetching Binance balances:', error)
         throw error
