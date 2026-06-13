@@ -65,17 +65,29 @@ const createAprItem = (product: BitgetProduct, apy: BitgetApy, suffix = ''): Ear
     APR: parseApr(apy.apy),
 })
 
-const fetchBitgetSavings = async (coinName: string): Promise<BitgetSavingsResponse> => {
-    const response = await fetch(BITGET_SAVINGS_URL, {
-        ...BITGET_FETCH_OPTIONS,
-        body: buildSavingsRequestBody(coinName),
-    })
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
-    if (!response.ok) {
+// Bitget rate-limits rapid sequential calls (429). Retry with backoff so a coin isn't silently dropped.
+const fetchBitgetSavings = async (coinName: string, retries = 3): Promise<BitgetSavingsResponse> => {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+        const response = await fetch(BITGET_SAVINGS_URL, {
+            ...BITGET_FETCH_OPTIONS,
+            body: buildSavingsRequestBody(coinName),
+        })
+
+        if (response.ok) {
+            return response.json() as Promise<BitgetSavingsResponse>
+        }
+
+        if (response.status === 429 && attempt < retries) {
+            await sleep(500 * (attempt + 1))
+            continue
+        }
+
         throw new Error(`Bitget request failed with status ${response.status}`)
     }
 
-    return response.json() as Promise<BitgetSavingsResponse>
+    throw new Error('Bitget request failed: retries exhausted')
 }
 
 const getProductGroups = (json: BitgetSavingsResponse): BitgetBizLineProduct[] => {
@@ -163,8 +175,12 @@ const BITGET_COINS: Record<string, BitgetCoinConfig> = {
  */
 export const data_Bitget = async (): Promise<EarnAprItem[]> => {
     const results: EarnAprItem[] = []
-    for (const [coinName, config] of Object.entries(BITGET_COINS)) {
+    const coins = Object.entries(BITGET_COINS)
+    for (let i = 0; i < coins.length; i++) {
+        const [coinName, config] = coins[i]
         results.push(...await getBitgetSavingsData(coinName, config.includeVip14 ?? false, config.rateLevel))
+        // Space out requests to the same host to avoid tripping Bitget's rate limit
+        if (i < coins.length - 1) await sleep(300)
     }
     return results
 }
