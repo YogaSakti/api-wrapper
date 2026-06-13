@@ -1,8 +1,29 @@
 import express from 'express'
 import cors from 'cors'
 import morgan from 'morgan'
+import helmet from 'helmet'
+import rateLimit from 'express-rate-limit'
 
 export const app = express()
+
+// Behind Railway's proxy: trust the first hop so rate-limit and logs see the real client IP
+app.set('trust proxy', 1)
+
+// Security headers
+app.use(helmet())
+
+// Skip rate limiting under test so the supertest suite isn't throttled
+const skipRateLimit = () => process.env.NODE_ENV === 'test'
+
+// Global limiter - generous ceiling to blunt abuse without affecting normal use
+const globalLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 120,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    skip: skipRateLimit,
+})
+app.use(globalLimiter)
 
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
     .split(',')

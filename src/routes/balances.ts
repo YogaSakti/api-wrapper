@@ -1,10 +1,22 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import express from 'express'
+import rateLimit from 'express-rate-limit'
 import { getBybitBalances, getOkxBalances, getBinanceBalances, getBitgetBalances } from '../services/balances'
 import Cache from '../utils/cache.service'
 import { NumericBalanceMap } from '../types/api.types'
 
 export const balancesRouter = express.Router()
+
+// Strict limiter to slow ACCESS_KEY brute-forcing on this key-protected endpoint
+const balancesLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 30,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    skip: () => process.env.NODE_ENV === 'test',
+    message: { error: 'Too Many Requests', message: 'Rate limit exceeded. Try again later.' },
+})
+balancesRouter.use(balancesLimiter)
 
 // Cache with 15 minutes TTL (900 seconds)
 const balanceCache = new Cache(900)
