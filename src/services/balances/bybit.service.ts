@@ -19,8 +19,41 @@ const client = new RestClientV5({
     secret: process.env.SECRET_BYBIT,
 })
 
-const toAmount = (value: any): number => {
-    const parsed = parseFloat(value)
+const BYBIT_EARN_CATEGORY = {
+    FLEXIBLE: 'FlexibleSaving',
+    ON_CHAIN: 'OnChain',
+} as const
+
+type BybitEarnCategory = typeof BYBIT_EARN_CATEGORY[keyof typeof BYBIT_EARN_CATEGORY]
+
+const BYBIT_COIN = {
+    USDE: 'USDE',
+    USDT: 'USDT',
+    USDC: 'USDC',
+    USD1: 'USD1',
+    BYUSDT: 'BYUSDT',
+} as const
+
+interface BybitCoinBalance {
+    coin: string
+    walletBalance?: string
+}
+
+interface BybitEarnPosition {
+    coin: string
+    amount?: string
+    totalPnl?: string
+}
+
+interface BybitBalanceSources {
+    spotBalances: BybitCoinBalance[]
+    earnPositions: BybitEarnPosition[]
+    onChainBalances: BybitEarnPosition[]
+    unifiedBalances: BybitCoinBalance[]
+}
+
+const toAmount = (value: unknown): number => {
+    const parsed = parseFloat(String(value))
     return isNaN(parsed) ? 0 : parsed
 }
 
@@ -28,53 +61,86 @@ const getSpotBalance = async () => client
     .getAllCoinsBalance({ accountType: 'FUND' })
     .then((response: any) => {
         if (response.retCode !== 0) throw new Error(`Error fetching balances: ${response.retMsg}`)
-        return response.result.balance.filter((balance: any) => toAmount(balance.walletBalance) !== 0)
+        const balances = response.result?.balance
+        return Array.isArray(balances)
+            ? balances.filter((balance: BybitCoinBalance) => toAmount(balance.walletBalance) !== 0)
+            : []
     })
 
-const getEarnPositions = async (category = 'FlexibleSaving') => client
+const getEarnPositions = async (category: BybitEarnCategory = BYBIT_EARN_CATEGORY.FLEXIBLE) => client
     .getEarnPosition({ category })
     .then((response: any) => {
         if (response.retCode !== 0) throw new Error(`Error fetching earn positions: ${response.retMsg}`)
-        return response.result.list
+        const positions = response.result?.list
+        return Array.isArray(positions) ? positions : []
     })
 
 const getUnifiedBalance = async () => client
-    .getAllCoinsBalance({ accountType: 'UNIFIED', coin: 'BYUSDT' })
+    .getAllCoinsBalance({ accountType: 'UNIFIED', coin: BYBIT_COIN.BYUSDT })
     .then((response: any) => {
         if (response.retCode !== 0) throw new Error(`Error fetching unified balance: ${response.retMsg}`)
-        return response.result.balance.filter((balance: any) => toAmount(balance.walletBalance) !== 0)
+        const balances = response.result?.balance
+        return Array.isArray(balances)
+            ? balances.filter((balance: BybitCoinBalance) => toAmount(balance.walletBalance) !== 0)
+            : []
     })
+
+const groupByCoin = <T extends { coin: string }>(items: T[]): Record<string, T[]> => items.reduce((groups, item) => {
+    groups[item.coin] = groups[item.coin] || []
+    groups[item.coin].push(item)
+    return groups
+}, {} as Record<string, T[]>)
+
+const firstAmountByCoin = <T extends { walletBalance?: string; amount?: string }>(groups: Record<string, T[]>, coin: string, field: keyof T): number =>
+    toAmount(groups[coin]?.[0]?.[field])
+
+const calculateOnChainAmount = (positions: BybitEarnPosition[]): number => positions.reduce((total, position) =>
+    total + toAmount(position.amount) + toAmount(position.totalPnl), 0)
+
+const getSettledValue = <T>(result: PromiseSettledResult<T>, fallback: T, source: string): T => {
+    if (result.status === 'fulfilled') return result.value
+
+    console.error(`Error fetching Bybit ${source}:`, result.reason)
+    return fallback
+}
+
+const buildBybitBalanceMap = ({
+    spotBalances,
+    earnPositions,
+    onChainBalances,
+    unifiedBalances,
+}: BybitBalanceSources): NumericBalanceMap => {
+    const spotByCoin = groupByCoin(spotBalances)
+    const earnByCoin = groupByCoin(earnPositions)
+    const onChainByCoin = groupByCoin(onChainBalances)
+    const unifiedByCoin = groupByCoin(unifiedBalances)
+
+    return {
+        USDE: firstAmountByCoin(spotByCoin, BYBIT_COIN.USDE, 'walletBalance'),
+        USD1: firstAmountByCoin(spotByCoin, BYBIT_COIN.USD1, 'walletBalance'),
+        USDT: firstAmountByCoin(earnByCoin, BYBIT_COIN.USDT, 'amount'),
+        USDC: firstAmountByCoin(earnByCoin, BYBIT_COIN.USDC, 'amount'),
+        'USDT-ONCHAIN': calculateOnChainAmount(onChainByCoin[BYBIT_COIN.USDT] || []),
+        'USDC-ONCHAIN': calculateOnChainAmount(onChainByCoin[BYBIT_COIN.USDC] || []),
+        BYUSDT: firstAmountByCoin(unifiedByCoin, BYBIT_COIN.BYUSDT, 'walletBalance')
+    }
+}
 
 export const getBybitBalances = async (): Promise<NumericBalanceMap> => {
     try {
-        const [spotBalances, earnPositions, onChainBalances, unifiedBalances] = await Promise.all([
+        const [spotBalances, earnPositions, onChainBalances, unifiedBalances] = await Promise.allSettled([
             getSpotBalance(),
             getEarnPositions(),
-            getEarnPositions('OnChain'),
+            getEarnPositions(BYBIT_EARN_CATEGORY.ON_CHAIN),
             getUnifiedBalance()
         ])
 
-        const findCoin = (balances: any, coin: string) => Array.isArray(balances) ? balances.find((b: any) => b.coin === coin) : null
-        const findAllCoins = (balances: any, coin: string) => Array.isArray(balances) ? balances.filter((b: any) => b.coin === coin) : []
-        const calculateOnChainAmount = (positions: any[]) =>
-            positions.reduce((total, position) =>
-                total + toAmount(position.amount) + toAmount(position.totalPnl), 0)
-
-        const usdeBalance = findCoin(spotBalances, 'USDE')
-        const usdtPosition = findCoin(earnPositions, 'USDT')
-        const usdcPosition = findCoin(earnPositions, 'USDC')
-        const usdtOnChain = findAllCoins(onChainBalances, 'USDT')
-        const usdcOnChain = findAllCoins(onChainBalances, 'USDC')
-        const byusdtBalance = findCoin(unifiedBalances, 'BYUSDT')
-
-        return {
-            USDE: usdeBalance ? toAmount(usdeBalance.walletBalance) : 0,
-            USDT: usdtPosition ? toAmount(usdtPosition.amount) : 0,
-            USDC: usdcPosition ? toAmount(usdcPosition.amount) : 0,
-            'USDT-ONCHAIN': calculateOnChainAmount(usdtOnChain),
-            'USDC-ONCHAIN': calculateOnChainAmount(usdcOnChain),
-            BYUSDT: byusdtBalance ? toAmount(byusdtBalance.walletBalance) : 0
-        }
+        return buildBybitBalanceMap({
+            spotBalances: getSettledValue(spotBalances, [], 'spot balances'),
+            earnPositions: getSettledValue(earnPositions, [], 'earn positions'),
+            onChainBalances: getSettledValue(onChainBalances, [], 'on-chain positions'),
+            unifiedBalances: getSettledValue(unifiedBalances, [], 'unified balances'),
+        })
     } catch (error) {
         console.error('Error fetching Bybit balances:', error)
         throw error
