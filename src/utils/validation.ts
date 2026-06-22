@@ -13,6 +13,9 @@ export const isSafeAddress = (value: string): boolean => /^[a-zA-Z0-9:._-]{1,128
 
 export const isSafeSymbol = (value: string): boolean => /^[A-Z0-9]{2,30}$/.test(value)
 
+// OKX instrument id, e.g. USD1-USDC (BASE-QUOTE)
+export const isSafeInstId = (value: string): boolean => /^[A-Z0-9]{1,15}-[A-Z0-9]{1,15}$/.test(value)
+
 export const parseIntegerInRange = (value: unknown, min: number, max: number): number | null => {
     if (typeof value !== 'string' || !/^\d+$/.test(value)) return null
 

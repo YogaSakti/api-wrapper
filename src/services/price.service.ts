@@ -1,4 +1,63 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import fetch from 'cross-fetch'
+import { MainClient } from 'binance'
+import { RestClientV5 } from 'bybit-api'
+import { RestClient } from 'okx-api'
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import { RestClientV2 } from 'bitget-api'
+
+if (!process.env.KEY_BINANCE || !process.env.SECRET_BINANCE) {
+    throw new Error('Binance API key and secret must be set in the environment variables.')
+}
+if (!process.env.KEY_BYBIT || !process.env.SECRET_BYBIT) {
+    throw new Error('Bybit API key and secret must be set in the environment variables.')
+}
+if (!process.env.KEY_OKX || !process.env.SECRET_OKX || !process.env.PASS_OKX) {
+    throw new Error('OKX API key, secret, and passphrase must be set in the environment variables.')
+}
+if (!process.env.KEY_BITGET || !process.env.SECRET_BITGET || !process.env.PASS_BITGET) {
+    throw new Error('Bitget API key, secret, and passphrase must be set in the environment variables.')
+}
+
+const binanceClient = new MainClient({
+    api_key: process.env.KEY_BINANCE,
+    api_secret: process.env.SECRET_BINANCE,
+})
+
+const bybitClient = new RestClientV5({
+    testnet: false,
+    key: process.env.KEY_BYBIT,
+    secret: process.env.SECRET_BYBIT,
+})
+
+const okxClient = new RestClient({
+    apiKey: process.env.KEY_OKX,
+    apiSecret: process.env.SECRET_OKX,
+    apiPass: process.env.PASS_OKX,
+})
+
+const bitgetClient = new RestClientV2({
+    apiKey: process.env.KEY_BITGET,
+    apiSecret: process.env.SECRET_BITGET,
+    apiPass: process.env.PASS_BITGET,
+})
+
+/**
+ * Compute the mid price from order book bid/ask levels.
+ * Each level is expected to be a [price, size] tuple.
+ */
+const computeMidPrice = (bids: any, asks: any): number => {
+    if (!Array.isArray(bids) || !Array.isArray(asks) || bids.length === 0 || asks.length === 0) {
+        throw new Error('No order book data found')
+    }
+    const bidPrice = parseFloat(bids[0]?.[0])
+    const askPrice = parseFloat(asks[0]?.[0])
+    if (isNaN(bidPrice) || isNaN(askPrice)) {
+        throw new Error('Invalid price data')
+    }
+    return (bidPrice + askPrice) / 2
+}
 
 export const SUPPORTED_PINTU_CURRENCIES = ['USDT', 'USDC'] as const
 
@@ -56,45 +115,57 @@ export const getPintuPrice = async (quoteCurrency: string = 'USDT'): Promise<num
 }
 
 /**
- * Fetch average price from Binance order book
+ * Fetch average price from Binance order book (via the binance SDK module)
  */
-export const getBinanceOrderBookPrice = async (symbol: string = 'USD1USDC', limit: number = 10): Promise<number | null> => {
+export const getBinanceOrderBookPrice = async (symbol: string = 'USD1USDT', limit: number = 10): Promise<number | null> => {
     try {
-        const response = await fetch(`https://www.binance.com/api/v3/depth?symbol=${symbol}&limit=${limit}`, {
-            headers: {
-                accept: '*/*',
-                'accept-language': 'en-US,en;q=0.9,id;q=0.8',
-                'bnc-level': '0',
-                'bnc-location': 'ID',
-                'bnc-time-zone': 'Asia/Jakarta',
-                clienttype: 'web',
-                'content-type': 'application/json',
-                lang: 'en',
-                priority: 'u=1, i',
-                'sec-ch-ua': '"Google Chrome";v="143", "Chromium";v="143", "Not A(Brand";v="24"',
-                'sec-ch-ua-mobile': '?0',
-                'sec-ch-ua-platform': '"macOS"',
-                'sec-fetch-dest': 'empty',
-                'sec-fetch-mode': 'cors',
-                'sec-fetch-site': 'same-origin',
-                'x-passthrough-token': '',
-
-            },
-            method: 'GET',
-        })
-        const data = await response.json()
-        if (!data.bids || !data.asks || !Array.isArray(data.bids) || !Array.isArray(data.asks) || data.bids.length === 0 || data.asks.length === 0) {
-            throw new Error('No order book data found')
-        }
-        const bidPrice = parseFloat(data.bids[0][0])
-        const askPrice = parseFloat(data.asks[0][0])
-        if (isNaN(bidPrice) || isNaN(askPrice)) {
-            throw new Error('Invalid price data')
-        }
-        const average = (bidPrice + askPrice) / 2
-        return average
+        const data: any = await binanceClient.getOrderBook({ symbol, limit: limit as any })
+        return computeMidPrice(data?.bids, data?.asks)
     } catch (error) {
         console.error('Binance fetch error:', error)
+        return null
+    }
+}
+
+/**
+ * Fetch average price from Bybit spot order book (via the bybit-api SDK module)
+ */
+export const getBybitOrderBookPrice = async (symbol: string = 'USDEUSDT', limit: number = 10): Promise<number | null> => {
+    try {
+        const response: any = await bybitClient.getOrderbook({ category: 'spot', symbol, limit })
+        // Bybit wraps results in result.b (bids) / result.a (asks)
+        return computeMidPrice(response?.result?.b, response?.result?.a)
+    } catch (error) {
+        console.error('Bybit fetch error:', error)
+        return null
+    }
+}
+
+/**
+ * Fetch average price from OKX order book (via the okx-api SDK module).
+ * OKX uses an instrument id (e.g. USD1-USDC) and a `sz` depth size.
+ */
+export const getOkxOrderBookPrice = async (instId: string = 'USDG-USDT', limit: number = 10): Promise<number | null> => {
+    try {
+        const response: any = await okxClient.getOrderBook({ instId, sz: String(limit) })
+        // okx-api unwraps the response into a `data` array of order book snapshots
+        const book = Array.isArray(response) ? response[0] : undefined
+        return computeMidPrice(book?.bids, book?.asks)
+    } catch (error) {
+        console.error('OKX fetch error:', error)
+        return null
+    }
+}
+
+/**
+ * Fetch average price from Bitget spot order book (via the bitget-api SDK module)
+ */
+export const getBitgetOrderBookPrice = async (symbol: string = 'USDGOUSDT', limit: number = 10): Promise<number | null> => {
+    try {
+        const response: any = await bitgetClient.getSpotOrderBookDepth({ symbol, type: 'step0', limit: String(limit) })
+        return computeMidPrice(response?.data?.bids, response?.data?.asks)
+    } catch (error) {
+        console.error('Bitget fetch error:', error)
         return null
     }
 }
