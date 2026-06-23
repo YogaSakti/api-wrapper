@@ -34,5 +34,5 @@ drip-serve.code-workspace
 .env.me
 .env.vault
 .eslintrc.json
-src/routes/solana.ts
-solana.png
+*.png
+/docs

@@ -141,6 +141,60 @@ export const data_Bybit_USDe = async (): Promise<EarnAprItem[]> => {
 }
 
 /**
+ * Fetch data from Bybit USD1.
+ */
+export const data_Bybit_USD1 = async (): Promise<EarnAprItem[]> => {
+    try {
+        // Get date range - from 7 days ago to 7 days ahead to ensure we capture today's data
+        const now = new Date()
+        const startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) // 7 days ago
+        const endDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000) // 7 days ahead
+
+        const start_at = Math.floor(startDate.getTime() / 1000)
+        const end_at = Math.floor(endDate.getTime() / 1000)
+
+        const response = await fetch('https://www.bybit.com/x-api/s1/byfi/airdrop/get-apr', {
+            headers: {
+                ...BYBIT_HEADERS,
+                'referer': 'https://www.bybit.com/en/earn/usd1-page',
+                'traceparent': '00-f2c93bf876a5fce34d3d6cc5f153a583-c8e288e645f396a5-01',
+            },
+            'body': JSON.stringify({
+                'start_at': start_at,
+                'end_at': end_at,
+                'coin': 920
+            }),
+            'method': 'POST',
+            ...(proxyAgent ? { agent: proxyAgent } : {})
+        })
+
+        const json = await response.json()
+
+        if (!json?.result?.daily_aprs || json.result.daily_aprs.length === 0) {
+            return []
+        }
+
+        // Get the most recent APR (last item in the array or closest to today)
+        const todayTimestamp = Math.floor(Date.now() / 1000)
+        const closestApr = json.result.daily_aprs.reduce((closest: any, current: any) => {
+            const currentDiff = Math.abs(parseInt(current.timestamp) - todayTimestamp)
+            const closestDiff = Math.abs(parseInt(closest.timestamp) - todayTimestamp)
+            return currentDiff < closestDiff ? current : closest
+        })
+
+        const apr_e8 = parseInt(closestApr.apr_e8, 10)
+
+        return [{
+            name: 'USD1',
+            APR: apr_e8 / 100000000,
+        }]
+    } catch (error) {
+        console.error('Bybit Airdrop fetch error:', error)
+        return []
+    }
+}
+
+/**
  * Fetch BYUSDT airdrop product data from Bybit.
  * @param tier - 1 (default, ≤100k, full APR) or 2 (>100k, base APR only)
  */

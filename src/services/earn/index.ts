@@ -1,5 +1,5 @@
 export { data_OKX } from './okx.service'
-export { data_Bybit, data_Bybit_USDe, data_Bybit_OnChain, data_Bybit_BYUSDT } from './bybit.service'
+export { data_Bybit, data_Bybit_USDe, data_Bybit_USD1, data_Bybit_OnChain, data_Bybit_BYUSDT } from './bybit.service'
 export { data_Binance, data_Binance_All } from './binance.service'
 export { data_Bitget } from './bitget.service'
 export { data_Kamino } from './kamino.service'

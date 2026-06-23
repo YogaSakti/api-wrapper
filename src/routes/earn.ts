@@ -6,6 +6,7 @@ import {
     data_OKX,
     data_Bybit,
     data_Bybit_USDe,
+    data_Bybit_USD1,
     data_Bybit_OnChain,
     data_Bybit_BYUSDT,
     data_Binance,
@@ -98,6 +99,18 @@ router.get(
         console.log('Fetching Bybit USDE data...')
         // const cachedData = await cache.get('bybit-usde', async () => data_Bybit_USDe())
         const data = await data_Bybit_USDe()
+        res.status(200).json(data)
+    }),
+)
+
+/**
+ * Bybit USD1 route - uncached (matches /bybit-usde)
+ */
+router.get(
+    '/bybit-usd1',
+    asyncHandler(async (req, res) => {
+        console.log('Fetching Bybit USD1 data...')
+        const data = await data_Bybit_USD1()
         res.status(200).json(data)
     }),
 )
