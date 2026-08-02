@@ -6,7 +6,8 @@
   "author": "YOGS",
   "scripts": {
     "dev": "nodemon src/index.ts",
-    "build": "tsc",
+    "build": "esbuild src/index.ts --bundle --platform=node --target=es2017 --format=cjs --outfile=dist/index.js --external:./node_modules/* --sourcemap",
+    "typecheck": "tsc --noEmit",
     "start": "node dist/index.js",
     "test": "jest",
     "test:live": "RUN_LIVE_TESTS=true jest test/live --runInBand",
@@ -41,6 +42,7 @@
     "@types/supertest": "^7.2.0",
     "@typescript-eslint/eslint-plugin": "^8.59.1",
     "@typescript-eslint/parser": "^8.59.1",
+    "esbuild": "^0.25.2",
     "eslint": "^9.39.4",
     "jest": "^30.3.0",
     "nodemon": "^3.1.14",
