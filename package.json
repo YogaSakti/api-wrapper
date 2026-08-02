@@ -4,6 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "author": "YOGS",
+  "packageManager": "pnpm@11.18.0",
   "scripts": {
     "dev": "nodemon src/index.ts",
     "build": "esbuild src/index.ts --bundle --platform=node --target=es2017 --format=cjs --outfile=dist/index.js --packages=external --sourcemap",
