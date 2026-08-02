@@ -18,7 +18,7 @@ const skipRateLimit = () => process.env.NODE_ENV === 'test'
 // Global limiter - generous ceiling to blunt abuse without affecting normal use
 const globalLimiter = rateLimit({
     windowMs: 60 * 1000,
-    limit: 120,
+    limit: 150,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
     skip: skipRateLimit,

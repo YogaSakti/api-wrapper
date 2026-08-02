@@ -9,8 +9,8 @@ export const balancesRouter = express.Router()
 
 // Strict limiter to slow ACCESS_KEY brute-forcing on this key-protected endpoint
 const balancesLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit: 30,
+    windowMs: 60 * 1000,
+    limit: 100,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
     skip: () => process.env.NODE_ENV === 'test',
