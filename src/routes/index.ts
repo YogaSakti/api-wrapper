@@ -23,4 +23,7 @@ router.use('/balances', balancesRouter)
 import priceRouter from './price'
 router.use('/price', priceRouter)
 
+import wdfeeRouter from './wdfee'
+router.use('/wdfee', wdfeeRouter)
+
 export default router

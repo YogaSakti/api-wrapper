@@ -135,6 +135,10 @@ Example price response:
 { "price": 1.0001 }
 ```
 
+#### Withdrawal Fee APIs
+- **GET /api/v1/wdfee**: Returns USDT withdrawal and deposit network data for Bybit, Pintu, Tokocrypto, and P2P.
+- **GET /api/v1/wdfee?from=bybit&to=pintu**: Returns compatible source withdrawal and destination deposit details. Supported sources are `bybit`, `pintu`, and `tokocrypto`; supported destinations also include `p2p`.
+
 For detailed logic and route handling, explore the `src/routes` directory.
 
 ## 🛠️ Development Notes
