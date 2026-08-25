@@ -5,8 +5,6 @@ import { RestClientV5 } from 'bybit-api'
 export type WdfeeExchange = 'bybit' | 'pintu' | 'tokocrypto'
 export type WdfeeDestination = WdfeeExchange | 'p2p'
 
-type FeeSource = 'bybit-api' | 'pintu-api' | 'binance-api'
-
 export interface WdfeeWithdrawal {
     network: string
     name?: string
@@ -15,7 +13,6 @@ export interface WdfeeWithdrawal {
     min?: string
     max?: string
     enabled: boolean
-    feeSource: FeeSource
 }
 
 interface WdfeeDeposit {
@@ -42,7 +39,7 @@ export interface WdfeeMasterResponse {
         bybit: WdfeeExchangeData
         pintu: WdfeeExchangeData
         tokocrypto: WdfeeExchangeData & {
-            internalTransfer: { p2p: { enabled: boolean; fee: string; feeSource: 'fixed' } }
+            internalTransfer: { p2p: { enabled: boolean; fee: string } }
         }
         p2p: { deposit: string[] }
     }
@@ -53,7 +50,7 @@ export interface WdfeeRouteResponse {
     from: WdfeeExchange
     to: WdfeeDestination
     transferType: 'onchain' | 'internal'
-    internalTransfer?: { enabled: boolean; fee: string; feeSource: 'fixed' }
+    internalTransfer?: { enabled: boolean; fee: string }
     networks: WdfeeRouteNetwork[]
 }
 
@@ -189,7 +186,6 @@ const mapBybit = (chains: BybitChain[]): WdfeeExchangeData => {
                 min: chain.withdrawMin,
                 max: chain.withdrawMax,
                 enabled: true,
-                feeSource: 'bybit-api' as const,
             })),
     }
 }
@@ -207,7 +203,6 @@ const mapPintu = (networks: PintuNetwork[]): WdfeeExchangeData => {
                 name: network.name,
                 fee: network.fee as string,
                 enabled: true,
-                feeSource: 'pintu-api' as const,
             }))
     }
 }
@@ -224,7 +219,6 @@ const mapTokocrypto = (coin: BinanceCoin): WdfeeExchangeData => ({
             min: network.withdrawMin,
             max: network.withdrawMax,
             enabled: coin.withdrawAllEnable !== false && network.withdrawEnable === true && network.busy !== true,
-            feeSource: 'binance-api' as const,
         })),
 })
 
@@ -262,7 +256,7 @@ export const getWdfeeMaster = async (): Promise<WdfeeMasterResponse> => {
             pintu: mapPintu(pintuNetworks),
             tokocrypto: {
                 ...mapTokocrypto(tokocryptoCoin),
-                internalTransfer: { p2p: { enabled: true, fee: '0', feeSource: 'fixed' } },
+                internalTransfer: { p2p: { enabled: true, fee: '0' } },
             },
             p2p: { deposit: [...P2P_DEPOSIT] },
         },
@@ -276,7 +270,7 @@ export const getWdfeeRoute = async (from: WdfeeExchange, to: WdfeeDestination): 
             from,
             to,
             transferType: 'internal',
-            internalTransfer: { enabled: true, fee: '0', feeSource: 'fixed' },
+            internalTransfer: { enabled: true, fee: '0' },
             networks: [],
         }
     }
