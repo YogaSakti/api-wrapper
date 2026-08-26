@@ -136,8 +136,9 @@ Example price response:
 ```
 
 #### Withdrawal Fee APIs
-- **GET /api/v1/wdfee**: Returns USDT withdrawal and deposit network data for Bybit, Pintu, Tokocrypto, and P2P.
-- **GET /api/v1/wdfee?from=bybit&to=pintu**: Returns compatible source withdrawal and destination deposit details. Supported sources are `bybit`, `pintu`, and `tokocrypto`; supported destinations also include `p2p`.
+- **GET /api/v1/wdfee**: Returns the cheapest enabled recommendation for each valid USDT source-to-destination route, plus the Tokocrypto-to-P2P internal transfer.
+- **GET /api/v1/wdfee?from=bybit&to=pintu**: Returns complete live withdrawal data for `from` and complete live deposit data for `to`; `from` is the withdrawal source and `to` is the deposit destination. Supported sources are `bybit`, `pintu`, and `tokocrypto`; supported destinations also include `p2p`.
+- Explicit route data preserves confirmation fields when an upstream provides them. Unknown chains remain bounded by allowlists, removed live chains disappear, and disabled live chains remain visible in detail but are not recommended.
 
 For detailed logic and route handling, explore the `src/routes` directory.
 

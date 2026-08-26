@@ -12,37 +12,41 @@ export interface WdfeeWithdrawal {
     percentageFee?: string
     min?: string
     max?: string
+    confirmation?: string
+    safeConfirmNumber?: string
+    depositMin?: string
+    minConfirm?: number
     enabled: boolean
 }
 
-interface WdfeeDeposit {
-    exchange: WdfeeDestination
-    action: 'deposit'
-    enabled: boolean
-    name?: string
-}
-
-interface WdfeeRouteNetwork {
+export interface WdfeeDeposit {
     network: string
-    source: WdfeeWithdrawal & { exchange: WdfeeExchange; action: 'withdraw' }
-    destination: WdfeeDeposit
+    name?: string
+    confirmation?: string
+    safeConfirmNumber?: string
+    depositMin?: string
+    minConfirm?: number
+    enabled: boolean
 }
 
 interface WdfeeExchangeData {
-    deposit: string[]
+    deposit: WdfeeDeposit[]
     withdraw: WdfeeWithdrawal[]
+}
+
+export interface WdfeeRecommendation {
+    from: WdfeeExchange
+    to: WdfeeDestination
+    transferType: 'onchain' | 'internal'
+    network?: string
+    source?: WdfeeWithdrawal & { exchange: WdfeeExchange; action: 'withdraw' }
+    destination?: WdfeeDeposit & { exchange: WdfeeDestination; action: 'deposit' }
+    internalTransfer?: { enabled: boolean; fee: string }
 }
 
 export interface WdfeeMasterResponse {
     asset: 'USDT'
-    exchanges: {
-        bybit: WdfeeExchangeData
-        pintu: WdfeeExchangeData
-        tokocrypto: WdfeeExchangeData & {
-            internalTransfer: { p2p: { enabled: boolean; fee: string } }
-        }
-        p2p: { deposit: string[] }
-    }
+    recommendations: WdfeeRecommendation[]
 }
 
 export interface WdfeeRouteResponse {
@@ -50,8 +54,9 @@ export interface WdfeeRouteResponse {
     from: WdfeeExchange
     to: WdfeeDestination
     transferType: 'onchain' | 'internal'
+    source?: { exchange: WdfeeExchange; withdraw: WdfeeWithdrawal[] }
+    destination?: { exchange: WdfeeDestination; deposit: WdfeeDeposit[] }
     internalTransfer?: { enabled: boolean; fee: string }
-    networks: WdfeeRouteNetwork[]
 }
 
 const bybitClient = new RestClientV5({
@@ -104,15 +109,17 @@ const TOKOCRYPTO_DEPOSIT = ['BSC', 'PLASMA', 'KAIA', 'OPTIMISM', 'SOL', 'TRX', '
 const TOKOCRYPTO_WITHDRAW = ['BSC', 'PLASMA', 'KAIA', 'OPTIMISM', 'AVAXC', 'POL', 'ARBITRUM', 'APT', 'SCROLL', 'XTZ', 'KAVAEVM', 'NEAR', 'TON', 'SOL', 'TRX', 'OPBNB', 'ETH', 'CELO'] as const
 const P2P_DEPOSIT = ['BSC', 'TRX', 'ETH', 'APT', 'PLASMA', 'SOL', 'POL', 'TON', 'ARBITRUM', 'AVAXC', 'OPTIMISM', 'CELO', 'OPBNB', 'KAIA', 'NEAR', 'SCROLL', 'DOT', 'KAVAEVM', 'XTZ'] as const
 
-
 interface BybitChain {
     chain: string
     chainType: string
-    chainWithdraw: string
-    chainDeposit: string
+    confirmation: string
     withdrawFee: string
-    withdrawPercentageFee: string
+    depositMin: string
     withdrawMin: string
+    chainDeposit: string
+    chainWithdraw: string
+    withdrawPercentageFee: string
+    safeConfirmNumber: string
     withdrawMax: string
 }
 
@@ -135,6 +142,8 @@ interface PintuResponse {
 interface BinanceNetwork {
     network?: string
     name?: string
+    depositEnable?: boolean
+    minConfirm?: number
     withdrawFee?: string
     withdrawMin?: string
     withdrawMax?: string
@@ -172,95 +181,163 @@ const getTokocrypto = async () => {
 }
 
 const mapBybit = (chains: BybitChain[]): WdfeeExchangeData => {
-    const liveDeposits = new Set(chains.filter(chain => chain.chainDeposit === '1').map(chain => normalizeNetwork(chain.chain)))
+    const allowedChains = chains
+        .map(chain => ({ chain, network: normalizeNetwork(chain.chain) }))
+        .filter(({ network }) => BYBIT_DEPOSIT.includes(network as typeof BYBIT_DEPOSIT[number]))
+
     return {
-        deposit: BYBIT_DEPOSIT.filter(network => liveDeposits.has(network)),
-        withdraw: chains
-            .map(chain => ({ chain, network: normalizeNetwork(chain.chain) }))
-            .filter(({ chain, network }) => chain.chainWithdraw === '1' && BYBIT_DEPOSIT.includes(network as typeof BYBIT_DEPOSIT[number]))
-            .map(({ chain, network }) => ({
-                network,
-                name: chain.chainType,
-                fee: chain.withdrawFee,
-                percentageFee: chain.withdrawPercentageFee,
-                min: chain.withdrawMin,
-                max: chain.withdrawMax,
-                enabled: true,
-            })),
+        deposit: allowedChains.map(({ chain, network }) => ({
+            network,
+            name: chain.chainType,
+            confirmation: chain.confirmation,
+            safeConfirmNumber: chain.safeConfirmNumber,
+            depositMin: chain.depositMin,
+            enabled: chain.chainDeposit === '1',
+        })),
+        withdraw: allowedChains.map(({ chain, network }) => ({
+            network,
+            name: chain.chainType,
+            fee: chain.withdrawFee,
+            percentageFee: chain.withdrawPercentageFee,
+            min: chain.withdrawMin,
+            max: chain.withdrawMax,
+            confirmation: chain.confirmation,
+            safeConfirmNumber: chain.safeConfirmNumber,
+            depositMin: chain.depositMin,
+            enabled: chain.chainWithdraw === '1',
+        })),
     }
 }
 
 const mapPintu = (networks: PintuNetwork[]): WdfeeExchangeData => {
     const usdtNetworks = networks.filter(network => network.asset === 'USDT' && network.name)
-    const liveDeposits = new Set(usdtNetworks.map(network => normalizeNetwork(network.name as string)))
+    const allowedNetworks = usdtNetworks
+        .map(network => ({ network, canonical: normalizeNetwork(network.name as string) }))
+        .filter(({ canonical }) => PINTU_DEPOSIT.includes(canonical as typeof PINTU_DEPOSIT[number]))
+
     return {
-        deposit: PINTU_DEPOSIT.filter(network => liveDeposits.has(network)),
-        withdraw: usdtNetworks
-            .map(network => ({ network, canonical: normalizeNetwork(network.name as string) }))
-            .filter(({ network, canonical }) => Boolean(network.fee) && PINTU_DEPOSIT.includes(canonical as typeof PINTU_DEPOSIT[number]))
+        deposit: allowedNetworks.map(({ network, canonical }) => ({
+            network: canonical,
+            name: network.name,
+            enabled: true,
+        })),
+        withdraw: allowedNetworks
+            .filter(({ network }) => Boolean(network.fee))
             .map(({ network, canonical }) => ({
                 network: canonical,
                 name: network.name,
                 fee: network.fee as string,
                 enabled: true,
-            }))
+            })),
     }
 }
 
-const mapTokocrypto = (coin: BinanceCoin): WdfeeExchangeData => ({
-    deposit: [...TOKOCRYPTO_DEPOSIT],
-    withdraw: (coin.networkList || [])
+const mapTokocrypto = (coin: BinanceCoin): WdfeeExchangeData => {
+    const networks = (coin.networkList || [])
         .map(network => ({ network, canonical: normalizeNetwork(network.network || '') }))
-        .filter(({ network, canonical }) => TOKOCRYPTO_WITHDRAW.includes(canonical as typeof TOKOCRYPTO_WITHDRAW[number]) && Boolean(network.withdrawFee))
-        .map(({ network, canonical }) => ({
-            network: canonical,
-            name: network.name,
-            fee: network.withdrawFee as string,
-            min: network.withdrawMin,
-            max: network.withdrawMax,
-            enabled: coin.withdrawAllEnable !== false && network.withdrawEnable === true && network.busy !== true,
-        })),
+
+    return {
+        deposit: networks
+            .filter(({ canonical }) => TOKOCRYPTO_DEPOSIT.includes(canonical as typeof TOKOCRYPTO_DEPOSIT[number]))
+            .map(({ network, canonical }) => ({
+                network: canonical,
+                name: network.name,
+                minConfirm: network.minConfirm,
+                enabled: network.depositEnable === true,
+            })),
+        withdraw: networks
+            .filter(({ network, canonical }) => TOKOCRYPTO_WITHDRAW.includes(canonical as typeof TOKOCRYPTO_WITHDRAW[number]) && Boolean(network.withdrawFee))
+            .map(({ network, canonical }) => ({
+                network: canonical,
+                name: network.name,
+                fee: network.withdrawFee as string,
+                min: network.withdrawMin,
+                max: network.withdrawMax,
+                minConfirm: network.minConfirm,
+                enabled: coin.withdrawAllEnable !== false && network.withdrawEnable === true && network.busy !== true,
+            })),
+    }
+}
+
+const mapP2P = (): WdfeeExchangeData => ({
+    deposit: P2P_DEPOSIT.map(network => ({ network, name: network, enabled: true })),
+    withdraw: [],
 })
 
-const destinationDeposits = async (destination: WdfeeDestination): Promise<WdfeeDeposit[]> => {
-    if (destination === 'bybit') {
-        const bybit = mapBybit(await getBybit())
-        return bybit.deposit.map(network => ({ exchange: 'bybit', action: 'deposit', enabled: true, name: network }))
-    }
-    if (destination === 'pintu') {
-        const pintuNetworks = await getPintu()
-        const names = new Map<string, string>()
-        for (const network of pintuNetworks) {
-            if (network.asset === 'USDT' && network.name) names.set(normalizeNetwork(network.name), network.name)
-        }
-        return PINTU_DEPOSIT
-            .filter(network => names.has(network))
-            .map(network => ({ exchange: 'pintu', action: 'deposit' as const, enabled: true, name: names.get(network) }))
-    }
-    const networks = destination === 'tokocrypto' ? TOKOCRYPTO_DEPOSIT : P2P_DEPOSIT
-    return networks.map(network => ({ exchange: destination, action: 'deposit' as const, enabled: true, name: network }))
+const getExchangeData = async (exchange: WdfeeDestination): Promise<WdfeeExchangeData> => {
+    if (exchange === 'bybit') return mapBybit(await getBybit())
+    if (exchange === 'pintu') return mapPintu(await getPintu())
+    if (exchange === 'tokocrypto') return mapTokocrypto(await getTokocrypto())
+    return mapP2P()
 }
 
-const sourceWithdrawals = async (source: WdfeeExchange): Promise<WdfeeWithdrawal[]> => {
-    if (source === 'bybit') return mapBybit(await getBybit()).withdraw
-    if (source === 'pintu') return mapPintu(await getPintu()).withdraw
-    return mapTokocrypto(await getTokocrypto()).withdraw
+const WD_FEE_ROUTES: Array<[WdfeeExchange, WdfeeDestination]> = [
+    ['bybit', 'pintu'],
+    ['bybit', 'tokocrypto'],
+    ['bybit', 'p2p'],
+    ['pintu', 'bybit'],
+    ['pintu', 'tokocrypto'],
+    ['pintu', 'p2p'],
+    ['tokocrypto', 'bybit'],
+    ['tokocrypto', 'pintu'],
+    ['tokocrypto', 'p2p'],
+]
+
+const internalTransfer = { enabled: true, fee: '0' }
+
+const selectRecommendation = (
+    from: WdfeeExchange,
+    to: WdfeeDestination,
+    data: Record<WdfeeDestination, WdfeeExchangeData>,
+): WdfeeRecommendation | undefined => {
+    const depositsByNetwork = new Map(
+        data[to].deposit
+            .filter(deposit => deposit.enabled)
+            .map(deposit => [deposit.network, deposit] as const),
+    )
+    let best: WdfeeRecommendation | undefined
+    let bestFee = Number.POSITIVE_INFINITY
+
+    for (const withdrawal of data[from].withdraw) {
+        if (!withdrawal.enabled) continue
+        const destination = depositsByNetwork.get(withdrawal.network)
+        if (!destination) continue
+        const fee = Number(withdrawal.fee)
+        if (!Number.isFinite(fee) || fee >= bestFee) continue
+        bestFee = fee
+        best = {
+            from,
+            to,
+            transferType: 'onchain',
+            network: withdrawal.network,
+            source: { ...withdrawal, exchange: from, action: 'withdraw' },
+            destination: { ...destination, exchange: to, action: 'deposit' },
+        }
+    }
+
+    return best
 }
 
 export const getWdfeeMaster = async (): Promise<WdfeeMasterResponse> => {
     const [bybitChains, pintuNetworks, tokocryptoCoin] = await Promise.all([getBybit(), getPintu(), getTokocrypto()])
-    return {
-        asset: 'USDT',
-        exchanges: {
-            bybit: mapBybit(bybitChains),
-            pintu: mapPintu(pintuNetworks),
-            tokocrypto: {
-                ...mapTokocrypto(tokocryptoCoin),
-                internalTransfer: { p2p: { enabled: true, fee: '0' } },
-            },
-            p2p: { deposit: [...P2P_DEPOSIT] },
-        },
+    const data: Record<WdfeeDestination, WdfeeExchangeData> = {
+        bybit: mapBybit(bybitChains),
+        pintu: mapPintu(pintuNetworks),
+        tokocrypto: mapTokocrypto(tokocryptoCoin),
+        p2p: mapP2P(),
     }
+    const recommendations: WdfeeRecommendation[] = []
+
+    for (const [from, to] of WD_FEE_ROUTES) {
+        if (from === 'tokocrypto' && to === 'p2p') {
+            recommendations.push({ from, to, transferType: 'internal', internalTransfer })
+            continue
+        }
+        const recommendation = selectRecommendation(from, to, data)
+        if (recommendation) recommendations.push(recommendation)
+    }
+
+    return { asset: 'USDT', recommendations }
 }
 
 export const getWdfeeRoute = async (from: WdfeeExchange, to: WdfeeDestination): Promise<WdfeeRouteResponse> => {
@@ -270,23 +347,17 @@ export const getWdfeeRoute = async (from: WdfeeExchange, to: WdfeeDestination): 
             from,
             to,
             transferType: 'internal',
-            internalTransfer: { enabled: true, fee: '0' },
-            networks: [],
+            internalTransfer,
         }
     }
 
-    const [withdrawals, deposits] = await Promise.all([sourceWithdrawals(from), destinationDeposits(to)])
-    const depositsByNetwork = new Map(deposits.map(deposit => [normalizeNetwork(deposit.name || ''), deposit]))
-    const networks = withdrawals.flatMap(withdrawal => {
-        const destination = depositsByNetwork.get(withdrawal.network)
-        return destination
-            ? [{
-                network: withdrawal.network,
-                source: { ...withdrawal, exchange: from, action: 'withdraw' as const },
-                destination,
-            }]
-            : []
-    })
-
-    return { asset: 'USDT', from, to, transferType: 'onchain', networks }
+    const [sourceData, destinationData] = await Promise.all([getExchangeData(from), getExchangeData(to)])
+    return {
+        asset: 'USDT',
+        from,
+        to,
+        transferType: 'onchain',
+        source: { exchange: from, withdraw: sourceData.withdraw },
+        destination: { exchange: to, deposit: destinationData.deposit },
+    }
 }
