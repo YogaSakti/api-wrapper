@@ -44,9 +44,6 @@ importers:
       express:
         specifier: ^5.1.0
         version: 5.2.1(supports-color@5.5.0)
-      express-async-handler:
-        specifier: ^1.2.0
-        version: 1.2.0
       express-rate-limit:
         specifier: ^8.6.1
         version: 8.6.1(express@5.2.1(supports-color@5.5.0))(supports-color@5.5.0)
@@ -1540,9 +1537,6 @@ packages:
   expect@30.4.1:
     resolution: {integrity: sha512-PMARsyh/JtqC20HoGqlFcIlQAyqUtW4PlI1rup1uhYJtKuwAjbvWi3GQMAn+STdHum/dk8xrKfUM1+5SAwpolA==}
     engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
-
-  express-async-handler@1.2.0:
-    resolution: {integrity: sha512-rCSVtPXRmQSW8rmik/AIb2P0op6l7r1fMW538yyvTMltCO4xQEWMmobfrIxN2V1/mVrgxB8Az3reYF6yUZw37w==}
 
   express-rate-limit@8.6.1:
     resolution: {integrity: sha512-0D493aP61w0TJ2A0wy27riRsO7FMQ7FK+KUHOKCSfPvYo0R55aiC6emCVgFUeShH0fq0ICPVzNcgoS+BsbXQCA==}
@@ -4370,8 +4364,6 @@ snapshots:
       jest-message-util: 30.4.1
       jest-mock: 30.4.1
       jest-util: 30.4.1
-
-  express-async-handler@1.2.0: {}
 
   express-rate-limit@8.6.1(express@5.2.1(supports-color@5.5.0))(supports-color@5.5.0):
     dependencies:

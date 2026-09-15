@@ -82,9 +82,10 @@ All routes are prefixed with `/api/v1`.
 
 #### Earn APIs (Stablecoin APR Rates)
 - **GET /api/v1/earn**: Welcome message and available earn endpoints.
-- **GET /api/v1/earn/okx**: Retrieves USDT/USDC APR data from OKX.
+- **GET /api/v1/earn/okx?amount=20000**: Retrieves USDT/USDC/USDG/RLUSD APR data from OKX. `amount` is optional; USDG/RLUSD use 10% up to 10,000, then their VIP APY for the remainder.
 - **GET /api/v1/earn/bybit**: Fetches USDT/USDC APR data from Bybit.
 - **GET /api/v1/earn/bybit-usde**: Fetches Bybit USDe airdrop rates.
+- **GET /api/v1/earn/bybit-usd1**: Fetches Bybit USD1 airdrop rates.
 - **GET /api/v1/earn/bybit-byusdt?tier=1**: Fetches Bybit BYUSDT airdrop rates. `tier` is optional; default behavior uses tier 1.
 - **GET /api/v1/earn/bybit-onchain**: Fetches Bybit on-chain earn rates.
 - **GET /api/v1/earn/binance**: Fetches Binance earn APR data.
@@ -114,16 +115,6 @@ Example CMC response:
 }
 ```
 
-#### Stable APIs (Stablecoin APR Rates)
-- **GET /api/v1/stable**: Welcome message and available endpoints.
-- **GET /api/v1/stable/okx**: Retrieves USDT/USDC APR data from OKX.
-- **GET /api/v1/stable/bybit**: Fetches USDT/USDC APR data from Bybit.
-- **GET /api/v1/stable/bybit-usde**: Fetches Bybit USDe airdrop rates.
-- **GET /api/v1/stable/bybit-byusdt**: Fetches Bybit BYUSDT airdrop rates.
-- **GET /api/v1/stable/binance**: Fetches FDUSD APR data from Binance.
-- **GET /api/v1/stable/binance-stable**: Fetches FDUSD/USDT/USDC APR data from Binance.
-- **GET /api/v1/stable/bitget**: Fetches combined USDT/USDC APR data from Bitget.
-
 #### Price APIs
 - **GET /api/v1/price/pintu**: Fetches USDT-IDR price data from Pintu.
 - **GET /api/v1/price/pintu/usdt**: Same as the default USDT price endpoint.
@@ -134,6 +125,11 @@ Example price response:
 ```json
 { "price": 1.0001 }
 ```
+
+#### Balance APIs
+- **GET /api/v1/balances**: Lists supported exchanges and coin parameters without exposing account data.
+- **GET /api/v1/balances/:key/:exchange/:coin**: Returns the cached balance for one coin. The key may instead be supplied through `x-api-key` or `Authorization: Bearer`.
+- OKX balance coins include `USDT`, `USDC`, `USDG`, and `RLUSD`.
 
 #### Withdrawal Fee APIs
 - **GET /api/v1/wdfee**: Returns the cheapest enabled recommendation for each valid USDT source-to-destination route, plus the Tokocrypto-to-P2P internal transfer.

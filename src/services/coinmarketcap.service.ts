@@ -46,20 +46,19 @@ const CMC_BASE_URL = 'https://pro-api.coinmarketcap.com'
 
 const cmcHeaders = {
     accept: 'application/json',
-    'X-CMC_PRO_API_KEY': CMC_API_KEY || '',
+    'X-CMC_PRO_API_KEY': CMC_API_KEY || ''
 }
 
 const dexHeaders = {
     accept: 'application/json',
-    'X-CMC_PRO_API_KEY': CMC_DEX_API_KEY || '',
+    'X-CMC_PRO_API_KEY': CMC_DEX_API_KEY || ''
 }
 
 const cache = new Cache(60) // 60 seconds TTL
-const dexCache = new Cache(60) // 60 seconds TTL for DEX
 
 const parseJsonResponse = async <T>(response: Response): Promise<T> => {
     try {
-        return await response.json() as T
+        return (await response.json()) as T
     } catch {
         throw new AppError(502, 'Invalid response from CoinMarketCap')
     }
@@ -85,7 +84,7 @@ export const getTokenPrice = async (slug: string, fiatCurrency: string = 'USD'):
         const slugUrl = `${CMC_BASE_URL}/v1/cryptocurrency/quotes/latest?slug=${slug}&convert=${fiat}`
         const slugResponse = await fetch(slugUrl, {
             headers: cmcHeaders,
-            method: 'GET',
+            method: 'GET'
         })
         const slugJson = await parseJsonResponse<CmcQuoteResponse>(slugResponse)
 
@@ -102,7 +101,7 @@ export const getTokenPrice = async (slug: string, fiatCurrency: string = 'USD'):
         const symbolUrl = `${CMC_BASE_URL}/v1/cryptocurrency/quotes/latest?symbol=${symbol}&convert=${fiat}`
         const symbolResponse = await fetch(symbolUrl, {
             headers: cmcHeaders,
-            method: 'GET',
+            method: 'GET'
         })
         const symbolJson = await parseJsonResponse<CmcQuoteResponse>(symbolResponse)
 
@@ -127,11 +126,11 @@ export const getTokenPrice = async (slug: string, fiatCurrency: string = 'USD'):
 export const getDexTokenPrice = async (platform: string, address: string): Promise<DexTokenPriceResponse> => {
     const cacheKey = `cmc:dex:${platform}:${address}`
 
-    return dexCache.get<DexTokenPriceResponse>(cacheKey, async () => {
+    return cache.get<DexTokenPriceResponse>(cacheKey, async () => {
         const url = `${CMC_BASE_URL}/v1/dex/token/price?platform=${platform}&address=${address}`
         const response = await fetch(url, {
             headers: dexHeaders,
-            method: 'GET',
+            method: 'GET'
         })
         const json = await parseJsonResponse<CmcDexResponse>(response)
 
@@ -146,7 +145,7 @@ export const getDexTokenPrice = async (platform: string, address: string): Promi
             priceChange7d: d.pc7d ?? null,
             volume24h: d.v24h ?? null,
             liquidity: d.l ?? null,
-            marketCap: d.mc ?? null,
+            marketCap: d.mc ?? null
         }
     })
 }

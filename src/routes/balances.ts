@@ -14,7 +14,7 @@ const balancesLimiter = rateLimit({
     standardHeaders: 'draft-7',
     legacyHeaders: false,
     skip: () => process.env.NODE_ENV === 'test',
-    message: { error: 'Too Many Requests', message: 'Rate limit exceeded. Try again later.' },
+    message: { error: 'Too Many Requests', message: 'Rate limit exceeded. Try again later.' }
 })
 balancesRouter.use(balancesLimiter)
 
@@ -31,7 +31,7 @@ if (!ACCESS_KEY || typeof ACCESS_KEY !== 'string' || ACCESS_KEY.length < 10) {
 
 // Supported exchanges and coins
 const SUPPORTED_EXCHANGES = ['bybit', 'okx', 'binance', 'bitget']
-const SUPPORTED_COINS = ['usde', 'usdt', 'usdc', 'usd1', 'byusdt', 'usdgo']
+const SUPPORTED_COINS = ['usde', 'usdt', 'usdc', 'usd1', 'byusdt', 'usdgo', 'usdg', 'rlusd']
 // Bitget supports additional coin formats like for fixed savings
 const BITGET_FIXED_PATTERN = /^[A-Z]+-[A-Z]+-\d+$/
 // Bybit supports on-chain balances with -ONCHAIN suffix
@@ -141,7 +141,7 @@ balancesRouter.get('/:key/:exchange/:coin', validateKey, validateExchange, valid
             bybit: () => balanceCache.get(`balances:bybit`, getBybitBalances),
             okx: () => balanceCache.get(`balances:okx`, getOkxBalances),
             binance: () => balanceCache.get(`balances:binance`, getBinanceBalances),
-            bitget: () => balanceCache.get(`balances:bitget`, getBitgetBalances),
+            bitget: () => balanceCache.get(`balances:bitget`, getBitgetBalances)
         }
 
         const getBalance = balanceFunctions[exchangeLower]

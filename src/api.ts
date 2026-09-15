@@ -21,13 +21,13 @@ const globalLimiter = rateLimit({
     limit: 150,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
-    skip: skipRateLimit,
+    skip: skipRateLimit
 })
 app.use(globalLimiter)
 
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
     .split(',')
-    .map(origin => origin.trim())
+    .map((origin) => origin.trim())
     .filter(Boolean)
 
 app.use(
@@ -68,8 +68,6 @@ app.use(
 )
 
 app.use(express.json())
-app.use(express.raw({ type: 'application/vnd.custom-type' }))
-app.use(express.text({ type: 'text/html' }))
 
 // Healthcheck endpoint
 app.get('/', (req, res) => res.status(200).send({ status: 'ok', message: 'Hello world' }))
@@ -77,7 +75,7 @@ app.get('/', (req, res) => res.status(200).send({ status: 'ok', message: 'Hello 
 // import routes
 import route from './routes/index'
 
-// Version the api  
+// Version the api
 app.use('/api/v1', route)
 
 // Error handling middleware (must be last)
@@ -86,12 +84,12 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
         error: err,
         method: req.method,
         url: sanitizeUrl(req.originalUrl || req.url),
-        headers: sanitizeHeaders(req.headers),
+        headers: sanitizeHeaders(req.headers)
     })
-    
+
     // Don't leak error details in production
     const isDevelopment = process.env.NODE_ENV !== 'production'
-    
+
     const status = err.status || 500
 
     res.status(status).json({
