@@ -36,3 +36,12 @@ export const parseIndexFilter = (value: unknown, max: number): number[] | null =
 
     return indices
 }
+
+export const parseChoiceFilter = (value: unknown, allowed: readonly string[]): string[] | null => {
+    if (typeof value !== 'string' || value.trim() === '') return null
+
+    const choices = value.split(',').map(choice => choice.trim().toUpperCase())
+    if (choices.some(choice => !allowed.includes(choice)) || new Set(choices).size !== choices.length) return null
+
+    return choices
+}

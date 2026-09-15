@@ -1,11 +1,12 @@
 import express from 'express'
 import CacheService from '../utils/cache.service'
-import { getSingleParam, isSafeAddress, parseIndexFilter, parseIntegerInRange } from '../utils/validation'
+import { getSingleParam, isSafeAddress, parseChoiceFilter, parseIndexFilter, parseIntegerInRange } from '../utils/validation'
 import { data_OKX, data_Bybit, data_Bybit_USDe, data_Bybit_USD1, data_Bybit_OnChain, data_Bybit_BYUSDT, data_Binance, data_Binance_All, data_Bitget, data_Kamino } from '../services/earn'
 
 const ttl = 60 * 0.5 // 0.5 minutes
 const cache = new CacheService(ttl)
 const router = express.Router()
+const OKX_COINS = ['USDT', 'USDC', 'USDG', 'RLUSD'] as const
 
 /**
  * Basic welcome route
@@ -48,6 +49,13 @@ router.get('/bitget', async (req, res) => {
  * Optional amount param calculates the effective USDG/RLUSD APR above the 10,000 limit.
  */
 router.get('/okx', async (req, res) => {
+    const rawCoins = req.query.coins
+    const coins = rawCoins === undefined ? undefined : parseChoiceFilter(rawCoins, OKX_COINS)
+    if (rawCoins !== undefined && !coins) {
+        res.status(400).json({ error: 'Invalid Coins', message: `Coins must be a comma-separated list selected from: ${OKX_COINS.join(', ')}` })
+        return
+    }
+
     const rawAmount = req.query.amount
     if (rawAmount !== undefined && typeof rawAmount !== 'string') {
         res.status(400).json({
@@ -79,7 +87,13 @@ router.get('/okx', async (req, res) => {
         } while (cachedData.length === 0 && attempts < 10)
     }
 
-    res.status(200).json(cachedData)
+    if (!coins) {
+        res.status(200).json(cachedData)
+        return
+    }
+
+    const dataByCoin = new Map(cachedData.map(item => [item.name.toUpperCase(), item]))
+    res.status(200).json(coins.map(coin => dataByCoin.get(coin)).filter(item => item !== undefined))
 })
 
 /**

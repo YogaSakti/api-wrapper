@@ -82,7 +82,7 @@ All routes are prefixed with `/api/v1`.
 
 #### Earn APIs (Stablecoin APR Rates)
 - **GET /api/v1/earn**: Welcome message and available earn endpoints.
-- **GET /api/v1/earn/okx?amount=20000**: Retrieves USDT/USDC/USDG/RLUSD APR data from OKX. `amount` is optional; USDG/RLUSD use 10% up to 10,000, then their VIP APY for the remainder.
+- **GET /api/v1/earn/okx?amount=20000&coins=usdg,USDT,rlUSD**: Retrieves OKX APR data. `amount` is optional; USDG/RLUSD use 10% up to 10,000, then their VIP APY for the remainder. `coins` optionally selects and orders unique `USDT`, `USDC`, `USDG`, and `RLUSD` results case-insensitively.
 - **GET /api/v1/earn/bybit**: Fetches USDT/USDC APR data from Bybit.
 - **GET /api/v1/earn/bybit-usde**: Fetches Bybit USDe airdrop rates.
 - **GET /api/v1/earn/bybit-usd1**: Fetches Bybit USD1 airdrop rates.
