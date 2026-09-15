@@ -13,42 +13,31 @@ const client = new RestClient({
     apiPass: process.env.PASS_OKX
 })
 
-const TRACKED_COINS = ['USDT', 'USDC', 'USDG', 'RLUSD'] as const
-
-const addAmount = (totals: NumericBalanceMap, coin: unknown, amount: unknown) => {
-    if (typeof coin !== 'string') return
-
-    const normalizedCoin = coin.toUpperCase()
-    if (!TRACKED_COINS.includes(normalizedCoin as typeof TRACKED_COINS[number])) return
-
-    totals[normalizedCoin] += toAmount(amount)
-}
+const SAVING_COINS = ['USDT', 'USDC', 'USDG'] as const
 
 export const getOkxBalances = async (): Promise<NumericBalanceMap> => {
-    const [fundingBalances, tradingAccounts, savingBalances, stableRewardsBalances] = await Promise.all([
-        client.getBalances({ ccy: TRACKED_COINS.join(',') }),
-        client.getBalance({ ccy: TRACKED_COINS.join(',') }),
-        client.getSavingBalance({ ccy: TRACKED_COINS.join(',') }),
-        client.getStableRewardsBalance({ ccy: TRACKED_COINS.join(',') })
+    const [fundingBalances, tradingAccounts, savingBalances] = await Promise.all([
+        client.getBalances({ ccy: 'RLUSD' }),
+        client.getBalance({ ccy: 'RLUSD' }),
+        client.getSavingBalance({ ccy: SAVING_COINS.join(',') })
     ])
 
-    const totals: NumericBalanceMap = Object.fromEntries(TRACKED_COINS.map(coin => [coin, 0]))
+    const balances: NumericBalanceMap = { USDT: 0, USDC: 0, USDG: 0, RLUSD: 0 }
 
     if (Array.isArray(fundingBalances)) {
-        fundingBalances.forEach(item => addAmount(totals, item.ccy, item.bal))
+        balances.RLUSD += fundingBalances.reduce((total, item) => item.ccy === 'RLUSD' ? total + toAmount(item.bal) : total, 0)
     }
 
     if (Array.isArray(tradingAccounts)) {
-        tradingAccounts.forEach(account => account.details?.forEach(item => addAmount(totals, item.ccy, item.cashBal)))
+        balances.RLUSD += tradingAccounts.reduce((total, account) => total + (account.details?.reduce((sum, item) => item.ccy === 'RLUSD' ? sum + toAmount(item.cashBal) : sum, 0) || 0), 0)
     }
 
     if (Array.isArray(savingBalances)) {
-        savingBalances.forEach((item: any) => addAmount(totals, item.ccy, item.amt))
+        savingBalances.forEach((item: any) => {
+            const coin = item?.ccy?.toUpperCase()
+            if (SAVING_COINS.includes(coin)) balances[coin] += toAmount(item.amt)
+        })
     }
 
-    if (Array.isArray(stableRewardsBalances)) {
-        stableRewardsBalances.forEach(account => account.details?.forEach(item => addAmount(totals, item.ccy, item.amt)))
-    }
-
-    return totals
+    return balances
 }
