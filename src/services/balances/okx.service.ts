@@ -13,31 +13,30 @@ const client = new RestClient({
     apiPass: process.env.PASS_OKX
 })
 
-const SAVING_COINS = ['USDT', 'USDC', 'USDG'] as const
+export const getOkxBalances = async (coin: string): Promise<NumericBalanceMap> => {
+    if (coin !== 'RLUSD') {
+        const savingBalances = await client.getSavingBalance({ ccy: coin })
+        const amount = Array.isArray(savingBalances)
+            ? savingBalances.reduce((total, item: any) => item?.ccy?.toUpperCase() === coin ? total + toAmount(item.amt) : total, 0)
+            : 0
 
-export const getOkxBalances = async (): Promise<NumericBalanceMap> => {
-    const [fundingBalances, tradingAccounts, savingBalances] = await Promise.all([
-        client.getBalances({ ccy: 'RLUSD' }),
-        client.getBalance({ ccy: 'RLUSD' }),
-        client.getSavingBalance({ ccy: SAVING_COINS.join(',') })
+        return { [coin]: amount }
+    }
+
+    const [fundingBalances, tradingAccounts] = await Promise.all([
+        client.getBalances({ ccy: coin }),
+        client.getBalance({ ccy: coin })
     ])
 
-    const balances: NumericBalanceMap = { USDT: 0, USDC: 0, USDG: 0, RLUSD: 0 }
+    let amount = 0
 
     if (Array.isArray(fundingBalances)) {
-        balances.RLUSD += fundingBalances.reduce((total, item) => item.ccy === 'RLUSD' ? total + toAmount(item.bal) : total, 0)
+        amount += fundingBalances.reduce((total, item) => item.ccy === coin ? total + toAmount(item.bal) : total, 0)
     }
 
     if (Array.isArray(tradingAccounts)) {
-        balances.RLUSD += tradingAccounts.reduce((total, account) => total + (account.details?.reduce((sum, item) => item.ccy === 'RLUSD' ? sum + toAmount(item.cashBal) : sum, 0) || 0), 0)
+        amount += tradingAccounts.reduce((total, account) => total + (account.details?.reduce((sum, item) => item.ccy === coin ? sum + toAmount(item.cashBal) : sum, 0) || 0), 0)
     }
 
-    if (Array.isArray(savingBalances)) {
-        savingBalances.forEach((item: any) => {
-            const coin = item?.ccy?.toUpperCase()
-            if (SAVING_COINS.includes(coin)) balances[coin] += toAmount(item.amt)
-        })
-    }
-
-    return balances
+    return { [coin]: amount }
 }

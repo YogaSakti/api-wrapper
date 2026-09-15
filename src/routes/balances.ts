@@ -139,7 +139,7 @@ balancesRouter.get('/:key/:exchange/:coin', validateKey, validateExchange, valid
 
         const balanceFunctions: Record<string, () => Promise<NumericBalanceMap>> = {
             bybit: () => balanceCache.get(`balances:bybit`, getBybitBalances),
-            okx: () => balanceCache.get(`balances:okx`, getOkxBalances),
+            okx: () => balanceCache.get(`balances:okx:${coin}`, () => getOkxBalances(coin)),
             binance: () => balanceCache.get(`balances:binance`, getBinanceBalances),
             bitget: () => balanceCache.get(`balances:bitget`, getBitgetBalances)
         }
