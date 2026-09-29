@@ -171,16 +171,18 @@ const BITGET_COINS: Record<string, BitgetCoinConfig> = {
     USDGO: {},
 }
 
+export type BitgetAmounts = [number, number, number]
+
 /**
  * Fetch data from Bitget for all supported coins.
  * Fetched sequentially — parallel requests get rate-limited (429) by Bitget.
  */
-export const data_Bitget = async (amount?: number): Promise<EarnAprItem[]> => {
+export const data_Bitget = async (amounts?: BitgetAmounts): Promise<EarnAprItem[]> => {
     const results: EarnAprItem[] = []
     const coins = Object.entries(BITGET_COINS)
     for (let i = 0; i < coins.length; i++) {
         const [coinName, config] = coins[i]
-        const result = await getBitgetSavingsData(coinName, config, amount)
+        const result = await getBitgetSavingsData(coinName, config, amounts?.[i])
         if (result) results.push(result)
         // Space out requests to the same host to avoid tripping Bitget's rate limit
         if (i < coins.length - 1) await sleep(300)

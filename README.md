@@ -91,7 +91,7 @@ All routes are prefixed with `/api/v1`.
 - **GET /api/v1/earn/binance**: Fetches Binance earn APR data.
 - **GET /api/v1/earn/binance-stable?noLimit=true**: Fetches Binance stablecoin APR data. `noLimit` is optional.
 - **GET /api/v1/earn/bitget**: Fetches one combined APR result for each supported Bitget coin: `USDT`, `USDC`, and `USDGO`.
-- **GET /api/v1/earn/bitget?amount=200**: Calculates the effective Bitget APR for the supplied positive amount. Amount tiers are applied progressively using each product's minimum and maximum tier limits.
+- **GET /api/v1/earn/bitget?amount=10,20,30**: Calculates the effective Bitget APR using separate positive amounts for `USDT`, `USDC`, and `USDGO`, in that order. Exactly three comma-separated values are required when `amount` is provided. Amount tiers are applied progressively using each product's minimum and maximum tier limits.
 - **GET /api/v1/earn/kamino/:vault/:address**: Fetches Kamino earn data for a vault and wallet address.
 
 Example earn response:
