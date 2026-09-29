@@ -90,17 +90,20 @@ All routes are prefixed with `/api/v1`.
 - **GET /api/v1/earn/bybit-onchain**: Fetches Bybit on-chain earn rates.
 - **GET /api/v1/earn/binance**: Fetches Binance earn APR data.
 - **GET /api/v1/earn/binance-stable?noLimit=true**: Fetches Binance stablecoin APR data. `noLimit` is optional.
-- **GET /api/v1/earn/bitget**: Fetches combined USDT/USDC APR data from Bitget.
-- **GET /api/v1/earn/bitget?filter=1,2**: Fetches selected Bitget rows by 1-based index. Current index order: `1` USDT, `2` USDT-VIP, `3` USDT-VIP-14, `4` USDC, `5` USDC-VIP.
+- **GET /api/v1/earn/bitget**: Fetches one combined APR result for each supported Bitget coin: `USDT`, `USDC`, and `USDGO`.
+- **GET /api/v1/earn/bitget?amount=200**: Calculates the effective Bitget APR for the supplied positive amount. Amount tiers are applied progressively using each product's minimum and maximum tier limits.
 - **GET /api/v1/earn/kamino/:vault/:address**: Fetches Kamino earn data for a vault and wallet address.
 
 Example earn response:
 ```json
 [
-  { "name": "USDT", "APR": 0.05 },
-  { "name": "USDC", "APR": 0.04 }
+  { "name": "USDT", "APR": 0.052 },
+  { "name": "USDC", "APR": 0.041 },
+  { "name": "USDGO", "APR": 0.066 }
 ]
 ```
+
+APR values are returned as decimals, so `0.052` represents `5.2%`.
 
 #### CoinMarketCap APIs
 - **GET /api/v1/cmc/:slug?convert=USD**: Fetches token price from CoinMarketCap by slug, with symbol fallback. `convert` is optional and defaults to `USD`.

@@ -1,6 +1,6 @@
 import express from 'express'
 import CacheService from '../utils/cache.service'
-import { getSingleParam, isSafeAddress, parseChoiceFilter, parseIndexFilter, parseIntegerInRange } from '../utils/validation'
+import { getSingleParam, isSafeAddress, parseChoiceFilter, parseIntegerInRange } from '../utils/validation'
 import { data_OKX, data_Bybit, data_Bybit_USDe, data_Bybit_USD1, data_Bybit_OnChain, data_Bybit_BYUSDT, data_Binance, data_Binance_All, data_Bitget, data_Kamino } from '../services/earn'
 
 const ttl = 60 * 0.5 // 0.5 minutes
@@ -19,29 +19,24 @@ router.get('/', (_req, res) => {
 
 /**
  * Bitget route - cached
- * Filter param: /bitget?filter=2,3,4,5
- * Index: [1] USDT, [2] USDT-VIP, [3] USDT-VIP-14, [4] USDC, [5] USDC-VIP, [6] USDGO
+ * Optional amount param calculates the effective tiered APR for USDT, USDC, and USDGO.
  */
 router.get('/bitget', async (req, res) => {
-    const allData = await cache.get('bitget', data_Bitget)
-
-    const filterParam = req.query.filter as string
-    if (filterParam) {
-        const indices = parseIndexFilter(filterParam, allData.length)
-        if (!indices) {
-            res.status(400).json({
-                error: 'Invalid Filter',
-                message: `Filter must be a comma-separated list of indexes between 1 and ${allData.length}`
-            })
-            return
-        }
-
-        const filtered = indices.map((i) => allData[i - 1])
-        res.status(200).json(filtered)
+    const rawAmount = req.query.amount
+    if (rawAmount !== undefined && typeof rawAmount !== 'string') {
+        res.status(400).json({ error: 'Invalid Amount', message: 'Amount must be a positive number' })
         return
     }
 
-    res.status(200).json(allData)
+    const amount = rawAmount === undefined ? undefined : Number(rawAmount)
+    if (rawAmount !== undefined && (!Number.isFinite(amount) || amount <= 0)) {
+        res.status(400).json({ error: 'Invalid Amount', message: 'Amount must be a positive number' })
+        return
+    }
+
+    const cacheKey = `bitget:${amount ?? 'default'}`
+    const data = await cache.get(cacheKey, () => data_Bitget(amount))
+    res.status(200).json(data)
 })
 
 /**

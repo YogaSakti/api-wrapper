@@ -37,3 +37,7 @@ drip-serve.code-workspace
 .eslintrc.json
 *.png
 /docs
+.superpowers
+.claude
+.code-review-graph
+scripts

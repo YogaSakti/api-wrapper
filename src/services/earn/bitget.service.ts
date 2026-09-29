@@ -4,6 +4,8 @@ import { EarnAprItem } from '../../types/api.types'
 interface BitgetApy {
     apy: string
     rateLevel: number
+    minStepValue?: string
+    maxStepValue?: string
 }
 
 interface BitgetProduct {
@@ -56,15 +58,6 @@ const buildSavingsRequestBody = (coinName: string) => JSON.stringify({
 
 const parseApr = (apy: string): number => parseFloat(apy) / 100
 
-const findApy = (product: BitgetProduct | undefined, rateLevel: number): BitgetApy | undefined => {
-    return product?.apyList?.find(item => item.rateLevel === rateLevel)
-}
-
-const createAprItem = (product: BitgetProduct, apy: BitgetApy, suffix = ''): EarnAprItem => ({
-    name: `${product.coinName}${suffix}`,
-    APR: parseApr(apy.apy),
-})
-
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 // Bitget rate-limits rapid sequential calls (429). Retry with backoff so a coin isn't silently dropped.
@@ -99,86 +92,96 @@ const getProductGroups = (json: BitgetSavingsResponse): BitgetBizLineProduct[] =
     return groups
 }
 
-const parseBitgetSavings = (json: BitgetSavingsResponse, includeVip14 = false): EarnAprItem[] => {
-    const groups = getProductGroups(json)
-    const standardProducts = groups[0]?.productList
-    const standardFlexible = standardProducts?.find(item => item.period === 0)
-    const standardApy = findApy(standardFlexible, 1)
+const calculateEffectiveApr = (product: BitgetProduct, amount?: number): number => {
+    const tiers = [...product.apyList]
+        .filter(tier => Number.isFinite(parseApr(tier.apy)))
+        .sort((a, b) => Number(a.minStepValue ?? 0) - Number(b.minStepValue ?? 0))
 
-    if (!standardFlexible || !standardApy) {
-        throw new Error('No standard flexible product data found.')
+    if (tiers.length === 0) {
+        throw new Error(`No APY tiers found for ${product.coinName}.`)
     }
 
-    const result: EarnAprItem[] = [createAprItem(standardFlexible, standardApy)]
-
-    const vipProducts = groups.find(item => item.productLevel === 2)?.productList
-    const vipFlexible = vipProducts?.find(item => item.period === 0)
-    const vipFlexibleApy = findApy(vipFlexible, 0)
-
-    if (vipFlexible && vipFlexibleApy) {
-        result.push(createAprItem(vipFlexible, vipFlexibleApy, '-VIP'))
+    if (amount === undefined) {
+        return parseApr(tiers[0].apy)
     }
 
-    if (includeVip14) {
-        const vip14 = vipProducts?.find(item => item.period === 14)
-        const vip14Apy = findApy(vip14, 0)
+    let weightedApr = 0
+    let coveredAmount = 0
 
-        if (vip14 && vip14Apy) {
-            result.push(createAprItem(vip14, vip14Apy, '-VIP-14'))
-        }
+    for (const tier of tiers) {
+        const min = Number(tier.minStepValue ?? 0)
+        const max = Number(tier.maxStepValue ?? amount)
+        if (!Number.isFinite(min) || !Number.isFinite(max) || max <= min) continue
+
+        const tierAmount = Math.max(0, Math.min(amount, max) - min)
+        weightedApr += tierAmount * parseApr(tier.apy)
+        coveredAmount += tierAmount
     }
 
-    return result
-}
-
-const parseBitgetFlexibleByRateLevel = (json: BitgetSavingsResponse, rateLevel: number): EarnAprItem[] => {
-    const groups = getProductGroups(json)
-    const flexible = groups[0]?.productList?.find(item => item.period === 0)
-    const apy = findApy(flexible, rateLevel)
-
-    if (!flexible || !apy) {
-        throw new Error(`No flexible product data found for rate level ${rateLevel}.`)
+    if (coveredAmount < amount) {
+        weightedApr += (amount - coveredAmount) * parseApr(tiers[tiers.length - 1].apy)
     }
 
-    return [createAprItem(flexible, apy)]
-}
-
-const getBitgetSavingsData = async (coinName: string, includeVip14 = false, rateLevel?: number): Promise<EarnAprItem[]> => {
-    try {
-        const json = await fetchBitgetSavings(coinName)
-        if (rateLevel !== undefined) {
-            return parseBitgetFlexibleByRateLevel(json, rateLevel)
-        }
-        return parseBitgetSavings(json, includeVip14)
-    } catch (error) {
-        console.error('Bitget fetch error:', error)
-        return []
-    }
+    return weightedApr / amount
 }
 
 interface BitgetCoinConfig {
+    includeVipFlexible?: boolean
     includeVip14?: boolean
-    rateLevel?: number
 }
 
-// USDT: standard + VIP + VIP-14. USDC: standard + VIP.
-// USDGO: no VIP group, amount-tiered apyList, rateLevel 0 = headline rate (≤300k)
+const parseBitgetSavings = (json: BitgetSavingsResponse, config: BitgetCoinConfig, amount?: number): EarnAprItem => {
+    const groups = getProductGroups(json)
+    const standardProducts = groups.find(group => group.productLevel === 1)?.productList
+    const standardFlexible = standardProducts?.filter(item => item.period === 0) ?? []
+
+    if (standardFlexible.length === 0) {
+        throw new Error('No standard flexible product data found.')
+    }
+
+    const products = [...standardFlexible]
+
+    const vipProducts = groups.find(item => item.productLevel === 2)?.productList
+    if (config.includeVipFlexible) {
+        products.push(...(vipProducts?.filter(item => item.period === 0) ?? []))
+    }
+
+    if (config.includeVip14) {
+        products.push(...(vipProducts?.filter(item => item.period === 14) ?? []))
+    }
+
+    const combinedApr = products.reduce((total, product) => total + calculateEffectiveApr(product, amount), 0) / products.length
+    return { name: standardFlexible[0].coinName, APR: combinedApr }
+}
+
+const getBitgetSavingsData = async (coinName: string, config: BitgetCoinConfig, amount?: number): Promise<EarnAprItem | null> => {
+    try {
+        const json = await fetchBitgetSavings(coinName)
+        return parseBitgetSavings(json, config, amount)
+    } catch (error) {
+        console.error('Bitget fetch error:', error)
+        return null
+    }
+}
+
+// USDT: standard flexible + VIP flexible + VIP 14-day. USDC: standard + VIP flexible.
 const BITGET_COINS: Record<string, BitgetCoinConfig> = {
-    USDT: { includeVip14: true },
-    USDC: {},
-    USDGO: { rateLevel: 0 },
+    USDT: { includeVipFlexible: true, includeVip14: true },
+    USDC: { includeVipFlexible: true },
+    USDGO: {},
 }
 
 /**
  * Fetch data from Bitget for all supported coins.
  * Fetched sequentially — parallel requests get rate-limited (429) by Bitget.
  */
-export const data_Bitget = async (): Promise<EarnAprItem[]> => {
+export const data_Bitget = async (amount?: number): Promise<EarnAprItem[]> => {
     const results: EarnAprItem[] = []
     const coins = Object.entries(BITGET_COINS)
     for (let i = 0; i < coins.length; i++) {
         const [coinName, config] = coins[i]
-        results.push(...await getBitgetSavingsData(coinName, config.includeVip14 ?? false, config.rateLevel))
+        const result = await getBitgetSavingsData(coinName, config, amount)
+        if (result) results.push(result)
         // Space out requests to the same host to avoid tripping Bitget's rate limit
         if (i < coins.length - 1) await sleep(300)
     }
