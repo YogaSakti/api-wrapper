@@ -34,6 +34,7 @@ const SUPPORTED_EXCHANGES = ['bybit', 'okx', 'binance', 'bitget']
 const SUPPORTED_COINS = ['usde', 'usdt', 'usdc', 'usd1', 'byusdt', 'usdgo', 'usdg', 'rlusd']
 // Bitget supports additional coin formats like for fixed savings
 const BITGET_FIXED_PATTERN = /^[A-Z]+-[A-Z]+-\d+$/
+const BITGET_ALL_PATTERN = /^(USDT|USDC|USDGO)-ALL$/
 // Bybit supports on-chain balances with -ONCHAIN suffix
 const BYBIT_ONCHAIN_PATTERN = /^(USDT|USDC)-ONCHAIN$/
 
@@ -109,15 +110,16 @@ const validateCoin = (req: express.Request, res: express.Response, next: express
     const sanitizedCoin = coin.trim().toUpperCase()
     const coinLower = sanitizedCoin.toLowerCase()
 
-    // Check if it's a standard coin, Bitget fixed savings format, or Bybit on-chain format
+    // Check if it's a standard coin, Bitget aggregate/fixed format, or Bybit on-chain format
     const isValidStandardCoin = SUPPORTED_COINS.includes(coinLower) && /^[A-Z0-9]+$/.test(sanitizedCoin)
     const isValidBitgetFixed = BITGET_FIXED_PATTERN.test(sanitizedCoin)
+    const isValidBitgetAll = BITGET_ALL_PATTERN.test(sanitizedCoin)
     const isValidBybitOnChain = BYBIT_ONCHAIN_PATTERN.test(sanitizedCoin)
 
-    if (!isValidStandardCoin && !isValidBitgetFixed && !isValidBybitOnChain) {
+    if (!isValidStandardCoin && !isValidBitgetFixed && !isValidBitgetAll && !isValidBybitOnChain) {
         res.status(400).json({
             error: 'Invalid Coin',
-            message: `Coin not supported. Supported coins: ${SUPPORTED_COINS.join(', ')}. Bitget fixed format: COIN-LEVEL-PERIOD. Bybit on-chain format: USDT-ONCHAIN, USDC-ONCHAIN`
+            message: `Coin not supported. Supported coins: ${SUPPORTED_COINS.join(', ')}. Bitget aggregate format: USDT-ALL, USDC-ALL, USDGO-ALL. Bitget fixed format: COIN-LEVEL-PERIOD. Bybit on-chain format: USDT-ONCHAIN, USDC-ONCHAIN`
         })
         return
     }

@@ -47,10 +47,9 @@ export const getBitgetEarnPositions = async (): Promise<BitgetEarnPositions> => 
     }
 }
 
-export const getBitgetBalances = async (): Promise<NumericBalanceMap> => {
-    const { flexible: flexibleSavingsAssets, fixed: fixedSavingsAssets } = await getBitgetEarnPositions()
-
+export const aggregateBitgetBalances = ({ flexible: flexibleSavingsAssets, fixed: fixedSavingsAssets }: BitgetEarnPositions): NumericBalanceMap => {
     const savingsByCoin: NumericBalanceMap = {}
+    const totalsByCoin: NumericBalanceMap = {}
 
     // Process flexible savings - sum by coin (vip + non-vip combined)
     if (Array.isArray(flexibleSavingsAssets)) {
@@ -58,7 +57,9 @@ export const getBitgetBalances = async (): Promise<NumericBalanceMap> => {
             const { productCoin, holdAmount } = asset
             if (!productCoin) return
             const coin = productCoin.toUpperCase()
-            savingsByCoin[coin] = (savingsByCoin[coin] ?? 0) + toAmount(holdAmount)
+            const amount = toAmount(holdAmount)
+            savingsByCoin[coin] = (savingsByCoin[coin] ?? 0) + amount
+            totalsByCoin[coin] = (totalsByCoin[coin] ?? 0) + amount
         })
     }
 
@@ -67,10 +68,21 @@ export const getBitgetBalances = async (): Promise<NumericBalanceMap> => {
         fixedSavingsAssets.forEach((asset: any) => {
             const { productCoin, productLevel, period, holdAmount } = asset
             if (!productCoin || !productLevel) return
-            const key = `${productCoin.toUpperCase()}-${productLevel.toUpperCase()}-${period}`
-            savingsByCoin[key] = (savingsByCoin[key] ?? 0) + toAmount(holdAmount)
+            const coin = productCoin.toUpperCase()
+            const amount = toAmount(holdAmount)
+            const key = `${coin}-${productLevel.toUpperCase()}-${period}`
+            savingsByCoin[key] = (savingsByCoin[key] ?? 0) + amount
+            totalsByCoin[coin] = (totalsByCoin[coin] ?? 0) + amount
         })
     }
 
+    Object.entries(totalsByCoin).forEach(([coin, amount]) => {
+        savingsByCoin[`${coin}-ALL`] = amount
+    })
+
     return savingsByCoin
+}
+
+export const getBitgetBalances = async (): Promise<NumericBalanceMap> => {
+    return aggregateBitgetBalances(await getBitgetEarnPositions())
 }
