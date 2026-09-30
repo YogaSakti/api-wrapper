@@ -1,5 +1,6 @@
 import fetch from 'cross-fetch'
 import { EarnAprItem } from '../../types/api.types'
+import { BitgetEarnPosition, getBitgetEarnPositions } from '../balances/bitget.service'
 
 interface BitgetApy {
     apy: string
@@ -60,6 +61,32 @@ const buildSavingsRequestBody = (coinName: string) => JSON.stringify({
 const parseApr = (apy: string): number => parseFloat(apy) / 100
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
+const calculatePositionApr = (position: BitgetEarnPosition): number => {
+    const amount = Number(position.holdAmount)
+    const tiers = position.apy.map(tier => ({
+        min: Number(tier.minApy) || 0,
+        max: Number(tier.maxApy) || amount,
+        apr: parseApr(tier.currentApy),
+    })).filter(tier => Number.isFinite(tier.apr) && tier.max > tier.min)
+        .sort((a, b) => a.min - b.min)
+
+    if (!Number.isFinite(amount) || amount <= 0 || tiers.length === 0) return 0
+
+    let weightedApr = 0
+    let coveredAmount = 0
+    for (const tier of tiers) {
+        const tierAmount = Math.max(0, Math.min(amount, tier.max) - tier.min)
+        weightedApr += tierAmount * tier.apr
+        coveredAmount += tierAmount
+    }
+
+    if (coveredAmount < amount) {
+        weightedApr += (amount - coveredAmount) * tiers[tiers.length - 1].apr
+    }
+
+    return weightedApr / amount
+}
 
 // Bitget rate-limits rapid sequential calls (429). Retry with backoff so a coin isn't silently dropped.
 const fetchBitgetSavings = async (coinName: string, retries = 3): Promise<BitgetSavingsResponse> => {
@@ -200,4 +227,24 @@ export const data_Bitget = async (amounts?: BitgetAmounts): Promise<EarnAprItem[
         if (i < coins.length - 1) await sleep(300)
     }
     return results
+}
+
+export const data_BitgetAuto = async (): Promise<EarnAprItem[]> => {
+    const { flexible, fixed } = await getBitgetEarnPositions()
+    const positions = [
+        ...flexible,
+        ...fixed,
+    ]
+    const supportedCoins = ['USDT', 'USDC', 'USDGO']
+
+    return supportedCoins.map(name => {
+        const coinPositions = positions.filter(position => position.productCoin === name)
+        const totalAmount = coinPositions.reduce((total, position) => total + Number(position.holdAmount), 0)
+        const weightedApr = coinPositions.reduce((total, position) => {
+            const amount = Number(position.holdAmount)
+            return total + amount * calculatePositionApr(position)
+        }, 0)
+
+        return { name, APR: totalAmount > 0 ? weightedApr / totalAmount : 0 }
+    })
 }

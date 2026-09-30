@@ -1,7 +1,7 @@
 import express from 'express'
 import CacheService from '../utils/cache.service'
 import { getSingleParam, isSafeAddress, parseChoiceFilter, parseIntegerInRange } from '../utils/validation'
-import { data_OKX, data_Bybit, data_Bybit_USDe, data_Bybit_USD1, data_Bybit_OnChain, data_Bybit_BYUSDT, data_Binance, data_Binance_All, data_Bitget, data_Kamino } from '../services/earn'
+import { data_OKX, data_Bybit, data_Bybit_USDe, data_Bybit_USD1, data_Bybit_OnChain, data_Bybit_BYUSDT, data_Binance, data_Binance_All, data_Bitget, data_BitgetAuto, data_Kamino } from '../services/earn'
 import { BitgetAmounts } from '../services/earn/bitget.service'
 
 const ttl = 60 * 0.5 // 0.5 minutes
@@ -20,9 +20,26 @@ router.get('/', (_req, res) => {
 
 /**
  * Bitget route - cached
- * Optional amount param accepts three comma-separated values for USDT, USDC, and USDGO.
+ * Set auto=true to calculate APR from the account's current live Earn positions.
  */
 router.get('/bitget', async (req, res) => {
+    const rawAuto = req.query.auto
+    if (rawAuto !== undefined && rawAuto !== 'true' && rawAuto !== 'false') {
+        res.status(400).json({ error: 'Invalid Auto', message: 'Auto must be true or false' })
+        return
+    }
+
+    if (rawAuto === 'true') {
+        if (req.query.amount !== undefined) {
+            res.status(400).json({ error: 'Invalid Parameters', message: 'Amount cannot be combined with auto=true' })
+            return
+        }
+
+        const data = await cache.get('bitget:auto', data_BitgetAuto)
+        res.status(200).json(data)
+        return
+    }
+
     const rawAmount = req.query.amount
     if (rawAmount !== undefined && typeof rawAmount !== 'string') {
         res.status(400).json({ error: 'Invalid Amount', message: 'Amount must contain three positive numbers for USDT, USDC, and USDGO' })

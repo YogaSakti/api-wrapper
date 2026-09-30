@@ -16,9 +16,39 @@ const client = new RestClientV2({
     apiPass: process.env.PASS_BITGET
 })
 
+export interface BitgetEarnPositionTier {
+    minApy: string
+    maxApy: string
+    currentApy: string
+}
+
+export interface BitgetEarnPosition {
+    productCoin: string
+    productLevel: string
+    period: string
+    holdAmount: string
+    apy: BitgetEarnPositionTier[]
+}
+
+export interface BitgetEarnPositions {
+    flexible: BitgetEarnPosition[]
+    fixed: BitgetEarnPosition[]
+}
+
+export const getBitgetEarnPositions = async (): Promise<BitgetEarnPositions> => {
+    const [flexibleResponse, fixedResponse] = await Promise.all([
+        client.getEarnSavingsAssets({ periodType: 'flexible' }),
+        client.getEarnSavingsAssets({ periodType: 'fixed' })
+    ])
+
+    return {
+        flexible: flexibleResponse.data?.resultList ?? [],
+        fixed: fixedResponse.data?.resultList ?? []
+    }
+}
+
 export const getBitgetBalances = async (): Promise<NumericBalanceMap> => {
-    const flexibleSavingsAssets = await client.getEarnSavingsAssets({ periodType: 'flexible' }).then((response: any) => response?.data?.resultList)
-    const fixedSavingsAssets = await client.getEarnSavingsAssets({ periodType: 'fixed' }).then((response: any) => response?.data?.resultList)
+    const { flexible: flexibleSavingsAssets, fixed: fixedSavingsAssets } = await getBitgetEarnPositions()
 
     const savingsByCoin: NumericBalanceMap = {}
 
