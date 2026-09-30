@@ -11,6 +11,7 @@ interface BitgetApy {
 interface BitgetProduct {
     coinName: string
     period: number
+    stickType?: number
     apyList: BitgetApy[]
 }
 
@@ -92,34 +93,45 @@ const getProductGroups = (json: BitgetSavingsResponse): BitgetBizLineProduct[] =
     return groups
 }
 
-const calculateEffectiveApr = (product: BitgetProduct, amount?: number): number => {
-    const tiers = [...product.apyList]
-        .filter(tier => Number.isFinite(parseApr(tier.apy)))
-        .sort((a, b) => Number(a.minStepValue ?? 0) - Number(b.minStepValue ?? 0))
+interface AprTranche {
+    apr: number
+    capacity: number
+}
 
-    if (tiers.length === 0) {
-        throw new Error(`No APY tiers found for ${product.coinName}.`)
+const getAprTranches = (products: BitgetProduct[]): AprTranche[] => {
+    return products.flatMap(product => product.apyList.map(tier => {
+        const min = Number(tier.minStepValue ?? 0)
+        const max = Number(tier.maxStepValue ?? Number.POSITIVE_INFINITY)
+        return {
+            apr: parseApr(tier.apy),
+            capacity: max - min,
+        }
+    })).filter(tranche => Number.isFinite(tranche.apr) && tranche.capacity > 0)
+        .sort((a, b) => b.apr - a.apr)
+}
+
+const calculateCombinedApr = (products: BitgetProduct[], amount?: number): number => {
+    const tranches = getAprTranches(products)
+    if (tranches.length === 0) {
+        throw new Error(`No APY tiers found for ${products[0]?.coinName ?? 'coin'}.`)
     }
 
     if (amount === undefined) {
-        return parseApr(tiers[0].apy)
+        return tranches[0].apr
     }
 
+    let remainingAmount = amount
     let weightedApr = 0
-    let coveredAmount = 0
 
-    for (const tier of tiers) {
-        const min = Number(tier.minStepValue ?? 0)
-        const max = Number(tier.maxStepValue ?? amount)
-        if (!Number.isFinite(min) || !Number.isFinite(max) || max <= min) continue
-
-        const tierAmount = Math.max(0, Math.min(amount, max) - min)
-        weightedApr += tierAmount * parseApr(tier.apy)
-        coveredAmount += tierAmount
+    for (const tranche of tranches) {
+        const allocatedAmount = Math.min(remainingAmount, tranche.capacity)
+        weightedApr += allocatedAmount * tranche.apr
+        remainingAmount -= allocatedAmount
+        if (remainingAmount <= 0) break
     }
 
-    if (coveredAmount < amount) {
-        weightedApr += (amount - coveredAmount) * parseApr(tiers[tiers.length - 1].apy)
+    if (remainingAmount > 0) {
+        weightedApr += remainingAmount * tranches[tranches.length - 1].apr
     }
 
     return weightedApr / amount
@@ -133,7 +145,7 @@ interface BitgetCoinConfig {
 const parseBitgetSavings = (json: BitgetSavingsResponse, config: BitgetCoinConfig, amount?: number): EarnAprItem => {
     const groups = getProductGroups(json)
     const standardProducts = groups.find(group => group.productLevel === 1)?.productList
-    const standardFlexible = standardProducts?.filter(item => item.period === 0) ?? []
+    const standardFlexible = standardProducts?.filter(item => item.period === 0 && item.stickType !== 1) ?? []
 
     if (standardFlexible.length === 0) {
         throw new Error('No standard flexible product data found.')
@@ -150,7 +162,7 @@ const parseBitgetSavings = (json: BitgetSavingsResponse, config: BitgetCoinConfi
         products.push(...(vipProducts?.filter(item => item.period === 14) ?? []))
     }
 
-    const combinedApr = products.reduce((total, product) => total + calculateEffectiveApr(product, amount), 0) / products.length
+    const combinedApr = calculateCombinedApr(products, amount)
     return { name: standardFlexible[0].coinName, APR: combinedApr }
 }
 
